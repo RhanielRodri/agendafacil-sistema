@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AppointmentStatus {
+  NEW
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Service {
+  id           Int           @id @default(autoincrement())
+  name         String
+  description  String
+  duration     Int
+  price        Decimal       @db.Decimal(10, 2)
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
+}
+
+model Professional {
+  id           Int           @id @default(autoincrement())
+  name         String
+  specialty    String
+  photo        String
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
+}
+
+model Appointment {
+  id             Int               @id @default(autoincrement())
+  serviceId      Int
+  professionalId Int
+  clientName     String
+  clientPhone    String
+  clientEmail    String?
+  date           DateTime          @db.Date
+  time           String
+  status         AppointmentStatus @default(NEW)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  service        Service           @relation(fields: [serviceId], references: [id])
+  professional   Professional      @relation(fields: [professionalId], references: [id])
+
+  @@index([date, professionalId])
+}
+
+model BusinessHours {
+  id        Int     @id @default(autoincrement())
+  dayOfWeek Int     @unique
+  openTime  String
+  closeTime String
+  isOpen    Boolean @default(true)
+}
+
+model BlockedDate {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @unique @db.Date
+  reason    String
+  createdAt DateTime @default(now())
+}
