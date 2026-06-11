@@ -1,6 +1,10 @@
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:4000/api").replace(/\/$/, "");
+const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
 
 async function request(path, options = {}) {
+  if (!API_URL) {
+    throw new Error("VITE_API_URL não configurada");
+  }
+
   const response = await fetch(`${API_URL}${path}`, {
     headers: {
       "Content-Type": "application/json",

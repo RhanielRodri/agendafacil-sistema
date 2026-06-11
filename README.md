@@ -177,22 +177,70 @@ npm.cmd run prisma:migrate
 npm.cmd run prisma:seed
 ```
 
-## Deploy planejado
+## Deploy automatizado
 
-### Frontend na Vercel
+### Ordem recomendada
+
+1. Suba o repositorio para o GitHub.
+2. Conecte o repositorio no Render como Blueprint usando `render.yaml`.
+3. Aguarde o Render criar o PostgreSQL e o Web Service do backend.
+4. Copie a URL publica do backend no Render.
+5. Configure `VITE_API_URL` na Vercel com a URL do backend + `/api`.
+6. Rode o deploy do frontend pela Vercel CLI.
+
+Ainda sera necessario autenticar as contas uma vez no Render, GitHub e Vercel.
+
+### Backend no Render Blueprint
+
+O arquivo `render.yaml` na raiz cria:
+
+- PostgreSQL: `agendafacil-db`
+- Web Service: `agendafacil-api`
+- Root directory: `backend`
+- Build command: `npm install && npx prisma generate && npx prisma migrate deploy && node prisma/seed.js`
+- Start command: `npm start`
+- `DATABASE_URL` preenchido automaticamente via `fromDatabase`
+- `FRONTEND_URL` como placeholder para atualizar depois com a URL da Vercel
+
+Depois que a Vercel gerar a URL do frontend, atualize `FRONTEND_URL` no Render para:
+
+```text
+https://SEU-FRONTEND.vercel.app
+```
+
+### Frontend na Vercel CLI
 
 - Root directory: `frontend`
 - Build command: `npm run build`
 - Output directory: `dist`
 - Variavel: `VITE_API_URL` com a URL publica do backend no Render
 
-### Backend no Render
+Instale e autentique a Vercel CLI:
 
-- Root directory: `backend`
-- Build command: `npm install && npx prisma generate && npx prisma migrate deploy`
-- Start command: `npm start`
-- Variavel: `DATABASE_URL` com a URL do PostgreSQL
-- Variavel: `FRONTEND_URL` com a URL publica do frontend na Vercel
+```powershell
+npm i -g vercel
+vercel login
+```
+
+Configure a variavel de producao:
+
+```powershell
+cd frontend
+vercel env add VITE_API_URL production
+```
+
+Use o valor no formato:
+
+```text
+https://SUA-API.onrender.com/api
+```
+
+Rode o deploy:
+
+```powershell
+vercel
+vercel --prod
+```
 
 ## Melhorias futuras
 
