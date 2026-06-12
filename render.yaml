@@ -1,9 +1,3 @@
-databases:
-  - name: agendafacil-db
-    plan: free
-    databaseName: agendafacil
-    user: agendafacil
-
 services:
   - type: web
     name: agendafacil-api
@@ -16,9 +10,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: agendafacil-db
-          property: connectionString
+        sync: false
       - key: FRONTEND_URL
         value: https://SEU-FRONTEND.vercel.app
       - key: PORT

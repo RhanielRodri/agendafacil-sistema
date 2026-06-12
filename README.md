@@ -182,25 +182,36 @@ npm.cmd run prisma:seed
 ### Ordem recomendada
 
 1. Suba o repositorio para o GitHub.
-2. Conecte o repositorio no Render como Blueprint usando `render.yaml`.
-3. Aguarde o Render criar o PostgreSQL e o Web Service do backend.
-4. Copie a URL publica do backend no Render.
-5. Configure `VITE_API_URL` na Vercel com a URL do backend + `/api`.
-6. Rode o deploy do frontend pela Vercel CLI.
+2. No Render, reutilize o PostgreSQL gratuito ja existente.
+3. Crie uma `DATABASE_URL` para o AgendaFacil usando um schema separado.
+4. Conecte o repositorio no Render como Blueprint usando `render.yaml`.
+5. Configure `DATABASE_URL` no Web Service do backend.
+6. Copie a URL publica do backend no Render.
+7. Configure `VITE_API_URL` na Vercel com a URL do backend + `/api`.
+8. Rode o deploy do frontend pela Vercel CLI.
 
 Ainda sera necessario autenticar as contas uma vez no Render, GitHub e Vercel.
 
 ### Backend no Render Blueprint
 
-O arquivo `render.yaml` na raiz cria:
+O arquivo `render.yaml` na raiz cria apenas o Web Service do backend:
 
-- PostgreSQL: `agendafacil-db`
 - Web Service: `agendafacil-api`
 - Root directory: `backend`
 - Build command: `npm install && npx prisma generate && npx prisma migrate deploy && node prisma/seed.js`
 - Start command: `npm start`
-- `DATABASE_URL` preenchido automaticamente via `fromDatabase`
+- `DATABASE_URL` deve ser configurado manualmente no Render
 - `FRONTEND_URL` como placeholder para atualizar depois com a URL da Vercel
+
+Como o plano Free do Render permite apenas um PostgreSQL gratuito, reutilize o banco ja existente com um schema separado. Isso evita afetar tabelas de outros projetos.
+
+Exemplo de `DATABASE_URL` usando schema separado:
+
+```text
+postgresql://USUARIO:SENHA@HOST:PORT/NOME_DO_BANCO?schema=agendafacil
+```
+
+No Render, copie a `Internal Database URL` ou `External Database URL` do banco existente e adicione `?schema=agendafacil` no final. Se a URL ja tiver parametros, use `&schema=agendafacil`.
 
 Depois que a Vercel gerar a URL do frontend, atualize `FRONTEND_URL` no Render para:
 
