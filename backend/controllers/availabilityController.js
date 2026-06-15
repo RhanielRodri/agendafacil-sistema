@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../prismaClient.js";
 import { createHttpError, intervalsOverlap, isValidDateInput, minutesToTime, normalizeDate, timeToMinutes } from "./utils.js";
-
-const prisma = new PrismaClient();
 
 export async function listAvailableSlots(req, res, next) {
   try {

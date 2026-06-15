@@ -35,8 +35,10 @@ app.use((req, res) => {
 
 app.use((error, req, res, next) => {
   const status = error.status || 500;
+  console.error(error.message);
+
   res.status(status).json({
-    message: error.message || "Erro interno do servidor"
+    message: status === 500 ? "Erro interno do servidor" : error.message
   });
 });
 

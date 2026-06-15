@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && node prisma/seed.js
+    buildCommand: npm ci && npm run build && npm run prisma:deploy
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -12,6 +12,4 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: FRONTEND_URL
-        value: https://SEU-FRONTEND.vercel.app
-      - key: PORT
-        value: 10000
+        sync: false

@@ -4,11 +4,22 @@ import { listProfessionals } from "../controllers/professionalController.js";
 import { listAppointments, getAppointment, createAppointment, updateAppointmentStatus } from "../controllers/appointmentController.js";
 import { listAvailableSlots } from "../controllers/availabilityController.js";
 import { listBusinessHours } from "../controllers/businessHoursController.js";
+import prisma from "../prismaClient.js";
 
 const router = Router();
 
-router.get("/health", (req, res) => {
-  res.json({ status: "ok", service: "AgendaFácil API" });
+router.get("/health", async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: "ok", service: "AgendaFácil API", database: "ok" });
+  } catch (error) {
+    res.status(503).json({
+      status: "error",
+      service: "AgendaFácil API",
+      database: "unavailable",
+      message: "Banco de dados indisponível"
+    });
+  }
 });
 
 router.get("/services", listServices);

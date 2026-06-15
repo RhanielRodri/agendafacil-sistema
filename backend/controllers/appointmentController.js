@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../prismaClient.js";
 import { allowedStatuses, createHttpError, intervalsOverlap, isValidDateInput, normalizeDate, timeToMinutes } from "./utils.js";
-
-const prisma = new PrismaClient();
 
 async function validateAppointmentPayload(payload) {
   const required = ["serviceId", "professionalId", "clientName", "clientPhone", "date", "time"];

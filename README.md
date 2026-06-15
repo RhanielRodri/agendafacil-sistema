@@ -124,6 +124,7 @@ No PowerShell:
 cd backend
 npm.cmd install
 Copy-Item .env.example .env
+npm.cmd run build
 npm.cmd run prisma:generate
 npm.cmd run prisma:migrate
 npm.cmd run prisma:seed
@@ -173,6 +174,7 @@ VITE_API_URL=http://localhost:4000/api
 
 ```powershell
 npm.cmd run prisma:generate
+npm.cmd run prisma:deploy
 npm.cmd run prisma:migrate
 npm.cmd run prisma:seed
 ```
@@ -198,10 +200,12 @@ O arquivo `render.yaml` na raiz cria apenas o Web Service do backend:
 
 - Web Service: `agendafacil-api`
 - Root directory: `backend`
-- Build command: `npm install && npx prisma generate && npx prisma migrate deploy && node prisma/seed.js`
+- Build command: `npm ci && npm run build && npm run prisma:deploy`
 - Start command: `npm start`
 - `DATABASE_URL` deve ser configurado manualmente no Render
-- `FRONTEND_URL` como placeholder para atualizar depois com a URL da Vercel
+- `FRONTEND_URL` deve ser configurado manualmente com a URL final da Vercel
+
+O seed (`npm run prisma:seed`) deve ser executado manualmente apenas quando voce quiser recriar os dados ficticios da demonstracao. Ele apaga e recria os dados de exemplo, por isso nao deve rodar automaticamente em todo deploy.
 
 Como o plano Free do Render permite apenas um PostgreSQL gratuito, reutilize o banco ja existente com um schema separado. Isso evita afetar tabelas de outros projetos.
 
