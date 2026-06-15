@@ -8,7 +8,7 @@ AgendaFacil e uma aplicacao full stack para pequenos negocios aceitarem agendame
 - Backend: Node.js e Express
 - Banco: PostgreSQL
 - ORM: Prisma
-- Deploy planejado: Vercel para frontend e Render para backend
+- Deploy: Vercel para frontend e Render para backend
 
 ## Funcionalidades
 
@@ -181,6 +181,12 @@ npm.cmd run prisma:seed
 
 ## Deploy automatizado
 
+### URLs de producao
+
+- Frontend: https://agendafacil-sistema.vercel.app
+- API: https://agendafacil-api-5zxc.onrender.com/api
+- Health check: https://agendafacil-api-5zxc.onrender.com/api/health
+
 ### Ordem recomendada
 
 1. Suba o repositorio para o GitHub.
@@ -217,10 +223,10 @@ postgresql://USUARIO:SENHA@HOST:PORT/NOME_DO_BANCO?schema=agendafacil
 
 No Render, copie a `Internal Database URL` ou `External Database URL` do banco existente e adicione `?schema=agendafacil` no final. Se a URL ja tiver parametros, use `&schema=agendafacil`.
 
-Depois que a Vercel gerar a URL do frontend, atualize `FRONTEND_URL` no Render para:
+`FRONTEND_URL` no Render:
 
 ```text
-https://SEU-FRONTEND.vercel.app
+https://agendafacil-sistema.vercel.app
 ```
 
 ### Frontend na Vercel CLI
@@ -247,7 +253,7 @@ vercel env add VITE_API_URL production
 Use o valor no formato:
 
 ```text
-https://SUA-API.onrender.com/api
+https://agendafacil-api-5zxc.onrender.com/api
 ```
 
 Rode o deploy:
