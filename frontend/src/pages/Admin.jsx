@@ -27,7 +27,9 @@ export default function Admin({ services, professionals }) {
     const weekLimit = new Date();
     weekLimit.setDate(weekLimit.getDate() + 7);
 
-    const todayTotal = appointments.filter((appointment) => appointment.date.slice(0, 10) === today).length;
+    const todayTotal = appointments.filter(
+      (appointment) => appointment.date.slice(0, 10) === today
+    ).length;
     const weekTotal = appointments.filter((appointment) => {
       const date = new Date(appointment.date);
       return date >= new Date(`${today}T00:00:00`) && date <= weekLimit;
@@ -52,30 +54,37 @@ export default function Admin({ services, professionals }) {
 
   return (
     <main className="admin-page">
-      <section className="section">
-        <div className="section-heading">
-          <span>Admin</span>
-          <h1>Painel Studio Cut</h1>
+      <header className="admin-header">
+        <div className="admin-header-brand">
+          <strong>AgendaFácil</strong>
+          <span>· Painel demonstrativo</span>
         </div>
+        <span className="admin-demo-notice">Ambiente demonstrativo · Dados fictícios</span>
+      </header>
 
-        {error && <StateMessage type="error" title="Erro no painel">{error}</StateMessage>}
+      <section className="section">
+        {error && (
+          <StateMessage type="error" title="Erro ao carregar dados" onRetry={loadAppointments}>
+            {error}
+          </StateMessage>
+        )}
 
         <div className="metrics-grid">
           <article>
-            <span>Hoje</span>
-            <strong>{metrics.todayTotal}</strong>
+            <span className="metric-label">Hoje</span>
+            <strong className="metric-value accent">{metrics.todayTotal}</strong>
           </article>
           <article>
-            <span>Próximos 7 dias</span>
-            <strong>{metrics.weekTotal}</strong>
+            <span className="metric-label">Confirmados</span>
+            <strong className="metric-value success">{metrics.byStatus.CONFIRMED || 0}</strong>
           </article>
           <article>
-            <span>Novos</span>
-            <strong>{metrics.byStatus.NEW || 0}</strong>
+            <span className="metric-label">Novos</span>
+            <strong className="metric-value warning">{metrics.byStatus.NEW || 0}</strong>
           </article>
           <article>
-            <span>Confirmados</span>
-            <strong>{metrics.byStatus.CONFIRMED || 0}</strong>
+            <span className="metric-label">Próximos 7 dias</span>
+            <strong className="metric-value neutral">{metrics.weekTotal}</strong>
           </article>
         </div>
 
@@ -83,10 +92,16 @@ export default function Admin({ services, professionals }) {
           <section className="panel">
             <h2>Próximos agendamentos</h2>
             {loading && <StateMessage type="loading" title="Carregando agendamentos" />}
-            {!loading && nextAppointments.length === 0 && <StateMessage title="Nenhum próximo agendamento" />}
+            {!loading && nextAppointments.length === 0 && (
+              <StateMessage title="Nenhum próximo agendamento" />
+            )}
             <div className="stack">
               {nextAppointments.map((appointment) => (
-                <AppointmentCard key={appointment.id} appointment={appointment} onStatusChange={handleStatusChange} />
+                <AppointmentCard
+                  key={appointment.id}
+                  appointment={appointment}
+                  onStatusChange={handleStatusChange}
+                />
               ))}
             </div>
           </section>
@@ -107,10 +122,16 @@ export default function Admin({ services, professionals }) {
         <div className="admin-grid">
           <section className="panel">
             <h2>Todos os agendamentos</h2>
-            {!loading && appointments.length === 0 && <StateMessage title="Nenhum agendamento cadastrado" />}
+            {!loading && appointments.length === 0 && (
+              <StateMessage title="Nenhum agendamento cadastrado" />
+            )}
             <div className="stack">
               {appointments.map((appointment) => (
-                <AppointmentCard key={appointment.id} appointment={appointment} onStatusChange={handleStatusChange} />
+                <AppointmentCard
+                  key={appointment.id}
+                  appointment={appointment}
+                  onStatusChange={handleStatusChange}
+                />
               ))}
             </div>
           </section>

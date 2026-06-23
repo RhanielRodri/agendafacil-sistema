@@ -1,0 +1,85 @@
+/* === DESKTOP (≥ 1024px) === */
+
+@media (min-width: 1024px) {
+  .hero-credentials {
+    display: block;
+  }
+
+  .booking-layout {
+    grid-template-columns: 1fr 300px;
+  }
+
+  .booking-sidebar {
+    display: block;
+  }
+}
+
+/* === TABLET (640px–1023px) === */
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .slot-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+}
+
+/* === MOBILE (< 640px) === */
+
+@media (max-width: 639px) {
+  .navbar {
+    padding: 0 4vw;
+  }
+
+  .hero {
+    padding: 48px 4vw;
+    min-height: min(540px, 85svh);
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(1.9rem, 9vw, 2.6rem);
+  }
+
+  .section {
+    padding: 48px 4vw;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .step-label {
+    display: none;
+  }
+
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+/* === PREVENT HORIZONTAL OVERFLOW AT 360px === */
+
+@media (max-width: 360px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .hero-copy h1 {
+    font-size: 1.75rem;
+  }
+
+  .slot-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

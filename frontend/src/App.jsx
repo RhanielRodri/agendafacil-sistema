@@ -17,7 +17,9 @@ export default function App() {
   const [error, setError] = useState("");
   const [successAppointment, setSuccessAppointment] = useState(null);
 
-  useEffect(() => {
+  function loadData() {
+    setLoading(true);
+    setError("");
     Promise.all([api.getServices(), api.getProfessionals()])
       .then(([servicesData, professionalsData]) => {
         setServices(servicesData);
@@ -25,6 +27,10 @@ export default function App() {
       })
       .catch((requestError) => setError(requestError.message))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   function navigate(nextPage) {
@@ -44,11 +50,18 @@ export default function App() {
 
   return (
     <>
-      <Navbar page={page} onNavigate={navigate} />
+      <Navbar onNavigate={navigate} />
       {page === "admin" ? (
         <Admin services={services} professionals={professionals} />
       ) : (
-        <Home services={services} professionals={professionals} loading={loading} error={error} onSuccess={handleSuccess} />
+        <Home
+          services={services}
+          professionals={professionals}
+          loading={loading}
+          error={error}
+          onSuccess={handleSuccess}
+          onRetry={loadData}
+        />
       )}
     </>
   );

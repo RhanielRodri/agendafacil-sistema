@@ -11,6 +11,8 @@ async function request(path, options = {}) {
       ...options.headers
     },
     ...options
+  }).catch(() => {
+    throw new Error("Não foi possível conectar ao servidor. Verifique sua conexão.");
   });
 
   const data = await response.json().catch(() => null);
