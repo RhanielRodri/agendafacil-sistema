@@ -3,6 +3,107 @@
   min-height: 100vh;
 }
 
+/* === TELAS DE ESTADO (loading, login, erro, indisponível) === */
+
+.admin-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg-dark);
+  padding: 24px 16px;
+}
+
+.admin-screen-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--bg-dark-surface);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-md);
+  padding: 36px 32px;
+  box-shadow: var(--shadow-md);
+}
+
+.admin-screen-title {
+  margin: 0 0 20px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-on-dark);
+}
+
+.admin-screen-message {
+  margin: 0 0 20px;
+  color: var(--text-on-dark-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.admin-screen-error {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  background: var(--danger-bg);
+  border: 1px solid rgba(201, 77, 71, 0.25);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: 0.88rem;
+}
+
+.admin-screen-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  color: var(--text-on-dark-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-screen-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  background: var(--bg-dark-elevated);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-dark);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.admin-screen-input:focus {
+  border-color: var(--accent);
+}
+
+.admin-screen-btn {
+  width: 100%;
+  min-height: 44px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.admin-screen-btn:hover {
+  background: var(--accent-hover);
+}
+
+.admin-screen-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.admin-screen-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* === ADMIN HEADER === */
 
 .admin-header {

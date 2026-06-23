@@ -67,6 +67,14 @@
   }
 }
 
+/* === ADMIN SCREEN MOBILE === */
+
+@media (max-width: 479px) {
+  .admin-screen-card {
+    padding: 28px 20px;
+  }
+}
+
 /* === PREVENT HORIZONTAL OVERFLOW AT 360px === */
 
 @media (max-width: 360px) {

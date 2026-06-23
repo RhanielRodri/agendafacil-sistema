@@ -4,40 +4,46 @@ import AppointmentCard from "../components/AppointmentCard.jsx";
 import StateMessage from "../components/StateMessage.jsx";
 import { formatCurrency, todayInputValue } from "../utils/format.js";
 
-function LoginOverlay({ onSuccess }) {
+// ─── Telas de estado (fundo escuro, card centralizado) ──────────────────────
+
+function AdminScreen({ children }) {
+  return (
+    <div className="admin-screen">
+      <div className="admin-screen-card">{children}</div>
+    </div>
+  );
+}
+
+function LoginScreen({ onSuccess }) {
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
-    setLoading(true);
+    setLoginError("");
+    setSubmitting(true);
     try {
       await api.adminLogin(password);
       onSuccess();
     } catch (err) {
-      setError(err.message || "Senha incorreta");
+      setLoginError(err.message || "Senha incorreta");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 
   return (
-    <div style={{
-      position: "fixed", inset: 0, display: "flex", alignItems: "center",
-      justifyContent: "center", background: "var(--bg-light)", zIndex: 100
-    }}>
-      <form onSubmit={handleSubmit} className="panel" style={{ width: "100%", maxWidth: 360 }}>
-        <h2 style={{ marginBottom: 20 }}>Painel administrativo</h2>
-        {error && (
-          <div className="state error" style={{ marginBottom: 12 }}>
-            <strong>{error}</strong>
-          </div>
-        )}
-        <label>
+    <AdminScreen>
+      <h2 className="admin-screen-title">Painel administrativo</h2>
+      {loginError && (
+        <p className="admin-screen-error">{loginError}</p>
+      )}
+      <form onSubmit={handleSubmit}>
+        <label className="admin-screen-label">
           Senha de acesso
           <input
+            className="admin-screen-input"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -45,75 +51,136 @@ function LoginOverlay({ onSuccess }) {
             required
           />
         </label>
-        <div className="actions">
-          <button className="primary-button" type="submit" disabled={loading}>
-            {loading ? "Entrando…" : "Entrar"}
-          </button>
-        </div>
+        <button className="admin-screen-btn" type="submit" disabled={submitting}>
+          {submitting ? "Entrando…" : "Entrar"}
+        </button>
       </form>
-    </div>
+    </AdminScreen>
   );
 }
 
+function LoadingScreen() {
+  return (
+    <AdminScreen>
+      <p className="admin-screen-message">Carregando painel…</p>
+    </AdminScreen>
+  );
+}
+
+function UnavailableScreen({ onRetry }) {
+  return (
+    <AdminScreen>
+      <h2 className="admin-screen-title">Painel indisponível</h2>
+      <p className="admin-screen-message">
+        O painel administrativo está temporariamente indisponível.<br />
+        Tente novamente em instantes.
+      </p>
+      <button className="admin-screen-btn" type="button" onClick={onRetry}>
+        Tentar novamente
+      </button>
+    </AdminScreen>
+  );
+}
+
+function ErrorScreen({ message, onRetry }) {
+  return (
+    <AdminScreen>
+      <h2 className="admin-screen-title">Erro ao carregar</h2>
+      <p className="admin-screen-message">{message}</p>
+      <button className="admin-screen-btn" type="button" onClick={onRetry}>
+        Tentar novamente
+      </button>
+    </AdminScreen>
+  );
+}
+
+// ─── Dashboard principal ─────────────────────────────────────────────────────
+
 export default function Admin({ services, professionals }) {
+  const [status, setStatus] = useState("loading");
   const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [needsLogin, setNeedsLogin] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [statusChangeError, setStatusChangeError] = useState("");
+
+  const safeAppointments = Array.isArray(appointments) ? appointments : [];
+  const safeServices = Array.isArray(services) ? services : [];
+  const safeProfessionals = Array.isArray(professionals) ? professionals : [];
+
+  // Todos os hooks ANTES de qualquer early return
+  const metrics = useMemo(() => {
+    const today = todayInputValue();
+    const weekLimit = new Date();
+    weekLimit.setDate(weekLimit.getDate() + 7);
+
+    const todayTotal = safeAppointments.filter(
+      (a) => a.date.slice(0, 10) === today
+    ).length;
+
+    const weekTotal = safeAppointments.filter((a) => {
+      const date = new Date(a.date);
+      return date >= new Date(`${today}T00:00:00`) && date <= weekLimit;
+    }).length;
+
+    const byStatus = safeAppointments.reduce((acc, a) => {
+      acc[a.status] = (acc[a.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    return { todayTotal, weekTotal, byStatus };
+  }, [safeAppointments]);
+
+  const nextAppointments = safeAppointments
+    .filter((a) => a.status !== "CANCELLED")
+    .slice(0, 5);
 
   function loadAppointments() {
-    setLoading(true);
-    setError("");
+    setStatus("loading");
+    setErrorMsg("");
+    setStatusChangeError("");
     api.getAppointments()
-      .then(setAppointments)
-      .catch((requestError) => {
-        if (requestError.status === 401) {
-          setNeedsLogin(true);
-        } else {
-          setError(requestError.message);
-        }
+      .then((data) => {
+        setAppointments(Array.isArray(data) ? data : []);
+        setStatus("authenticated");
       })
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (err.status === 401) {
+          setAppointments([]);
+          setStatus("unauthenticated");
+        } else if (err.status === 503) {
+          setStatus("unavailable");
+        } else {
+          setErrorMsg(err.message || "Erro ao carregar agendamentos");
+          setStatus("error");
+        }
+      });
   }
 
   useEffect(() => {
     loadAppointments();
   }, []);
 
-  if (needsLogin) {
-    return <LoginOverlay onSuccess={() => { setNeedsLogin(false); loadAppointments(); }} />;
-  }
-
-  const metrics = useMemo(() => {
-    const today = todayInputValue();
-    const weekLimit = new Date();
-    weekLimit.setDate(weekLimit.getDate() + 7);
-
-    const todayTotal = appointments.filter(
-      (appointment) => appointment.date.slice(0, 10) === today
-    ).length;
-    const weekTotal = appointments.filter((appointment) => {
-      const date = new Date(appointment.date);
-      return date >= new Date(`${today}T00:00:00`) && date <= weekLimit;
-    }).length;
-    const byStatus = appointments.reduce((acc, appointment) => {
-      acc[appointment.status] = (acc[appointment.status] || 0) + 1;
-      return acc;
-    }, {});
-
-    return { todayTotal, weekTotal, byStatus };
-  }, [appointments]);
-
-  const nextAppointments = appointments
-    .filter((appointment) => appointment.status !== "CANCELLED")
-    .slice(0, 5);
-
-  function handleStatusChange(id, status) {
-    api.updateAppointmentStatus(id, status)
+  function handleStatusChange(id, newStatus) {
+    setStatusChangeError("");
+    api.updateAppointmentStatus(id, newStatus)
       .then(loadAppointments)
-      .catch((requestError) => setError(requestError.message));
+      .catch((err) => setStatusChangeError(err.message));
   }
 
+  function handleLogout() {
+    api.adminLogout()
+      .finally(() => {
+        setAppointments([]);
+        setStatus("unauthenticated");
+      });
+  }
+
+  // ─── Estados de tela completa ──────────────────────────────────────────────
+  if (status === "loading") return <LoadingScreen />;
+  if (status === "unauthenticated") return <LoginScreen onSuccess={loadAppointments} />;
+  if (status === "unavailable") return <UnavailableScreen onRetry={loadAppointments} />;
+  if (status === "error") return <ErrorScreen message={errorMsg} onRetry={loadAppointments} />;
+
+  // ─── Dashboard (só renderiza quando authenticated) ─────────────────────────
   return (
     <main className="admin-page">
       <header className="admin-header">
@@ -121,13 +188,30 @@ export default function Admin({ services, professionals }) {
           <strong>AgendaFácil</strong>
           <span>· Painel demonstrativo</span>
         </div>
-        <span className="admin-demo-notice">Ambiente demonstrativo · Dados fictícios</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span className="admin-demo-notice">Ambiente demonstrativo · Dados fictícios</span>
+          <button
+            type="button"
+            onClick={handleLogout}
+            style={{
+              background: "none",
+              border: "1px solid var(--border-light)",
+              borderRadius: "var(--radius-sm)",
+              padding: "4px 12px",
+              fontSize: "0.8rem",
+              color: "var(--text-on-light-muted)",
+              cursor: "pointer"
+            }}
+          >
+            Sair
+          </button>
+        </div>
       </header>
 
       <section className="section">
-        {error && (
-          <StateMessage type="error" title="Erro ao carregar dados" onRetry={loadAppointments}>
-            {error}
+        {statusChangeError && (
+          <StateMessage type="error" title="Erro ao alterar status">
+            {statusChangeError}
           </StateMessage>
         )}
 
@@ -153,15 +237,14 @@ export default function Admin({ services, professionals }) {
         <div className="admin-grid">
           <section className="panel">
             <h2>Próximos agendamentos</h2>
-            {loading && <StateMessage type="loading" title="Carregando agendamentos" />}
-            {!loading && nextAppointments.length === 0 && (
+            {nextAppointments.length === 0 && (
               <StateMessage title="Nenhum próximo agendamento" />
             )}
             <div className="stack">
-              {nextAppointments.map((appointment) => (
+              {nextAppointments.map((a) => (
                 <AppointmentCard
-                  key={appointment.id}
-                  appointment={appointment}
+                  key={a.id}
+                  appointment={a}
                   onStatusChange={handleStatusChange}
                 />
               ))}
@@ -170,11 +253,14 @@ export default function Admin({ services, professionals }) {
 
           <section className="panel">
             <h2>Serviços</h2>
+            {safeServices.length === 0 && (
+              <StateMessage title="Carregando serviços…" />
+            )}
             <div className="stack">
-              {services.map((service) => (
-                <div className="compact-row" key={service.id}>
-                  <strong>{service.name}</strong>
-                  <span>{formatCurrency(service.price)} · {service.duration} min</span>
+              {safeServices.map((s) => (
+                <div className="compact-row" key={s.id}>
+                  <strong>{s.name}</strong>
+                  <span>{formatCurrency(s.price)} · {s.duration} min</span>
                 </div>
               ))}
             </div>
@@ -184,14 +270,14 @@ export default function Admin({ services, professionals }) {
         <div className="admin-grid">
           <section className="panel">
             <h2>Todos os agendamentos</h2>
-            {!loading && appointments.length === 0 && (
+            {safeAppointments.length === 0 && (
               <StateMessage title="Nenhum agendamento cadastrado" />
             )}
             <div className="stack">
-              {appointments.map((appointment) => (
+              {safeAppointments.map((a) => (
                 <AppointmentCard
-                  key={appointment.id}
-                  appointment={appointment}
+                  key={a.id}
+                  appointment={a}
                   onStatusChange={handleStatusChange}
                 />
               ))}
@@ -200,11 +286,14 @@ export default function Admin({ services, professionals }) {
 
           <section className="panel">
             <h2>Profissionais</h2>
+            {safeProfessionals.length === 0 && (
+              <StateMessage title="Carregando profissionais…" />
+            )}
             <div className="stack">
-              {professionals.map((professional) => (
-                <div className="compact-row" key={professional.id}>
-                  <strong>{professional.name}</strong>
-                  <span>{professional.specialty}</span>
+              {safeProfessionals.map((p) => (
+                <div className="compact-row" key={p.id}>
+                  <strong>{p.name}</strong>
+                  <span>{p.specialty}</span>
                 </div>
               ))}
             </div>
