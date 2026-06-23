@@ -8,6 +8,8 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 4000;
+const isProd = process.env.NODE_ENV === "production";
+
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   "http://localhost:5173",
@@ -20,12 +22,13 @@ app.use(cors({
       callback(null, true);
       return;
     }
-
     callback(new Error("Origem não permitida pelo CORS"));
-  }
+  },
+  credentials: true
 }));
-app.use(express.json());
-app.use(morgan("dev"));
+
+app.use(express.json({ limit: "16kb" }));
+app.use(morgan(isProd ? "combined" : "dev"));
 
 app.use("/api", routes);
 
@@ -35,7 +38,7 @@ app.use((req, res) => {
 
 app.use((error, req, res, next) => {
   const status = error.status || 500;
-  console.error(error.message);
+  if (status === 500) console.error("[ERROR]", error);
 
   res.status(status).json({
     message: status === 500 ? "Erro interno do servidor" : error.message
@@ -43,5 +46,5 @@ app.use((error, req, res, next) => {
 });
 
 app.listen(port, () => {
-  console.log(`API AgendaFácil rodando na porta ${port}`);
+  console.log(`API AgendaFácil rodando na porta ${port} [${isProd ? "production" : "development"}]`);
 });

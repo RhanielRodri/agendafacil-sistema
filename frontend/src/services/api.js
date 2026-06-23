@@ -10,6 +10,7 @@ async function request(path, options = {}) {
       "Content-Type": "application/json",
       ...options.headers
     },
+    credentials: "include",
     ...options
   }).catch(() => {
     throw new Error("Não foi possível conectar ao servidor. Verifique sua conexão.");
@@ -18,7 +19,9 @@ async function request(path, options = {}) {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(data?.message || "Erro ao comunicar com a API");
+    const err = new Error(data?.message || "Erro ao comunicar com a API");
+    err.status = response.status;
+    throw err;
   }
 
   return data;
@@ -40,5 +43,12 @@ export const api = {
     request(`/appointments/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status })
-    })
+    }),
+  adminLogin: (password) =>
+    request("/admin/session", {
+      method: "POST",
+      body: JSON.stringify({ password })
+    }),
+  adminLogout: () =>
+    request("/admin/session", { method: "DELETE" })
 };

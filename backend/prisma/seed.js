@@ -5,6 +5,11 @@ const prisma = new PrismaClient();
 const toDate = (value) => new Date(`${value}T00:00:00.000Z`);
 
 async function main() {
+  if (process.env.NODE_ENV === "production") {
+    console.error("ERRO: seed bloqueado em produção. Use NODE_ENV=development para rodar o seed localmente.");
+    process.exit(1);
+  }
+
   await prisma.appointment.deleteMany();
   await prisma.blockedDate.deleteMany();
   await prisma.businessHours.deleteMany();

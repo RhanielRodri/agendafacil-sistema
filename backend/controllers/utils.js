@@ -11,7 +11,28 @@ export function normalizeDate(date) {
 }
 
 export function isValidDateInput(date) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(normalizeDate(date).getTime());
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const d = normalizeDate(date);
+  return !Number.isNaN(d.getTime());
+}
+
+export function isDateInPast(date) {
+  const today = new Date();
+  const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  return normalizeDate(date) < todayUtc;
+}
+
+export function isValidTimeFormat(time) {
+  if (typeof time !== "string") return false;
+  if (!/^\d{2}:\d{2}$/.test(time)) return false;
+  const [h, m] = time.split(":").map(Number);
+  return h >= 0 && h <= 23 && m >= 0 && m <= 59;
+}
+
+export function sanitizeId(value) {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n <= 0) return null;
+  return n;
 }
 
 export function timeToMinutes(time) {

@@ -4,23 +4,85 @@ import AppointmentCard from "../components/AppointmentCard.jsx";
 import StateMessage from "../components/StateMessage.jsx";
 import { formatCurrency, todayInputValue } from "../utils/format.js";
 
+function LoginOverlay({ onSuccess }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await api.adminLogin(password);
+      onSuccess();
+    } catch (err) {
+      setError(err.message || "Senha incorreta");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, display: "flex", alignItems: "center",
+      justifyContent: "center", background: "var(--bg-light)", zIndex: 100
+    }}>
+      <form onSubmit={handleSubmit} className="panel" style={{ width: "100%", maxWidth: 360 }}>
+        <h2 style={{ marginBottom: 20 }}>Painel administrativo</h2>
+        {error && (
+          <div className="state error" style={{ marginBottom: 12 }}>
+            <strong>{error}</strong>
+          </div>
+        )}
+        <label>
+          Senha de acesso
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoFocus
+            required
+          />
+        </label>
+        <div className="actions">
+          <button className="primary-button" type="submit" disabled={loading}>
+            {loading ? "Entrando…" : "Entrar"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export default function Admin({ services, professionals }) {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   function loadAppointments() {
     setLoading(true);
     setError("");
     api.getAppointments()
       .then(setAppointments)
-      .catch((requestError) => setError(requestError.message))
+      .catch((requestError) => {
+        if (requestError.status === 401) {
+          setNeedsLogin(true);
+        } else {
+          setError(requestError.message);
+        }
+      })
       .finally(() => setLoading(false));
   }
 
   useEffect(() => {
     loadAppointments();
   }, []);
+
+  if (needsLogin) {
+    return <LoginOverlay onSuccess={() => { setNeedsLogin(false); loadAppointments(); }} />;
+  }
 
   const metrics = useMemo(() => {
     const today = todayInputValue();

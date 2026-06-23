@@ -158,17 +158,21 @@ http://localhost:5173
 
 ### Backend
 
-```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/agendafacil?schema=public"
-PORT=4000
-FRONTEND_URL="http://localhost:5173"
-```
+| Variavel | Descricao |
+|---|---|
+| `DATABASE_URL` | Connection string PostgreSQL |
+| `PORT` | Porta da API (padrao: 4000) |
+| `FRONTEND_URL` | Origin do frontend em producao |
+| `NODE_ENV` | Ambiente: `production` ou `development` |
+| `ADMIN_SECRET` | Senha do painel administrativo — gere uma senha forte |
+
+> Valores reais nunca vao para o Git. Configure no painel do Render (producao) ou em `.env` local (desenvolvimento). O `.env` esta no `.gitignore`.
 
 ### Frontend
 
-```env
-VITE_API_URL=http://localhost:4000/api
-```
+| Variavel | Descricao |
+|---|---|
+| `VITE_API_URL` | URL publica da API no Render |
 
 ## Comandos Prisma
 
@@ -263,11 +267,52 @@ vercel
 vercel --prod
 ```
 
+## Painel administrativo
+
+Acesse `/admin`. A senha e o valor de `ADMIN_SECRET` no `.env` do backend.
+
+A sessao e armazenada em cookie httpOnly com validade de 8 horas. Nenhum token e exposto no bundle do frontend.
+
+Para exportar os agendamentos em CSV, faca login no painel e acesse:
+
+```
+GET /api/appointments/export.csv
+```
+
+## Backup
+
+No Render PostgreSQL, ative backups automaticos diarios no painel.
+
+Para exportar manualmente (local ou via SSH):
+
+```bash
+pg_dump $DATABASE_URL > backup_$(date +%Y%m%d).sql
+```
+
+Guarde os arquivos fora do repositorio (S3, Google Drive, etc.).
+
+## Seed
+
+O seed apaga todos os dados antes de inserir os dados de demonstracao. Ele esta bloqueado quando `NODE_ENV=production`. So rode localmente:
+
+```powershell
+cd backend
+npm.cmd run prisma:seed
+```
+
+## Seguranca
+
+- Endpoints de leitura e alteracao de agendamentos requerem autenticacao por cookie httpOnly
+- Rate limit: 10 requisicoes por minuto por IP no endpoint de criacao de agendamento
+- Agendamentos concorrentes para o mesmo slot sao bloqueados por transacao serializable + unique constraint no banco
+- Preco do servico sempre vem do banco — nunca aceito do payload do cliente
+- Stack traces nunca chegam ao cliente em producao
+- Seed bloqueado com `NODE_ENV=production`
+
 ## Melhorias futuras
 
-- Autenticacao para admin
-- Cadastro e edicao de servicos
-- Cadastro e edicao de profissionais
+- Cadastro e edicao de servicos pelo painel
+- Cadastro e edicao de profissionais pelo painel
 - Bloqueio de datas pelo painel
 - Confirmacao por WhatsApp
 - Notificacoes por e-mail

@@ -52,6 +52,7 @@ model Appointment {
   service        Service           @relation(fields: [serviceId], references: [id])
   professional   Professional      @relation(fields: [professionalId], references: [id])
 
+  @@unique([professionalId, date, time])
   @@index([date, professionalId])
 }
 
