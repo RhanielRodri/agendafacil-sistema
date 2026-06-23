@@ -1,130 +1,76 @@
-# AgendaFacil - Sistema de Agendamento Online
+# AgendaFacil
 
-AgendaFacil e uma aplicacao full stack para pequenos negocios aceitarem agendamentos online. A V1 usa a marca ficticia **Studio Cut**, uma barbearia onde o cliente escolhe servico, profissional, data e horario disponivel sem ligacao e sem espera.
+Sistema full stack de agendamento online para pequenos negocios de servico. A demonstracao usa a marca ficticia Studio Cut, onde o cliente escolhe servico, profissional, data e horario, e a empresa acompanha tudo em um painel administrativo.
 
-## Stack
+[Demo publica](https://agendafacil-sistema.vercel.app)  
+[Painel admin](https://agendafacil-sistema.vercel.app/admin)  
+[Repositorio](https://github.com/RhanielRodri/agendafacil-sistema)
 
-- Frontend: React, Vite e CSS puro
-- Backend: Node.js e Express
-- Banco: PostgreSQL
-- ORM: Prisma
-- Deploy: Vercel para frontend e Render para backend
+> O painel admin usa a senha configurada em `ADMIN_SECRET`. Nao existe senha real versionada no repositorio.
+
+## Screenshots
+
+### Home desktop
+![Home desktop](docs/screenshots/home-desktop.png)
+
+### Home mobile
+![Home mobile](docs/screenshots/home-mobile.png)
+
+### Escolha de servico
+![Escolha de servico](docs/screenshots/booking-servico.png)
+
+### Escolha de horario
+![Escolha de horario](docs/screenshots/booking-horarios.png)
+
+### Formulario de agendamento
+![Formulario de agendamento](docs/screenshots/booking-formulario.png)
+
+### Confirmacao
+![Confirmacao](docs/screenshots/success-desktop.png)
+
+### Login admin
+![Login admin](docs/screenshots/admin-login.png)
+
+### Dashboard admin
+![Dashboard admin](docs/screenshots/admin-dashboard.png)
+
+### Admin mobile
+![Admin mobile](docs/screenshots/admin-mobile.png)
 
 ## Funcionalidades
 
-- Home publica com navbar, hero, servicos, profissionais, depoimentos e footer
-- Cards de servico clicaveis que iniciam o fluxo de agendamento
-- Fluxo de agendamento em 3 etapas
-- Tela de sucesso com resumo do agendamento
-- Estados de loading, erro e vazio
-- Painel admin em `/admin`
-- Cards de metricas por dia, semana e status
-- Lista de proximos agendamentos
-- Lista geral de agendamentos
-- Alteracao de status do agendamento
-- Listagem de servicos e profissionais
+- Home publica responsiva com servicos, profissionais e chamada para agendamento.
+- Fluxo de agendamento em etapas: servico, profissional, data, horario e dados do cliente.
+- Consulta de horarios disponiveis em tempo real.
+- Confirmacao visual do agendamento solicitado.
+- Painel administrativo protegido por sessao em cookie httpOnly.
+- Dashboard com metricas, lista de agendamentos e alteracao de status.
+- API com validacoes de regra de negocio e bloqueio de horarios concorrentes.
 
-## Fluxo do usuario
+## Stack
 
-1. O cliente acessa a home do Studio Cut.
-2. Escolhe um servico ativo.
-3. Escolhe profissional, data e horario disponivel.
-4. Preenche nome, telefone e e-mail.
-5. Revisa os dados e confirma.
-6. Recebe uma tela de sucesso com o resumo.
+- Frontend: React, Vite e CSS puro.
+- Backend: Node.js, Express e Prisma.
+- Banco: PostgreSQL.
+- Deploy: Vercel no frontend e Render no backend.
 
-## Regras de negocio
+## Seguranca
 
-- O servico precisa existir e estar ativo.
-- O profissional precisa existir e estar ativo.
-- A data nao pode estar bloqueada.
-- O horario precisa estar dentro do funcionamento do dia.
-- O horario nao pode estar ocupado pelo mesmo profissional na mesma data.
-- Todo novo agendamento inicia com status `NEW`.
-- Status aceitos: `NEW`, `CONFIRMED`, `COMPLETED` e `CANCELLED`.
-- Nao e permitido alterar `CANCELLED` para `COMPLETED`.
-- Horarios disponiveis sao gerados de 30 em 30 minutos.
-- Dias fechados ou bloqueados retornam lista vazia de horarios.
-
-## Endpoints
-
-| Metodo | Rota | Descricao |
-| --- | --- | --- |
-| GET | `/api/health` | Verifica saude da API |
-| GET | `/api/services` | Lista servicos ativos |
-| GET | `/api/professionals` | Lista profissionais ativos |
-| GET | `/api/appointments` | Lista agendamentos |
-| GET | `/api/appointments/:id` | Busca um agendamento |
-| POST | `/api/appointments` | Cria um agendamento |
-| PATCH | `/api/appointments/:id/status` | Altera status |
-| GET | `/api/available-slots?date=&professionalId=&serviceId=` | Lista horarios disponiveis |
-| GET | `/api/business-hours` | Lista horarios de funcionamento |
-
-## Models
-
-### Service
-
-- `id`
-- `name`
-- `description`
-- `duration`
-- `price`
-- `active`
-- `createdAt`
-- `updatedAt`
-
-### Professional
-
-- `id`
-- `name`
-- `specialty`
-- `photo`
-- `active`
-- `createdAt`
-- `updatedAt`
-
-### Appointment
-
-- `id`
-- `serviceId`
-- `professionalId`
-- `clientName`
-- `clientPhone`
-- `clientEmail`
-- `date`
-- `time`
-- `status`
-- `createdAt`
-- `updatedAt`
-
-### BusinessHours
-
-- `id`
-- `dayOfWeek`
-- `openTime`
-- `closeTime`
-- `isOpen`
-
-### BlockedDate
-
-- `id`
-- `date`
-- `reason`
-- `createdAt`
+- Senha administrativa somente por variavel de ambiente.
+- Sessao admin em cookie httpOnly.
+- Rate limit na criacao de agendamentos.
+- Regras de conflito protegidas por transacao e constraint no banco.
+- Seed bloqueado em producao.
+- `.env` nao deve ser versionado.
 
 ## Como rodar localmente
 
 ### Backend
 
-Crie um banco PostgreSQL chamado `agendafacil` e configure o `.env`.
-
-No PowerShell:
-
 ```powershell
 cd backend
 npm.cmd install
 Copy-Item .env.example .env
-npm.cmd run build
 npm.cmd run prisma:generate
 npm.cmd run prisma:migrate
 npm.cmd run prisma:seed
@@ -138,8 +84,6 @@ http://localhost:4000/api
 ```
 
 ### Frontend
-
-No PowerShell:
 
 ```powershell
 cd frontend
@@ -158,166 +102,34 @@ http://localhost:5173
 
 ### Backend
 
-| Variavel | Descricao |
-|---|---|
-| `DATABASE_URL` | Connection string PostgreSQL |
-| `PORT` | Porta da API (padrao: 4000) |
-| `FRONTEND_URL` | Origin do frontend em producao |
-| `NODE_ENV` | Ambiente: `production` ou `development` |
-| `ADMIN_SECRET` | Senha do painel administrativo — gere uma senha forte |
-
-> Valores reais nunca vao para o Git. Configure no painel do Render (producao) ou em `.env` local (desenvolvimento). O `.env` esta no `.gitignore`.
+```env
+DATABASE_URL=
+PORT=
+FRONTEND_URL=
+NODE_ENV=
+ADMIN_SECRET=
+```
 
 ### Frontend
 
-| Variavel | Descricao |
-|---|---|
-| `VITE_API_URL` | URL publica da API no Render |
-
-## Comandos Prisma
-
-```powershell
-npm.cmd run prisma:generate
-npm.cmd run prisma:deploy
-npm.cmd run prisma:migrate
-npm.cmd run prisma:seed
+```env
+VITE_API_URL=
 ```
 
-## Deploy automatizado
+Use valores reais apenas nos arquivos `.env` locais ou nos paineis da Vercel/Render.
 
-### URLs de producao
+## Deploy
 
-- Frontend: https://agendafacil-sistema.vercel.app
-- API: https://agendafacil-api-5zxc.onrender.com/api
-- Health check: https://agendafacil-api-5zxc.onrender.com/api/health
+- Frontend: Vercel, com root directory `frontend`.
+- Backend: Render, usando `render.yaml` na raiz.
+- Banco: PostgreSQL no Render.
+- API publicada: `https://agendafacil-api-5zxc.onrender.com/api`
+- Health check: `https://agendafacil-api-5zxc.onrender.com/api/health`
 
-### Ordem recomendada
+## Topics sugeridos
 
-1. Suba o repositorio para o GitHub.
-2. No Render, reutilize o PostgreSQL gratuito ja existente.
-3. Crie uma `DATABASE_URL` para o AgendaFacil usando um schema separado.
-4. Conecte o repositorio no Render como Blueprint usando `render.yaml`.
-5. Configure `DATABASE_URL` no Web Service do backend.
-6. Copie a URL publica do backend no Render.
-7. Configure `VITE_API_URL` na Vercel com a URL do backend + `/api`.
-8. Rode o deploy do frontend pela Vercel CLI.
+`react`, `vite`, `nodejs`, `express`, `postgresql`, `prisma`, `scheduling`, `booking-system`, `vercel`, `render`, `portfolio`
 
-Ainda sera necessario autenticar as contas uma vez no Render, GitHub e Vercel.
+## Status
 
-### Backend no Render Blueprint
-
-O arquivo `render.yaml` na raiz cria apenas o Web Service do backend:
-
-- Web Service: `agendafacil-api`
-- Root directory: `backend`
-- Build command: `npm ci && npm run build && npm run prisma:deploy`
-- Start command: `npm start`
-- `DATABASE_URL` deve ser configurado manualmente no Render
-- `FRONTEND_URL` deve ser configurado manualmente com a URL final da Vercel
-
-O seed (`npm run prisma:seed`) deve ser executado manualmente apenas quando voce quiser recriar os dados ficticios da demonstracao. Ele apaga e recria os dados de exemplo, por isso nao deve rodar automaticamente em todo deploy.
-
-Como o plano Free do Render permite apenas um PostgreSQL gratuito, reutilize o banco ja existente com um schema separado. Isso evita afetar tabelas de outros projetos.
-
-Exemplo de `DATABASE_URL` usando schema separado:
-
-```text
-postgresql://USUARIO:SENHA@HOST:PORT/NOME_DO_BANCO?schema=agendafacil
-```
-
-No Render, copie a `Internal Database URL` ou `External Database URL` do banco existente e adicione `?schema=agendafacil` no final. Se a URL ja tiver parametros, use `&schema=agendafacil`.
-
-`FRONTEND_URL` no Render:
-
-```text
-https://agendafacil-sistema.vercel.app
-```
-
-### Frontend na Vercel CLI
-
-- Root directory: `frontend`
-- Build command: `npm run build`
-- Output directory: `dist`
-- Variavel: `VITE_API_URL` com a URL publica do backend no Render
-
-Instale e autentique a Vercel CLI:
-
-```powershell
-npm i -g vercel
-vercel login
-```
-
-Configure a variavel de producao:
-
-```powershell
-cd frontend
-vercel env add VITE_API_URL production
-```
-
-Use o valor no formato:
-
-```text
-https://agendafacil-api-5zxc.onrender.com/api
-```
-
-Rode o deploy:
-
-```powershell
-vercel
-vercel --prod
-```
-
-## Painel administrativo
-
-Acesse `/admin`. A senha e o valor de `ADMIN_SECRET` no `.env` do backend.
-
-A sessao e armazenada em cookie httpOnly com validade de 8 horas. Nenhum token e exposto no bundle do frontend.
-
-Para exportar os agendamentos em CSV, faca login no painel e acesse:
-
-```
-GET /api/appointments/export.csv
-```
-
-## Backup
-
-No Render PostgreSQL, ative backups automaticos diarios no painel.
-
-Para exportar manualmente (local ou via SSH):
-
-```bash
-pg_dump $DATABASE_URL > backup_$(date +%Y%m%d).sql
-```
-
-Guarde os arquivos fora do repositorio (S3, Google Drive, etc.).
-
-## Seed
-
-O seed apaga todos os dados antes de inserir os dados de demonstracao. Ele esta bloqueado quando `NODE_ENV=production`. So rode localmente:
-
-```powershell
-cd backend
-npm.cmd run prisma:seed
-```
-
-## Seguranca
-
-- Endpoints de leitura e alteracao de agendamentos requerem autenticacao por cookie httpOnly
-- Rate limit: 10 requisicoes por minuto por IP no endpoint de criacao de agendamento
-- Agendamentos concorrentes para o mesmo slot sao bloqueados por transacao serializable + unique constraint no banco
-- Preco do servico sempre vem do banco — nunca aceito do payload do cliente
-- Stack traces nunca chegam ao cliente em producao
-- Seed bloqueado com `NODE_ENV=production`
-
-## Melhorias futuras
-
-- Cadastro e edicao de servicos pelo painel
-- Cadastro e edicao de profissionais pelo painel
-- Bloqueio de datas pelo painel
-- Confirmacao por WhatsApp
-- Notificacoes por e-mail
-- Relatorios financeiros simples
-
-## Screenshots
-
-Adicione aqui prints da home, fluxo de agendamento e painel admin.
+Projeto pronto para portfólio e demonstracao tecnica. Escopo atual: MVP funcional com agendamento publico, API, banco PostgreSQL e painel administrativo.
