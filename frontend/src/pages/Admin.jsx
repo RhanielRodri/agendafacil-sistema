@@ -6,6 +6,15 @@ import { formatCurrency, todayInputValue } from "../utils/format.js";
 
 // ─── Telas de estado (fundo escuro, card centralizado) ──────────────────────
 
+function AdminScreenHeader() {
+  return (
+    <div className="admin-screen-header">
+      <div className="admin-screen-brand">AgendaFácil</div>
+      <span className="admin-screen-badge">Demo · Studio Cut</span>
+    </div>
+  );
+}
+
 function AdminScreen({ children }) {
   return (
     <div className="admin-screen">
@@ -35,24 +44,41 @@ function LoginScreen({ onSuccess }) {
 
   return (
     <AdminScreen>
+      <AdminScreenHeader />
+      <div className="admin-screen-divider" />
       <h2 className="admin-screen-title">Painel administrativo</h2>
+      <p className="admin-screen-hint">
+        Área restrita para gerenciamento dos agendamentos.
+      </p>
       {loginError && (
-        <p className="admin-screen-error">{loginError}</p>
+        <p className="admin-screen-error" role="alert">{loginError}</p>
       )}
       <form onSubmit={handleSubmit}>
         <label className="admin-screen-label">
           Senha de acesso
-          <input
-            className="admin-screen-input"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoFocus
-            required
-          />
+          <div className="admin-screen-input-wrap">
+            <svg className="admin-screen-input-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <rect x="4" y="9" width="12" height="9" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M7 9V6.5a3 3 0 0 1 6 0V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <input
+              className="admin-screen-input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoFocus
+              required
+              placeholder="••••••••"
+            />
+          </div>
         </label>
         <button className="admin-screen-btn" type="submit" disabled={submitting}>
-          {submitting ? "Entrando…" : "Entrar"}
+          {submitting ? (
+            <span className="admin-screen-btn-loading">
+              <span className="admin-screen-spinner" />
+              Entrando…
+            </span>
+          ) : "Entrar"}
         </button>
       </form>
     </AdminScreen>
@@ -62,7 +88,12 @@ function LoginScreen({ onSuccess }) {
 function LoadingScreen() {
   return (
     <AdminScreen>
-      <p className="admin-screen-message">Carregando painel…</p>
+      <AdminScreenHeader />
+      <div className="admin-screen-divider" />
+      <div className="admin-screen-loading-body">
+        <span className="admin-screen-spinner admin-screen-spinner--lg" />
+        <p className="admin-screen-message">Carregando painel…</p>
+      </div>
     </AdminScreen>
   );
 }
@@ -70,6 +101,8 @@ function LoadingScreen() {
 function UnavailableScreen({ onRetry }) {
   return (
     <AdminScreen>
+      <AdminScreenHeader />
+      <div className="admin-screen-divider" />
       <h2 className="admin-screen-title">Painel indisponível</h2>
       <p className="admin-screen-message">
         O painel administrativo está temporariamente indisponível.<br />
@@ -85,6 +118,8 @@ function UnavailableScreen({ onRetry }) {
 function ErrorScreen({ message, onRetry }) {
   return (
     <AdminScreen>
+      <AdminScreenHeader />
+      <div className="admin-screen-divider" />
       <h2 className="admin-screen-title">Erro ao carregar</h2>
       <p className="admin-screen-message">{message}</p>
       <button className="admin-screen-btn" type="button" onClick={onRetry}>

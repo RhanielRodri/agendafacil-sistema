@@ -16,19 +16,62 @@
 
 .admin-screen-card {
   width: 100%;
-  max-width: 360px;
+  max-width: 380px;
   background: var(--bg-dark-surface);
   border: 1px solid var(--border-dark);
-  border-radius: var(--radius-md);
-  padding: 36px 32px;
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
+/* Marca no topo do card */
+
+.admin-screen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.admin-screen-brand {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-on-dark);
+  letter-spacing: -0.02em;
+}
+
+.admin-screen-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-on-dark-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-dark);
+  border-radius: 999px;
+  padding: 3px 10px;
+  letter-spacing: 0.03em;
+}
+
+.admin-screen-divider {
+  height: 1px;
+  background: var(--border-dark);
+  margin: 0 0 24px;
+}
+
+/* Títulos e textos */
+
 .admin-screen-title {
-  margin: 0 0 20px;
-  font-size: 1.15rem;
+  margin: 0 0 8px;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-on-dark);
+  letter-spacing: -0.01em;
+}
+
+.admin-screen-hint {
+  margin: 0 0 20px;
+  color: var(--text-on-dark-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
 }
 
 .admin-screen-message {
@@ -39,59 +82,91 @@
 }
 
 .admin-screen-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin: 0 0 16px;
   padding: 10px 14px;
   background: var(--danger-bg);
-  border: 1px solid rgba(201, 77, 71, 0.25);
+  border: 1px solid rgba(201, 77, 71, 0.3);
   border-radius: var(--radius-sm);
   color: var(--danger);
   font-size: 0.88rem;
+  line-height: 1.4;
 }
+
+/* Input com ícone */
 
 .admin-screen-label {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   color: var(--text-on-dark-muted);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+}
+
+.admin-screen-input-wrap {
+  position: relative;
+}
+
+.admin-screen-input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--text-on-dark-muted);
+  pointer-events: none;
 }
 
 .admin-screen-input {
   width: 100%;
-  min-height: 44px;
-  padding: 0 14px;
+  min-height: 46px;
+  padding: 0 14px 0 38px;
   background: var(--bg-dark-elevated);
   border: 1px solid var(--border-dark);
   border-radius: var(--radius-sm);
   color: var(--text-on-dark);
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.admin-screen-input::placeholder {
+  color: rgba(157, 163, 170, 0.4);
+  letter-spacing: 0.1em;
 }
 
 .admin-screen-input:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(200, 135, 74, 0.15);
 }
+
+/* Botão */
 
 .admin-screen-btn {
   width: 100%;
-  min-height: 44px;
+  min-height: 46px;
+  margin-top: 8px;
   background: var(--accent);
   color: #fff;
   border: none;
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
   font-weight: 700;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
 .admin-screen-btn:hover {
   background: var(--accent-hover);
+  box-shadow: 0 4px 12px rgba(200, 135, 74, 0.3);
 }
 
 .admin-screen-btn:focus-visible {
@@ -100,8 +175,54 @@
 }
 
 .admin-screen-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
+  box-shadow: none;
+}
+
+.admin-screen-btn-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Spinner */
+
+.admin-screen-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: admin-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.admin-screen-spinner--lg {
+  width: 28px;
+  height: 28px;
+  border-width: 3px;
+  border-color: rgba(200, 135, 74, 0.2);
+  border-top-color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.admin-screen-loading-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 4px;
+}
+
+.admin-screen-loading-body .admin-screen-message {
+  margin: 0;
+  text-align: center;
+}
+
+@keyframes admin-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* === ADMIN HEADER === */
