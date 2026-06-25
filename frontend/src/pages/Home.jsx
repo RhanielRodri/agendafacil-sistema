@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import BookingFlow from "./BookingFlow.jsx";
 import { formatCurrency } from "../utils/format.js";
 import StateMessage from "../components/StateMessage.jsx";
+import { useTranslation } from "../i18n/I18nContext.jsx";
 
 function ProfessionalPhoto({ src, name }) {
   const [failed, setFailed] = useState(false);
@@ -30,6 +31,7 @@ function ProfessionalPhoto({ src, name }) {
 }
 
 export default function Home({ services, professionals, loading, error, onSuccess, onRetry }) {
+  const { t } = useTranslation();
   const [selectedServiceFromHome, setSelectedServiceFromHome] = useState("");
 
   function handleServiceSelect(serviceId) {
@@ -46,24 +48,22 @@ export default function Home({ services, professionals, loading, error, onSucces
       <section className="hero">
         <div className="hero-inner">
           <div className="hero-copy">
-            <span className="eyebrow">Plataforma de agendamento online</span>
-            <h1>Seu cliente agenda em segundos. Você organiza tudo em um painel.</h1>
-            <p className="hero-sub">
-              Veja como funciona com a Studio Cut — uma barbearia configurada como demonstração.
-            </p>
+            <span className="eyebrow">{t.hero_eyebrow}</span>
+            <h1>{t.hero_title}</h1>
+            <p className="hero-sub">{t.hero_sub}</p>
             <button className="primary-button" type="button" onClick={handleStartBooking}>
-              Agendar agora
+              {t.hero_cta}
             </button>
-            <p className="hero-perks">Sem ligação · Sem espera · Painel incluso</p>
+            <p className="hero-perks">{t.hero_perks}</p>
           </div>
 
           <aside className="hero-credentials" aria-label="Recursos do sistema">
-            <h3>O que está incluso</h3>
+            <h3>{t.hero_includes}</h3>
             <ul>
-              <li>Horários disponíveis em tempo real</li>
-              <li>Painel administrativo completo</li>
-              <li>Funciona direto no celular</li>
-              <li>Confirmação automática de agendamento</li>
+              <li>{t.perk_1}</li>
+              <li>{t.perk_2}</li>
+              <li>{t.perk_3}</li>
+              <li>{t.perk_4}</li>
             </ul>
           </aside>
         </div>
@@ -71,16 +71,16 @@ export default function Home({ services, professionals, loading, error, onSucces
 
       <section className="section">
         <div className="section-heading">
-          <span className="eyebrow">Serviços</span>
-          <h2>Escolha o cuidado certo para hoje</h2>
+          <span className="eyebrow">{t.services_eyebrow}</span>
+          <h2>{t.services_title}</h2>
         </div>
-        {loading && <StateMessage type="loading" title="Carregando serviços" />}
+        {loading && <StateMessage type="loading" title={t.services_loading} />}
         {error && (
-          <StateMessage type="error" title="Erro ao carregar dados" onRetry={onRetry}>
+          <StateMessage type="error" title={t.services_error} onRetry={onRetry}>
             {error}
           </StateMessage>
         )}
-        {!loading && !error && services.length === 0 && <StateMessage title="Nenhum serviço ativo" />}
+        {!loading && !error && services.length === 0 && <StateMessage title={t.services_empty} />}
         <div className="grid three">
           {services.map((service) => (
             <button
@@ -102,8 +102,8 @@ export default function Home({ services, professionals, loading, error, onSucces
 
       <section className="section dark">
         <div className="section-heading">
-          <span className="eyebrow">Profissionais</span>
-          <h2>Time Studio Cut</h2>
+          <span className="eyebrow">{t.professionals_eyebrow}</span>
+          <h2>{t.professionals_title}</h2>
         </div>
         <div className="grid three">
           {professionals.map((professional) => (
@@ -127,21 +127,21 @@ export default function Home({ services, professionals, loading, error, onSucces
 
       <section className="section">
         <div className="section-heading">
-          <span className="eyebrow">Depoimentos</span>
-          <h2>Clientes que já agilizaram a rotina</h2>
+          <span className="eyebrow">{t.testimonials_eyebrow}</span>
+          <h2>{t.testimonials_title}</h2>
         </div>
         <div className="grid three">
           <div className="testimonial-card">
             <span className="testimonial-quote">"</span>
-            <p>Marquei pelo celular e cheguei no horário certo. Muito prático.</p>
+            <p>{t.testimonial_1}</p>
           </div>
           <div className="testimonial-card">
             <span className="testimonial-quote">"</span>
-            <p>O painel deixa tudo organizado, sem conversa perdida no WhatsApp.</p>
+            <p>{t.testimonial_2}</p>
           </div>
           <div className="testimonial-card">
             <span className="testimonial-quote">"</span>
-            <p>O Studio Cut ficou mais rápido para atender e confirmar horários.</p>
+            <p>{t.testimonial_3}</p>
           </div>
         </div>
       </section>
@@ -149,14 +149,14 @@ export default function Home({ services, professionals, loading, error, onSucces
       <footer className="footer">
         <div>
           <span className="footer-brand">AgendaFácil</span>
-          <p className="footer-tagline">Sistema de agendamento online para negócios de serviço.</p>
+          <p className="footer-tagline">{t.footer_tagline}</p>
         </div>
         <a
           href="https://github.com/RhanielRodri/agendafacil-sistema"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Ver no GitHub ↗
+          {t.footer_github}
         </a>
       </footer>
     </main>

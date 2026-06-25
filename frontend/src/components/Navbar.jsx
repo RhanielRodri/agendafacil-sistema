@@ -1,6 +1,27 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "../i18n/I18nContext.jsx";
+
+function LangToggle() {
+  const { locale, setLocale } = useTranslation();
+
+  const activeStyle = { fontWeight: "800", color: "currentColor" };
+  const inactiveStyle = { fontWeight: "600", opacity: 0.45, cursor: "pointer" };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", letterSpacing: "0.05em" }}>
+      <button type="button" onClick={() => setLocale("pt")} style={locale === "pt" ? activeStyle : inactiveStyle} aria-pressed={locale === "pt"}>
+        PT
+      </button>
+      <span style={{ opacity: 0.3 }}>|</span>
+      <button type="button" onClick={() => setLocale("en")} style={locale === "en" ? activeStyle : inactiveStyle} aria-pressed={locale === "en"}>
+        EN
+      </button>
+    </div>
+  );
+}
 
 export default function Navbar({ onNavigate }) {
+  const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -17,9 +38,12 @@ export default function Navbar({ onNavigate }) {
         <span className="navbar-brand-name">AgendaFácil</span>
         <span className="navbar-brand-demo">· Demo Studio Cut</span>
       </button>
-      <button className="navbar-cta" type="button" onClick={() => onNavigate("home")}>
-        Agendar agora
-      </button>
+      <nav style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        <LangToggle />
+        <button className="navbar-cta" type="button" onClick={() => onNavigate("home")}>
+          {t.nav_cta}
+        </button>
+      </nav>
     </header>
   );
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { api } from "../services/api.js";
 import StateMessage from "../components/StateMessage.jsx";
 import { formatCurrency, todayInputValue } from "../utils/format.js";
+import { useTranslation } from "../i18n/I18nContext.jsx";
 
 const initialForm = {
   clientName: "",
@@ -9,9 +10,8 @@ const initialForm = {
   clientEmail: ""
 };
 
-const stepLabels = ["Serviço", "Horário", "Dados"];
-
 export default function BookingFlow({ services, professionals, initialServiceId, onSuccess }) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [selectedProfessionalId, setSelectedProfessionalId] = useState("");
@@ -75,7 +75,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
     event.preventDefault();
 
     if (!selectedServiceId || !selectedProfessionalId || !date || !time) {
-      setSlotsError("Complete serviço, profissional, data e horário antes de confirmar.");
+      setSlotsError(t.form_incomplete);
       return;
     }
 
@@ -110,8 +110,8 @@ export default function BookingFlow({ services, professionals, initialServiceId,
   return (
     <section className="section booking" id="agendamento">
       <div className="section-heading">
-        <span className="eyebrow">Agendamento online</span>
-        <h2>Reserve seu horário</h2>
+        <span className="eyebrow">{t.booking_eyebrow}</span>
+        <h2>{t.booking_title}</h2>
       </div>
 
       <div className="steps" role="list" aria-label="Etapas do agendamento">
@@ -128,7 +128,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
                 {step > item ? "✓" : item}
               </div>
               <span className={`step-label${step === item ? " current" : ""}`}>
-                {stepLabels[index]}
+                {t.step_labels[index]}
               </span>
             </div>
           </React.Fragment>
@@ -139,8 +139,8 @@ export default function BookingFlow({ services, professionals, initialServiceId,
         <div>
           {step === 1 && (
             <div className="panel">
-              <h3>1. Escolha o serviço</h3>
-              {!services.length && <StateMessage title="Nenhum serviço disponível" />}
+              <h3>{t.step1_title}</h3>
+              {!services.length && <StateMessage title={t.step1_empty} />}
               <div className="choice-list">
                 {services.map((service) => (
                   <button
@@ -162,7 +162,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
                   disabled={!selectedServiceId}
                   onClick={() => setStep(2)}
                 >
-                  Continuar
+                  {t.btn_continue}
                 </button>
               </div>
             </div>
@@ -170,15 +170,15 @@ export default function BookingFlow({ services, professionals, initialServiceId,
 
           {step === 2 && (
             <div className="panel">
-              <h3>2. Escolha profissional, data e horário</h3>
+              <h3>{t.step2_title}</h3>
               <label>
-                Profissional
+                {t.step2_professional}
                 <div className="select-wrapper">
                   <select
                     value={selectedProfessionalId}
                     onChange={(event) => setSelectedProfessionalId(event.target.value)}
                   >
-                    <option value="">Selecione</option>
+                    <option value="">{t.step2_professional_placeholder}</option>
                     {professionals.map((professional) => (
                       <option key={professional.id} value={professional.id}>
                         {professional.name}
@@ -188,7 +188,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
                 </div>
               </label>
               <label>
-                Data
+                {t.step2_date}
                 <input
                   type="date"
                   min={todayInputValue()}
@@ -196,15 +196,15 @@ export default function BookingFlow({ services, professionals, initialServiceId,
                   onChange={(event) => setDate(event.target.value)}
                 />
               </label>
-              {slotsLoading && <StateMessage type="loading" title="Buscando horários" />}
+              {slotsLoading && <StateMessage type="loading" title={t.step2_slots_loading} />}
               {slotsError && (
-                <StateMessage type="error" title="Não foi possível buscar horários">
+                <StateMessage type="error" title={t.step2_slots_error}>
                   {slotsError}
                 </StateMessage>
               )}
               {!slotsLoading && selectedProfessionalId && slots.length === 0 && !slotsError && (
-                <StateMessage title="Nenhum horário disponível">
-                  Tente outra data ou outro profissional.
+                <StateMessage title={t.step2_slots_empty}>
+                  {t.step2_slots_hint}
                 </StateMessage>
               )}
               <div className="slot-grid">
@@ -221,7 +221,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
               </div>
               <div className="actions">
                 <button type="button" className="secondary-button" onClick={() => setStep(1)}>
-                  Voltar
+                  {t.btn_back}
                 </button>
                 <button
                   type="button"
@@ -229,7 +229,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
                   disabled={!selectedProfessionalId || !time}
                   onClick={() => setStep(3)}
                 >
-                  Continuar
+                  {t.btn_continue}
                 </button>
               </div>
             </div>
@@ -237,14 +237,14 @@ export default function BookingFlow({ services, professionals, initialServiceId,
 
           {step === 3 && (
             <form className="panel" onSubmit={handleSubmit}>
-              <h3>3. Dados e confirmação</h3>
+              <h3>{t.step3_title}</h3>
               <div className="summary-box">
                 <strong>{selectedService?.name}</strong>
                 <span>{selectedProfessional?.name}</span>
-                <span>{date} às {time}</span>
+                <span>{date} {t.at} {time}</span>
               </div>
               <label>
-                Nome
+                {t.form_name}
                 <input
                   value={form.clientName}
                   onChange={(event) => setForm({ ...form, clientName: event.target.value })}
@@ -252,7 +252,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
                 />
               </label>
               <label>
-                Telefone
+                {t.form_phone}
                 <input
                   value={form.clientPhone}
                   onChange={(event) => setForm({ ...form, clientPhone: event.target.value })}
@@ -260,7 +260,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
                 />
               </label>
               <label>
-                E-mail
+                {t.form_email}
                 <input
                   type="email"
                   value={form.clientEmail}
@@ -268,17 +268,17 @@ export default function BookingFlow({ services, professionals, initialServiceId,
                 />
               </label>
               {slotsError && (
-                <StateMessage type="error" title="Erro ao confirmar">{slotsError}</StateMessage>
+                <StateMessage type="error" title={t.form_error}>{slotsError}</StateMessage>
               )}
               <div className="actions">
                 <button type="button" className="secondary-button" onClick={() => setStep(2)}>
-                  Voltar
+                  {t.btn_back}
                 </button>
                 <button
                   className="primary-button"
                   disabled={submitting || !form.clientName || !form.clientPhone}
                 >
-                  {submitting ? "Confirmando..." : "Confirmar agendamento"}
+                  {submitting ? t.btn_confirming : t.btn_confirm}
                 </button>
               </div>
             </form>
@@ -287,27 +287,27 @@ export default function BookingFlow({ services, professionals, initialServiceId,
 
         <aside className="booking-sidebar" aria-label="Resumo do agendamento">
           <div className="summary-sticky">
-            <h4>Resumo</h4>
+            <h4>{t.summary_title}</h4>
             <div className="summary-row">
-              <span className="summary-label">Serviço</span>
+              <span className="summary-label">{t.summary_service}</span>
               <span className="summary-value">
                 {selectedService ? selectedService.name : "—"}
               </span>
             </div>
             <div className="summary-row">
-              <span className="summary-label">Profissional</span>
+              <span className="summary-label">{t.summary_professional}</span>
               <span className="summary-value">
                 {selectedProfessional ? selectedProfessional.name : "—"}
               </span>
             </div>
             <div className="summary-row">
-              <span className="summary-label">Data e horário</span>
+              <span className="summary-label">{t.summary_datetime}</span>
               <span className="summary-value">
-                {date && time ? `${date} às ${time}` : "—"}
+                {date && time ? `${date} ${t.at} ${time}` : "—"}
               </span>
             </div>
             <div className="summary-row">
-              <span className="summary-label">Total</span>
+              <span className="summary-label">{t.summary_total}</span>
               <span className="summary-price">
                 {selectedService ? formatCurrency(selectedService.price) : "—"}
               </span>
