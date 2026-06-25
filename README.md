@@ -126,10 +126,16 @@ Use valores reais apenas nos arquivos `.env` locais ou nos paineis da Vercel/Ren
 - API publicada: `https://agendafacil-api-5zxc.onrender.com/api`
 - Health check: `https://agendafacil-api-5zxc.onrender.com/api/health`
 
-## Topics sugeridos
+## O que este projeto demonstra
 
-`react`, `vite`, `nodejs`, `express`, `postgresql`, `prisma`, `scheduling`, `booking-system`, `vercel`, `render`, `portfolio`
+- **Transação Prisma serializada** para evitar double-booking: dois clientes no mesmo horário são bloqueados em nível de banco, não só de aplicação
+- **Rate limit implementado do zero** no Express, sem dependência externa, controlado por IP e janela de tempo
+- **Fluxo multi-step com estado gerenciado** em React: serviço → profissional → data → horário → dados → confirmação, com validação em cada etapa
+- **API REST com validação completa de payload**: campos obrigatórios, formatos, regras de negócio (horário disponível, data no futuro, serviço ativo)
+- **Deploy separado frontend/backend**: Vercel + Render com variáveis de ambiente distintas por ambiente
 
-## Status
+## Autor
 
-Projeto pronto para portfólio e demonstracao tecnica. Escopo atual: MVP funcional com agendamento publico, API, banco PostgreSQL e painel administrativo.
+Desenvolvido por Rhaniel Rodrigues.
+
+GitHub: https://github.com/RhanielRodri
