@@ -21,7 +21,6 @@ function LangToggle() {
 }
 
 export default function Navbar({ onNavigate }) {
-  const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -40,9 +39,6 @@ export default function Navbar({ onNavigate }) {
       </button>
       <nav style={{ display: "flex", alignItems: "center", gap: "16px" }}>
         <LangToggle />
-        <button className="navbar-cta" type="button" onClick={() => onNavigate("home")}>
-          {t.nav_cta}
-        </button>
       </nav>
     </header>
   );
