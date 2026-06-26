@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Navbar from "./components/Navbar.jsx";
 import Home from "./pages/Home.jsx";
 import Admin from "./pages/Admin.jsx";
 import Success from "./pages/Success.jsx";
-import { api } from "./services/api.js";
+import { SERVICES, PROFESSIONALS } from "./data/mock.js";
 
 function getInitialPage() {
   return window.location.pathname === "/admin" ? "admin" : "home";
@@ -11,27 +11,13 @@ function getInitialPage() {
 
 export default function App() {
   const [page, setPage] = useState(getInitialPage);
-  const [services, setServices] = useState([]);
-  const [professionals, setProfessionals] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [services] = useState(SERVICES);
+  const [professionals] = useState(PROFESSIONALS);
+  const [loading] = useState(false);
+  const [error] = useState("");
   const [successAppointment, setSuccessAppointment] = useState(null);
 
-  function loadData() {
-    setLoading(true);
-    setError("");
-    Promise.all([api.getServices(), api.getProfessionals()])
-      .then(([servicesData, professionalsData]) => {
-        setServices(servicesData);
-        setProfessionals(professionalsData);
-      })
-      .catch((requestError) => setError(requestError.message))
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(() => {
-    loadData();
-  }, []);
+  function loadData() {}
 
   function navigate(nextPage) {
     setSuccessAppointment(null);

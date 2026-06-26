@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { api } from "../services/api.js";
+import { getMockSlots, createMockAppointment } from "../data/mock.js";
 import StateMessage from "../components/StateMessage.jsx";
 import { formatCurrency, todayInputValue } from "../utils/format.js";
 import { useTranslation } from "../i18n/I18nContext.jsx";
@@ -55,7 +55,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
     setSlotsError("");
     setTime("");
 
-    api.getAvailableSlots({ date, professionalId: selectedProfessionalId, serviceId: selectedServiceId })
+    Promise.resolve(getMockSlots(date))
       .then((data) => {
         if (!ignore) setSlots(data);
       })
@@ -82,7 +82,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
     setSlotsError("");
     setSubmitting(true);
 
-    api.createAppointment({
+    createMockAppointment({
       serviceId: Number(selectedServiceId),
       professionalId: Number(selectedProfessionalId),
       date,
