@@ -149,14 +149,15 @@
 
 .primary-button,
 .primary-link {
-  border: none;
-  background: var(--text-primary);
-  color: var(--bg);
+  border: 1.5px solid var(--text-primary);
+  background: var(--surface);
+  color: var(--text-primary);
 }
 
 .primary-button:hover:not(:disabled),
 .primary-link:hover {
-  background: var(--accent-hover);
+  background: var(--text-primary);
+  color: var(--bg);
 }
 
 .primary-button:disabled,
@@ -166,14 +167,14 @@
 }
 
 .secondary-button {
-  border: 0.5px solid var(--border-strong);
-  background: transparent;
-  color: var(--text-secondary);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text-primary);
 }
 
 .secondary-button:hover:not(:disabled) {
-  border-color: var(--text-muted);
-  color: var(--text-primary);
+  border-color: var(--text-primary);
+  background: var(--surface);
 }
 
 /* === SERVICE CARDS === */

@@ -45,18 +45,19 @@
   align-items: center;
   justify-content: center;
   min-height: 36px;
-  border: none;
+  border: 1.5px solid var(--text-primary);
   padding: 0 18px;
-  background: var(--text-primary);
-  color: var(--bg);
+  background: var(--surface);
+  color: var(--text-primary);
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  transition: background 0.15s;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
 }
 
-.navbar-cta:hover { background: var(--accent-hover); }
+.navbar-cta:hover { background: var(--text-primary); color: var(--bg); }
 
 .section {
   padding: 64px 5vw;
