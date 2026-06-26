@@ -73,7 +73,7 @@ export default function Home({ services, professionals, loading, error, onSucces
         <div className="about-inner">
           <div className="about-media">
             <img
-              src="https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=1200"
+              src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200"
               alt="Interior da clínica Lumière"
               loading="lazy"
             />
