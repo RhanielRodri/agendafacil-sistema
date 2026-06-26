@@ -9,10 +9,10 @@
 .success-panel {
   width: min(560px, 100%);
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  padding: 36px;
+  border-radius: var(--radius-card);
+  padding: 40px;
   background: var(--bg-light-surface);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-card);
 }
 
 .success-icon {
@@ -26,12 +26,15 @@
   font-size: 1.5rem;
   font-weight: 800;
   margin-bottom: 20px;
-  border: 1px solid rgba(42, 140, 90, 0.2);
+  border: 1px solid rgba(122, 139, 111, 0.3);
 }
 
 .success-panel h1 {
   margin: 0 0 8px;
-  font-size: 1.55rem;
+  font-size: 1.9rem;
+  letter-spacing: -0.25px;
+  font-family: var(--font-display);
+  font-weight: 500;
   color: var(--text-on-light);
   line-height: 1.2;
 }

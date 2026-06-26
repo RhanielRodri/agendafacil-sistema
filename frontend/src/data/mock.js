@@ -27,19 +27,19 @@ export const PROFESSIONALS = [
     id: 1,
     name: "Dra. Beatriz Moura",
     specialty: "Skincare & Procedimentos Faciais",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400",
   },
   {
     id: 2,
     name: "Dra. Camila Lins",
     specialty: "Harmonização Facial & Bioestimuladores",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400",
   },
   {
     id: 3,
     name: "Fernanda Costa",
     specialty: "Terapeuta Corporal & Drenagem",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=400",
   },
 ];
 

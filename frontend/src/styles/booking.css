@@ -82,15 +82,18 @@
 
 .panel {
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 22px;
+  border-radius: var(--radius-card);
+  padding: 32px;
   background: var(--bg-light-surface);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-card);
 }
 
 .panel h2 {
-  margin: 0 0 16px;
-  font-size: 1.1rem;
+  margin: 0 0 20px;
+  font-size: 1.4rem;
+  letter-spacing: -0.25px;
+  font-family: var(--font-display);
+  font-weight: 500;
   color: var(--text-on-light);
 }
 
@@ -163,10 +166,10 @@ label {
 input,
 select {
   width: 100%;
-  min-height: 44px;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  padding: 0 12px;
+  min-height: 48px;
+  border: 1px solid rgba(44, 36, 32, 0.15);
+  border-radius: 12px;
+  padding: 14px 18px;
   background: var(--bg-light-surface);
   color: var(--text-on-light);
   appearance: none;
@@ -177,7 +180,7 @@ input:focus,
 select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-muted);
+  box-shadow: 0 0 0 3px rgba(201, 169, 122, 0.18);
 }
 
 .select-wrapper {
@@ -256,26 +259,27 @@ select:focus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
-  border-radius: var(--radius-sm);
-  padding: 0 22px;
-  font-weight: 700;
-  font-size: 0.9rem;
+  border-radius: var(--radius-pill);
+  padding: 16px 36px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.5px;
   text-decoration: none;
-  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  transition: transform 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.15s;
 }
 
 .primary-button,
 .primary-link {
-  border: 1px solid var(--accent);
+  border: 0;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-text);
+  box-shadow: var(--shadow-btn);
 }
 
 .primary-button:hover:not(:disabled),
 .primary-link:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
 }
 
 .primary-button:focus-visible,
@@ -292,13 +296,13 @@ select:focus {
 }
 
 .secondary-button {
-  border: 1px solid var(--border-light);
-  background: var(--bg-light-surface);
+  border: 1px solid rgba(44, 36, 32, 0.25);
+  background: transparent;
   color: var(--text-on-light);
 }
 
 .secondary-button:hover:not(:disabled) {
-  border-color: var(--text-on-light-muted);
+  background: rgba(44, 36, 32, 0.04);
 }
 
 /* === SUMMARY BOX (step 3 form) === */

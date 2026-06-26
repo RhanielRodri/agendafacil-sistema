@@ -25,21 +25,21 @@
 /* === MOBILE (< 640px) === */
 
 @media (max-width: 639px) {
-  .navbar {
-    padding: 0 4vw;
-  }
-
   .hero {
-    padding: 48px 4vw;
-    min-height: min(540px, 85svh);
+    padding-block: 56px;
+    min-height: min(560px, 85svh);
   }
 
   .hero-copy h1 {
-    font-size: clamp(1.9rem, 9vw, 2.6rem);
+    font-size: clamp(32px, 9vw, 36px);
+  }
+
+  .hero-sub {
+    font-size: 18px;
   }
 
   .section {
-    padding: 48px 4vw;
+    padding-block: 56px;
   }
 
   .admin-grid {

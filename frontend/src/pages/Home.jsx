@@ -69,6 +69,24 @@ export default function Home({ services, professionals, loading, error, onSucces
         </div>
       </section>
 
+      <section className="section about">
+        <div className="about-inner">
+          <div className="about-media">
+            <img
+              src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200"
+              alt="Interior da clínica Lumière"
+              loading="lazy"
+            />
+          </div>
+          <div className="about-copy">
+            <span className="eyebrow">{t.about_eyebrow}</span>
+            <h2>{t.about_title}</h2>
+            <p>{t.about_text_1}</p>
+            <p>{t.about_text_2}</p>
+          </div>
+        </div>
+      </section>
+
       <section className="section">
         <div className="section-heading">
           <span className="eyebrow">{t.services_eyebrow}</span>
