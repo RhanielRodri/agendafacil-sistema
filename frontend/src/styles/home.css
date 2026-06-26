@@ -44,7 +44,7 @@
   color: var(--text-primary);
 }
 
-.hero h1 .dim { color: var(--surface-2); }
+.hero h1 .dim { color: var(--text-muted); }
 
 .hero-sub {
   max-width: 360px;
