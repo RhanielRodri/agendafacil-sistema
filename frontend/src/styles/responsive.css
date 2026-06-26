@@ -25,6 +25,21 @@
 /* === MOBILE (< 640px) === */
 
 @media (max-width: 639px) {
+  .navbar {
+    gap: 10px;
+  }
+
+  .navbar-brand-demo {
+    display: none;
+  }
+
+  .navbar-cta {
+    padding: 0 18px;
+    font-size: 0.82rem;
+    min-height: 38px;
+    letter-spacing: 0.3px;
+  }
+
   .hero {
     padding-block: 56px;
     min-height: min(560px, 85svh);
