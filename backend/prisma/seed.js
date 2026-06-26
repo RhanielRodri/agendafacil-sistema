@@ -56,21 +56,21 @@ async function main() {
       data: {
         name: "Lucas Martins",
         specialty: "Cortes clássicos",
-        photo: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=600&q=80"
+        photo: "https://images.unsplash.com/photo-1605980776566-0486c3ac7617?auto=format&fit=crop&w=800&q=80"
       }
     }),
     prisma.professional.create({
       data: {
         name: "Rafael Costa",
         specialty: "Barba e degradê",
-        photo: "https://images.unsplash.com/photo-1599351431404-433ef72fe40b?auto=format&fit=crop&w=600&q=80"
+        photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80"
       }
     }),
     prisma.professional.create({
       data: {
         name: "Bruno Alves",
         specialty: "Corte moderno",
-        photo: "https://images.unsplash.com/photo-1582893561942-d61adcb2e534?auto=format&fit=crop&w=600&q=80"
+        photo: "https://images.unsplash.com/photo-1582893561942-d61adcb2e534?auto=format&fit=crop&w=800&q=80"
       }
     })
   ]);

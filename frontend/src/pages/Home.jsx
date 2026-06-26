@@ -119,7 +119,7 @@ export default function Home({ services, professionals, loading, error, onSucces
           <span className="eyebrow">{t.professionals_eyebrow}</span>
           <h2>{t.professionals_title}</h2>
         </div>
-        <div className="grid three">
+        <div className="grid team-grid">
           {professionals.map((professional) => (
             <article className="professional-card" key={professional.id}>
               <ProfessionalPhoto src={professional.photo} name={professional.name} />
@@ -129,6 +129,23 @@ export default function Home({ services, professionals, loading, error, onSucces
               </div>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="section studio-section">
+        <div className="section-heading">
+          <span className="eyebrow">O espaço</span>
+          <h2>Onde o corte acontece</h2>
+        </div>
+        <div className="studio-photo">
+          <img
+            src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1400&q=80"
+            alt="Interior do Studio Cut em Vila Velha"
+          />
+          <div className="studio-caption">
+            <strong>Studio Cut</strong>
+            <span>Vila Velha, ES · Seg a Sáb</span>
+          </div>
         </div>
       </section>
 

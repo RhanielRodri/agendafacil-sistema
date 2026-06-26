@@ -252,6 +252,19 @@
 
 /* === PROFESSIONAL CARDS === */
 
+.grid.team-grid {
+  grid-template-columns: repeat(3, 1fr);
+  background: transparent;
+  gap: 12px;
+}
+
+@media (max-width: 720px) {
+  .grid.team-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
 .professional-card {
   overflow: hidden;
   background: var(--surface);
@@ -260,16 +273,16 @@
 
 .professional-card img {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 4;
   object-fit: cover;
-  object-position: top;
+  object-position: center 25%;
   display: block;
   filter: grayscale(15%) brightness(0.85);
 }
 
 .professional-avatar {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 4;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -299,6 +312,60 @@
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+/* === STUDIO === */
+
+.studio-photo {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+}
+
+.studio-photo img {
+  width: 100%;
+  height: clamp(260px, 38vw, 460px);
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  filter: grayscale(10%) brightness(0.78);
+}
+
+.studio-photo::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  pointer-events: none;
+}
+
+.studio-caption {
+  position: absolute;
+  z-index: 2;
+  left: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.studio-caption strong {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.studio-caption span {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
 }
 
 /* === TESTIMONIALS === */

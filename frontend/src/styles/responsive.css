@@ -31,16 +31,6 @@
 @media (max-width: 639px) {
   .navbar {
     padding: 0 4vw;
-    gap: 10px;
-  }
-
-  .navbar nav {
-    gap: 12px !important;
-  }
-
-  .navbar-cta {
-    padding: 0 12px;
-    letter-spacing: 0.04em;
   }
 
   .hero {
