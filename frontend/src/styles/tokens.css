@@ -1,65 +1,44 @@
 :root {
-  --bg-dark: #0f1117;
-  --bg-dark-surface: #181c23;
-  --bg-dark-elevated: #1f242d;
-  --bg-light: #f7f6f3;
-  --bg-light-surface: #ffffff;
+  --bg: #111111;
+  --surface: #1a1a1a;
+  --surface-2: #222222;
+  --text-primary: #ffffff;
+  --text-secondary: #888888;
+  --text-muted: #555555;
+  --border: #2a2a2a;
+  --border-strong: #3a3a3a;
 
-  --accent: #c8874a;
-  --accent-hover: #b07038;
-  --accent-muted: #c8874a18;
-  --accent-text: #0f1117;
+  --accent: #ffffff;
+  --accent-hover: #e0e0e0;
+  --accent-muted: rgba(255,255,255,0.06);
+  --accent-text: #111111;
 
-  --text-on-dark: #f2f0eb;
-  --text-on-dark-muted: #9da3aa;
-  --text-on-light: #181c23;
-  --text-on-light-muted: #6b7280;
+  --success: #4caf50;
+  --success-bg: rgba(76,175,80,0.1);
+  --danger: #ef5350;
+  --danger-bg: rgba(239,83,80,0.1);
+  --warning: #ff9800;
+  --warning-bg: rgba(255,152,0,0.1);
 
-  --border-dark: rgba(255, 255, 255, 0.08);
-  --border-light: #e5e2dc;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --shadow-sm: none;
+  --shadow-md: none;
 
-  --success: #2a8c5a;
-  --success-bg: #2a8c5a18;
-  --danger: #c94d47;
-  --danger-bg: #c94d4718;
-  --warning: #d97706;
-  --warning-bg: #d9770618;
-
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
-
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
   line-height: 1.5;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
   min-width: 320px;
-  background: var(--bg-light);
-  color: var(--text-on-light);
+  background: var(--bg);
+  color: var(--text-primary);
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }

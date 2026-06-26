@@ -14,20 +14,10 @@ function ProfessionalPhoto({ src, name }) {
     .toUpperCase();
 
   if (failed || !src) {
-    return (
-      <div className="professional-avatar" aria-hidden="true">
-        {initials}
-      </div>
-    );
+    return <div className="professional-avatar" aria-hidden="true">{initials}</div>;
   }
 
-  return (
-    <img
-      src={src}
-      alt={name}
-      onError={() => setFailed(true)}
-    />
-  );
+  return <img src={src} alt={name} onError={() => setFailed(true)} />;
 }
 
 export default function Home({ services, professionals, loading, error, onSuccess, onRetry }) {
@@ -46,26 +36,49 @@ export default function Home({ services, professionals, loading, error, onSucces
   return (
     <main>
       <section className="hero">
-        <div className="hero-inner">
-          <div className="hero-copy">
-            <span className="eyebrow">{t.hero_eyebrow}</span>
-            <h1>{t.hero_title}</h1>
-            <p className="hero-sub">{t.hero_sub}</p>
+        <div className="hero-content">
+          <div className="hero-tag">
+            <div className="hero-tag-line"></div>
+            <span>Barbearia · Vila Velha, ES</span>
+          </div>
+          <h1>
+            PRECISÃO<br />
+            <span className="dim">NO</span><br />
+            CORTE.
+          </h1>
+          <p className="hero-sub">Agende o seu horário em menos de 2 minutos. Sem ligação, sem espera.</p>
+          <div className="hero-btns">
             <button className="primary-button" type="button" onClick={handleStartBooking}>
               {t.hero_cta}
             </button>
-            <p className="hero-perks">{t.hero_perks}</p>
+            <button className="secondary-button" type="button" onClick={() => document.querySelector(".section")?.scrollIntoView({ behavior: "smooth" })}>
+              Ver serviços
+            </button>
           </div>
-
-          <aside className="hero-credentials" aria-label="Recursos do sistema">
-            <h3>{t.hero_includes}</h3>
-            <ul>
-              <li>{t.perk_1}</li>
-              <li>{t.perk_2}</li>
-              <li>{t.perk_3}</li>
-              <li>{t.perk_4}</li>
-            </ul>
-          </aside>
+          <div className="hero-stats">
+            <div>
+              <div className="hero-stat-num">4.9</div>
+              <div className="hero-stat-label">Google</div>
+            </div>
+            <div>
+              <div className="hero-stat-num">+800</div>
+              <div className="hero-stat-label">Clientes</div>
+            </div>
+            <div>
+              <div className="hero-stat-num">7</div>
+              <div className="hero-stat-label">Anos</div>
+            </div>
+          </div>
+        </div>
+        <div className="hero-image">
+          <img
+            src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80"
+            alt="Interior da barbearia Studio Cut"
+          />
+          <div className="hero-image-badge">
+            <div className="hero-badge-dot"></div>
+            <span>Agendamento online disponível</span>
+          </div>
         </div>
       </section>
 
@@ -82,13 +95,14 @@ export default function Home({ services, professionals, loading, error, onSucces
         )}
         {!loading && !error && services.length === 0 && <StateMessage title={t.services_empty} />}
         <div className="grid three">
-          {services.map((service) => (
+          {services.map((service, index) => (
             <button
               className={selectedServiceFromHome === String(service.id) ? "service-card selected" : "service-card"}
               key={service.id}
               type="button"
               onClick={() => handleServiceSelect(service.id)}
             >
+              <div className="service-card-num">{String(index + 1).padStart(2, "0")}</div>
               <h3>{service.name}</h3>
               <p>{service.description}</p>
               <div className="service-card-footer">
@@ -148,14 +162,10 @@ export default function Home({ services, professionals, loading, error, onSucces
 
       <footer className="footer">
         <div>
-          <span className="footer-brand">AgendaFácil</span>
-          <p className="footer-tagline">{t.footer_tagline}</p>
+          <span className="footer-brand">Studio Cut</span>
+          <p className="footer-tagline">Vila Velha, ES · Agendamento online</p>
         </div>
-        <a
-          href="https://github.com/RhanielRodri/agendafacil-sistema"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href="https://github.com/RhanielRodri/agendafacil-sistema" target="_blank" rel="noopener noreferrer">
           {t.footer_github}
         </a>
       </footer>

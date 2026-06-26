@@ -1,10 +1,6 @@
 /* === DESKTOP (≥ 1024px) === */
 
 @media (min-width: 1024px) {
-  .hero-credentials {
-    display: block;
-  }
-
   .booking-layout {
     grid-template-columns: 1fr 300px;
   }
@@ -17,6 +13,14 @@
 /* === TABLET (640px–1023px) === */
 
 @media (min-width: 640px) and (max-width: 1023px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-image {
+    min-height: 280px;
+  }
+
   .slot-grid {
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   }
@@ -30,12 +34,19 @@
   }
 
   .hero {
-    padding: 48px 4vw;
-    min-height: min(540px, 85svh);
+    grid-template-columns: 1fr;
   }
 
-  .hero-copy h1 {
-    font-size: clamp(1.9rem, 9vw, 2.6rem);
+  .hero-content {
+    padding: 48px 4vw;
+  }
+
+  .hero-image {
+    min-height: 240px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 10vw, 2.8rem);
   }
 
   .section {
@@ -67,25 +78,12 @@
   }
 }
 
-/* === ADMIN SCREEN MOBILE === */
-
-@media (max-width: 479px) {
-  .admin-screen-card {
-    padding: 28px 20px;
-  }
-}
-
-/* === PREVENT HORIZONTAL OVERFLOW AT 360px === */
+/* === PREVENT OVERFLOW 360px === */
 
 @media (max-width: 360px) {
-  html,
-  body {
-    overflow-x: hidden;
-  }
+  html, body { overflow-x: hidden; }
 
-  .hero-copy h1 {
-    font-size: 1.75rem;
-  }
+  .hero h1 { font-size: 1.8rem; }
 
   .slot-grid {
     grid-template-columns: repeat(3, 1fr);

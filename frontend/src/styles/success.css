@@ -3,41 +3,41 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: var(--bg-light);
+  background: var(--bg);
 }
 
 .success-panel {
-  width: min(560px, 100%);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
+  width: min(520px, 100%);
+  border: 0.5px solid var(--border);
   padding: 36px;
-  background: var(--bg-light-surface);
-  box-shadow: var(--shadow-md);
+  background: var(--surface);
 }
 
 .success-icon {
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
+  width: 48px;
+  height: 48px;
   background: var(--success-bg);
   color: var(--success);
-  font-size: 1.5rem;
+  font-size: 18px;
   font-weight: 800;
   margin-bottom: 20px;
-  border: 1px solid rgba(42, 140, 90, 0.2);
+  border: 0.5px solid rgba(76,175,80,0.3);
 }
 
 .success-panel h1 {
   margin: 0 0 8px;
-  font-size: 1.55rem;
-  color: var(--text-on-light);
-  line-height: 1.2;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  line-height: 1.1;
 }
 
 .success-panel > p {
   margin: 0 0 24px;
-  color: var(--text-on-light-muted);
-  font-size: 0.95rem;
+  color: var(--text-muted);
+  font-size: 13px;
 }
