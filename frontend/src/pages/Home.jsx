@@ -148,7 +148,7 @@ export default function Home({ services, professionals, loading, error, onSucces
 
       <footer className="footer">
         <div>
-          <span className="footer-brand">AgendaFácil</span>
+          <span className="footer-brand" style={{ fontFamily: "var(--font-display)", fontWeight: 400, letterSpacing: "0.03em" }}>Lumiere</span>
           <p className="footer-tagline">{t.footer_tagline}</p>
         </div>
         <a

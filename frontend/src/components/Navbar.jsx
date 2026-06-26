@@ -35,8 +35,8 @@ export default function Navbar({ onNavigate }) {
   return (
     <header className={`navbar${scrolled ? " scrolled" : ""}`}>
       <button className="navbar-brand" onClick={() => onNavigate("home")}>
-        <span className="navbar-brand-name">AgendaFácil</span>
-        <span className="navbar-brand-demo">· Demo Studio Cut</span>
+        <span className="navbar-brand-name">Lumiere</span>
+        <span className="navbar-brand-demo">· Clínica Estética</span>
       </button>
       <nav style={{ display: "flex", alignItems: "center", gap: "16px" }}>
         <LangToggle />

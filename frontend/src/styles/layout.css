@@ -10,13 +10,13 @@
   gap: 16px;
   height: 64px;
   padding: 0 5vw;
-  background: var(--bg-dark);
-  border-bottom: 1px solid var(--border-dark);
+  background: var(--bg-light);
+  border-bottom: 1px solid var(--border-light);
   transition: background 0.2s;
 }
 
 .navbar.scrolled {
-  background: rgba(15, 17, 23, 0.88);
+  background: rgba(250, 248, 245, 0.92);
   backdrop-filter: blur(12px);
 }
 
@@ -31,14 +31,16 @@
 }
 
 .navbar-brand-name {
-  color: var(--text-on-dark);
-  font-size: 1.1rem;
-  font-weight: 700;
+  color: var(--text-on-light);
+  font-size: 1.15rem;
+  font-weight: 400;
+  font-family: var(--font-display);
   line-height: 1;
+  letter-spacing: 0.03em;
 }
 
 .navbar-brand-demo {
-  color: var(--text-on-dark-muted);
+  color: var(--text-on-light-muted);
   font-size: 0.69rem;
   font-weight: 400;
 }
@@ -88,6 +90,8 @@
   font-size: clamp(1.8rem, 5vw, 3rem);
   line-height: 1.05;
   color: inherit;
+  font-family: var(--font-display);
+  font-weight: 400;
 }
 
 .eyebrow {
