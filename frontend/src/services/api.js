@@ -50,5 +50,6 @@ export const api = {
       body: JSON.stringify({ password })
     }),
   adminLogout: () =>
-    request("/admin/session", { method: "DELETE" })
+    request("/admin/session", { method: "DELETE" }),
+  getExportUrl: () => `${API_URL}/appointments/export.csv`
 };

@@ -137,6 +137,7 @@ export default function Admin({ services, professionals }) {
   const [appointments, setAppointments] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [statusChangeError, setStatusChangeError] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
 
   const safeAppointments = Array.isArray(appointments) ? appointments : [];
   const safeServices = Array.isArray(services) ? services : [];
@@ -168,6 +169,10 @@ export default function Admin({ services, professionals }) {
   const nextAppointments = safeAppointments
     .filter((a) => a.status !== "CANCELLED")
     .slice(0, 5);
+
+  const filteredAppointments = dateFilter
+    ? safeAppointments.filter((a) => a.date.slice(0, 10) === dateFilter)
+    : safeAppointments;
 
   function loadAppointments() {
     setStatus("loading");
@@ -304,12 +309,38 @@ export default function Admin({ services, professionals }) {
 
         <div className="admin-grid">
           <section className="panel">
-            <h2>Todos os agendamentos</h2>
-            {safeAppointments.length === 0 && (
-              <StateMessage title="Nenhum agendamento cadastrado" />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+              <h2 style={{ margin: 0 }}>Todos os agendamentos</h2>
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  style={{ fontSize: "0.8rem", padding: "4px 8px", border: "1px solid var(--border-light)", borderRadius: "var(--radius-sm)", background: "transparent", color: "inherit", cursor: "pointer" }}
+                />
+                {dateFilter && (
+                  <button
+                    type="button"
+                    onClick={() => setDateFilter("")}
+                    style={{ fontSize: "0.8rem", padding: "4px 8px", background: "none", border: "1px solid var(--border-light)", borderRadius: "var(--radius-sm)", cursor: "pointer", color: "inherit" }}
+                  >
+                    Limpar
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => window.open(api.getExportUrl(), "_blank")}
+                  style={{ fontSize: "0.8rem", padding: "4px 8px", background: "none", border: "1px solid var(--border-light)", borderRadius: "var(--radius-sm)", cursor: "pointer", color: "inherit" }}
+                >
+                  CSV ↓
+                </button>
+              </div>
+            </div>
+            {filteredAppointments.length === 0 && (
+              <StateMessage title={dateFilter ? "Nenhum agendamento nesta data" : "Nenhum agendamento cadastrado"} />
             )}
             <div className="stack">
-              {safeAppointments.map((a) => (
+              {filteredAppointments.map((a) => (
                 <AppointmentCard
                   key={a.id}
                   appointment={a}
