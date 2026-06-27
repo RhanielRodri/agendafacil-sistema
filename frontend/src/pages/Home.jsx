@@ -3,6 +3,7 @@ import BookingFlow from "./BookingFlow.jsx";
 import { formatCurrency } from "../utils/format.js";
 import StateMessage from "../components/StateMessage.jsx";
 import { useTranslation } from "../i18n/I18nContext.jsx";
+import tenant from "../config/tenant.js";
 
 function ProfessionalPhoto({ src, name }) {
   const [failed, setFailed] = useState(false);
@@ -39,14 +40,17 @@ export default function Home({ services, professionals, loading, error, onSucces
         <div className="hero-content">
           <div className="hero-tag">
             <div className="hero-tag-line"></div>
-            <span>Barbearia · Vila Velha, ES</span>
+            <span>{tenant.hero.eyebrow}</span>
           </div>
           <h1>
-            PRECISÃO<br />
-            <span className="dim">NO</span><br />
-            CORTE.
+            {tenant.hero.headline.map((line, i) => (
+              <React.Fragment key={i}>
+                {i === 1 ? <span className="dim">{line}</span> : line}
+                {i < tenant.hero.headline.length - 1 && <br />}
+              </React.Fragment>
+            ))}
           </h1>
-          <p className="hero-sub">Agende o seu horário em menos de 2 minutos. Sem ligação, sem espera.</p>
+          <p className="hero-sub">{tenant.hero.sub}</p>
           <div className="hero-btns">
             <button className="primary-button" type="button" onClick={handleStartBooking}>
               {t.hero_cta}
@@ -56,24 +60,18 @@ export default function Home({ services, professionals, loading, error, onSucces
             </button>
           </div>
           <div className="hero-stats">
-            <div>
-              <div className="hero-stat-num">4.9</div>
-              <div className="hero-stat-label">Google</div>
-            </div>
-            <div>
-              <div className="hero-stat-num">+800</div>
-              <div className="hero-stat-label">Clientes</div>
-            </div>
-            <div>
-              <div className="hero-stat-num">7</div>
-              <div className="hero-stat-label">Anos</div>
-            </div>
+            {tenant.hero.stats.map((stat, i) => (
+              <div key={i}>
+                <div className="hero-stat-num">{stat.value}</div>
+                <div className="hero-stat-label">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
         <div className="hero-image">
           <img
-            src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80"
-            alt="Interior da barbearia Studio Cut"
+            src={tenant.hero.image}
+            alt={tenant.hero.imageAlt}
           />
           <div className="hero-image-badge">
             <div className="hero-badge-dot"></div>
@@ -134,17 +132,17 @@ export default function Home({ services, professionals, loading, error, onSucces
 
       <section className="section studio-section">
         <div className="section-heading">
-          <span className="eyebrow">O espaço</span>
-          <h2>Onde o corte acontece</h2>
+          <span className="eyebrow">{tenant.space.eyebrow}</span>
+          <h2>{tenant.space.title}</h2>
         </div>
         <div className="studio-photo">
           <img
-            src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1400&q=80"
-            alt="Interior do Studio Cut em Vila Velha"
+            src={tenant.space.image}
+            alt={tenant.space.imageAlt}
           />
           <div className="studio-caption">
-            <strong>Studio Cut</strong>
-            <span>Vila Velha, ES · Seg a Sáb</span>
+            <strong>{tenant.name}</strong>
+            <span>{tenant.city} · {tenant.schedule}</span>
           </div>
         </div>
       </section>
@@ -162,29 +160,25 @@ export default function Home({ services, professionals, loading, error, onSucces
           <h2>{t.testimonials_title}</h2>
         </div>
         <div className="grid three">
-          <div className="testimonial-card">
-            <span className="testimonial-quote">"</span>
-            <p>{t.testimonial_1}</p>
-          </div>
-          <div className="testimonial-card">
-            <span className="testimonial-quote">"</span>
-            <p>{t.testimonial_2}</p>
-          </div>
-          <div className="testimonial-card">
-            <span className="testimonial-quote">"</span>
-            <p>{t.testimonial_3}</p>
-          </div>
+          {tenant.testimonials.map((text, i) => (
+            <div className="testimonial-card" key={i}>
+              <span className="testimonial-quote">"</span>
+              <p>{text}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       <footer className="footer">
         <div>
-          <span className="footer-brand">Studio Cut</span>
-          <p className="footer-tagline">Vila Velha, ES · Agendamento online</p>
+          <span className="footer-brand">{tenant.name}</span>
+          <p className="footer-tagline">{tenant.city} · {tenant.footer.tagline}</p>
         </div>
-        <a href="https://github.com/RhanielRodri/agendafacil-sistema" target="_blank" rel="noopener noreferrer">
-          {t.footer_github}
-        </a>
+        {tenant.contact.whatsapp && (
+          <a href={`https://wa.me/${tenant.contact.whatsapp}`} target="_blank" rel="noopener noreferrer">
+            WhatsApp
+          </a>
+        )}
       </footer>
     </main>
   );

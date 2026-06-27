@@ -3,6 +3,7 @@ import { api } from "../services/api.js";
 import AppointmentCard from "../components/AppointmentCard.jsx";
 import StateMessage from "../components/StateMessage.jsx";
 import { formatCurrency, todayInputValue } from "../utils/format.js";
+import tenant from "../config/tenant.js";
 
 // ─── Telas de estado (fundo escuro, card centralizado) ──────────────────────
 
@@ -10,7 +11,7 @@ function AdminScreenHeader() {
   return (
     <div className="admin-screen-header">
       <div className="admin-screen-brand">AgendaFácil</div>
-      <span className="admin-screen-badge">Demo · Studio Cut</span>
+      <span className="admin-screen-badge">{tenant.name}</span>
     </div>
   );
 }
@@ -220,11 +221,10 @@ export default function Admin({ services, professionals }) {
     <main className="admin-page">
       <header className="admin-header">
         <div className="admin-header-brand">
-          <strong>AgendaFácil</strong>
-          <span>· Painel demonstrativo</span>
+          <strong>{tenant.name}</strong>
+          <span>· Painel administrativo</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span className="admin-demo-notice">Ambiente demonstrativo · Dados fictícios</span>
           <button
             type="button"
             onClick={handleLogout}

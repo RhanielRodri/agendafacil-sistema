@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import tenant from "../config/tenant.js";
 
 export default function Navbar({ onNavigate }) {
   const [scrolled, setScrolled] = useState(false);
@@ -12,7 +13,7 @@ export default function Navbar({ onNavigate }) {
   return (
     <header className={`navbar${scrolled ? " scrolled" : ""}`}>
       <button className="navbar-brand" onClick={() => onNavigate("home")}>
-        <span className="navbar-brand-name">STUDIO<span style={{ color: "var(--text-muted)", fontWeight: 400 }}>CUT</span></span>
+        <span className="navbar-brand-name">{tenant.name}</span>
       </button>
     </header>
   );
