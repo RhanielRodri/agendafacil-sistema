@@ -138,7 +138,7 @@
 }
 
 .admin-screen-input::placeholder {
-  color: rgba(157, 163, 170, 0.4);
+  color: rgba(157, 163, 170, 0.7);
   letter-spacing: 0.1em;
 }
 
