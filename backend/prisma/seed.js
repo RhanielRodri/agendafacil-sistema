@@ -19,6 +19,7 @@ async function main() {
   const services = await Promise.all([
     prisma.service.create({
       data: {
+        demoId: "studio-cut",
         name: "Corte masculino",
         description: "Corte completo com acabamento na navalha.",
         duration: 30,
@@ -27,6 +28,7 @@ async function main() {
     }),
     prisma.service.create({
       data: {
+        demoId: "studio-cut",
         name: "Barba completa",
         description: "Toalha quente, desenho e finalização.",
         duration: 30,
@@ -35,6 +37,7 @@ async function main() {
     }),
     prisma.service.create({
       data: {
+        demoId: "studio-cut",
         name: "Corte + barba",
         description: "Combo completo para cabelo e barba.",
         duration: 60,
@@ -43,6 +46,7 @@ async function main() {
     }),
     prisma.service.create({
       data: {
+        demoId: "studio-cut",
         name: "Sobrancelha",
         description: "Design rápido com acabamento natural.",
         duration: 30,
@@ -54,6 +58,7 @@ async function main() {
   const professionals = await Promise.all([
     prisma.professional.create({
       data: {
+        demoId: "studio-cut",
         name: "Lucas Martins",
         specialty: "Cortes clássicos",
         photo: "https://images.unsplash.com/photo-1605980776566-0486c3ac7617?auto=format&fit=crop&w=800&q=80"
@@ -61,6 +66,7 @@ async function main() {
     }),
     prisma.professional.create({
       data: {
+        demoId: "studio-cut",
         name: "Rafael Costa",
         specialty: "Barba e degradê",
         photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80"
@@ -68,9 +74,64 @@ async function main() {
     }),
     prisma.professional.create({
       data: {
+        demoId: "studio-cut",
         name: "Bruno Alves",
         specialty: "Corte moderno",
         photo: "https://images.unsplash.com/photo-1582893561942-d61adcb2e534?auto=format&fit=crop&w=800&q=80"
+      }
+    })
+  ]);
+
+  await Promise.all([
+    prisma.service.create({
+      data: {
+        demoId: "lumiere",
+        name: "Limpeza de pele",
+        description: "Limpeza profunda com extração, esfoliação e hidratação.",
+        duration: 60,
+        price: 180
+      }
+    }),
+    prisma.service.create({
+      data: {
+        demoId: "lumiere",
+        name: "Harmonização facial",
+        description: "Procedimento personalizado para realçar os traços com naturalidade.",
+        duration: 90,
+        price: 1200
+      }
+    }),
+    prisma.service.create({
+      data: {
+        demoId: "lumiere",
+        name: "Drenagem linfática",
+        description: "Massagem corporal para reduzir inchaço e melhorar a circulação.",
+        duration: 60,
+        price: 150
+      }
+    }),
+    prisma.professional.create({
+      data: {
+        demoId: "lumiere",
+        name: "Beatriz Moura",
+        specialty: "Skincare e procedimentos faciais",
+        photo: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=800&q=80"
+      }
+    }),
+    prisma.professional.create({
+      data: {
+        demoId: "lumiere",
+        name: "Camila Lins",
+        specialty: "Harmonização facial e bioestimuladores",
+        photo: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80"
+      }
+    }),
+    prisma.professional.create({
+      data: {
+        demoId: "lumiere",
+        name: "Fernanda Costa",
+        specialty: "Terapia corporal e drenagem",
+        photo: "https://images.unsplash.com/photo-1651008376811-b90baee60c1f?auto=format&fit=crop&w=800&q=80"
       }
     })
   ]);

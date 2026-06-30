@@ -4,9 +4,10 @@ import Home from "./pages/Home.jsx";
 import Admin from "./pages/Admin.jsx";
 import Success from "./pages/Success.jsx";
 import { api } from "./services/api.js";
+import tenant, { adminPath, demoPath } from "./config/tenant.js";
 
 function getInitialPage() {
-  return window.location.pathname === "/admin" ? "admin" : "home";
+  return window.location.pathname.endsWith("/admin") ? "admin" : "home";
 }
 
 export default function App() {
@@ -30,13 +31,22 @@ export default function App() {
   }
 
   useEffect(() => {
-    loadData();
+    document.title = `${tenant.name} · Demonstração AgendaFácil`;
+    document.querySelector('meta[name="description"]')?.setAttribute(
+      "content",
+      `${tenant.name} é uma demonstração da plataforma de agendamento AgendaFácil.`
+    );
+    if (tenant.bookingEnabled) {
+      loadData();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   function navigate(nextPage) {
     setSuccessAppointment(null);
     setPage(nextPage);
-    window.history.pushState({}, "", nextPage === "admin" ? "/admin" : "/");
+    window.history.pushState({}, "", nextPage === "admin" ? adminPath : demoPath);
   }
 
   function handleSuccess(appointment) {

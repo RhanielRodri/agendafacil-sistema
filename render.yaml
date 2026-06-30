@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm ci && npm run build && npm run prisma:deploy
+    buildCommand: npm ci --include=dev && npm run build && npm run prisma:deploy
     startCommand: npm start
     envVars:
       - key: NODE_ENV

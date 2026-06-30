@@ -1,4 +1,7 @@
+import tenant from "../config/tenant.js";
+
 const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+const demoQuery = `demoId=${encodeURIComponent(tenant.slug)}`;
 
 async function request(path, options = {}) {
   if (!API_URL) {
@@ -28,16 +31,16 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  getServices: () => request("/services"),
-  getProfessionals: () => request("/professionals"),
-  getAppointments: () => request("/appointments"),
+  getServices: () => request(`/services?${demoQuery}`),
+  getProfessionals: () => request(`/professionals?${demoQuery}`),
+  getAppointments: () => request(`/appointments?${demoQuery}`),
   getBusinessHours: () => request("/business-hours"),
   getAvailableSlots: ({ date, professionalId, serviceId }) =>
-    request(`/available-slots?date=${encodeURIComponent(date)}&professionalId=${encodeURIComponent(professionalId)}&serviceId=${encodeURIComponent(serviceId)}`),
+    request(`/available-slots?date=${encodeURIComponent(date)}&professionalId=${encodeURIComponent(professionalId)}&serviceId=${encodeURIComponent(serviceId)}&${demoQuery}`),
   createAppointment: (payload) =>
     request("/appointments", {
       method: "POST",
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, demoId: tenant.slug })
     }),
   updateAppointmentStatus: (id, status) =>
     request(`/appointments/${id}/status`, {
@@ -51,5 +54,5 @@ export const api = {
     }),
   adminLogout: () =>
     request("/admin/session", { method: "DELETE" }),
-  getExportUrl: () => `${API_URL}/appointments/export.csv`
+  getExportUrl: () => `${API_URL}/appointments/export.csv?${demoQuery}`
 };

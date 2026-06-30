@@ -1,44 +1,15 @@
-const tenant = {
-  name: "Studio Cut",
-  segment: "Barbearia",
-  city: "Vila Velha, ES",
-  schedule: "Seg a Sáb",
+import studioCut from "./demos/studio-cut.js";
+import lumiere from "./demos/lumiere.js";
 
-  hero: {
-    eyebrow: "Barbearia · Vila Velha, ES",
-    headline: ["PRECISÃO", "NO", "CORTE."],
-    sub: "Agende o seu horário em menos de 2 minutos. Sem ligação, sem espera.",
-    stats: [
-      { value: "4.9", label: "Google" },
-      { value: "+800", label: "Clientes" },
-      { value: "7 anos", label: "de experiência" }
-    ],
-    image: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Interior da barbearia"
-  },
-
-  space: {
-    eyebrow: "O espaço",
-    title: "Onde o corte acontece",
-    image: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1400&q=80",
-    imageAlt: "Interior da barbearia"
-  },
-
-  testimonials: [
-    "Marquei pelo celular e cheguei no horário certo. Muito prático.",
-    "O painel deixa tudo organizado, sem conversa perdida no WhatsApp.",
-    "Atendimento rápido e pontual. Nunca mais precisei ligar para confirmar."
-  ],
-
-  contact: {
-    whatsapp: null,
-    instagram: null,
-    address: null
-  },
-
-  footer: {
-    tagline: "Agendamento online"
-  }
+export const demos = {
+  "studio-cut": studioCut,
+  lumiere
 };
+
+const routeSlug = window.location.pathname.match(/^\/demo\/([^/]+)/)?.[1];
+const tenant = demos[routeSlug] || studioCut;
+
+export const demoPath = `/demo/${tenant.slug}`;
+export const adminPath = tenant.slug === "studio-cut" ? "/admin" : `${demoPath}/admin`;
 
 export default tenant;

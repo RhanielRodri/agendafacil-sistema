@@ -31,13 +31,15 @@ export default function Home({ services, professionals, loading, error, onSucces
   }
 
   function handleStartBooking() {
-    document.getElementById("agendamento")?.scrollIntoView({ behavior: "smooth" });
+    const target = tenant.bookingEnabled ? document.getElementById("agendamento") : document.querySelector(".studio-section");
+    target?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
     <main>
       <section className="hero">
         <div className="hero-content">
+          <p className="demo-context">Demonstração da plataforma AgendaFácil para {tenant.segment}</p>
           <div className="hero-tag">
             <div className="hero-tag-line"></div>
             <span>{tenant.hero.eyebrow}</span>
@@ -53,10 +55,10 @@ export default function Home({ services, professionals, loading, error, onSucces
           <p className="hero-sub">{tenant.hero.sub}</p>
           <div className="hero-btns">
             <button className="primary-button" type="button" onClick={handleStartBooking}>
-              {t.hero_cta}
+              {tenant.bookingEnabled ? t.hero_cta : "Conhecer a demonstração"}
             </button>
-            <button className="secondary-button" type="button" onClick={() => document.querySelector(".section")?.scrollIntoView({ behavior: "smooth" })}>
-              Ver serviços
+            <button className="secondary-button" type="button" onClick={handleStartBooking}>
+              {tenant.bookingEnabled ? "Ver serviços" : "Sobre a Lumière"}
             </button>
           </div>
           <div className="hero-stats">
@@ -80,10 +82,10 @@ export default function Home({ services, professionals, loading, error, onSucces
         </div>
       </section>
 
-      <section className="section">
+      {tenant.bookingEnabled && <section className="section">
         <div className="section-heading">
-          <span className="eyebrow">{t.services_eyebrow}</span>
-          <h2>{t.services_title}</h2>
+          <span className="eyebrow">{tenant.copy.servicesEyebrow}</span>
+          <h2>{tenant.copy.servicesTitle}</h2>
         </div>
         {loading && <StateMessage type="loading" title={t.services_loading} />}
         {error && (
@@ -110,12 +112,12 @@ export default function Home({ services, professionals, loading, error, onSucces
             </button>
           ))}
         </div>
-      </section>
+      </section>}
 
-      <section className="section dark">
+      {tenant.bookingEnabled && <section className="section dark">
         <div className="section-heading">
-          <span className="eyebrow">{t.professionals_eyebrow}</span>
-          <h2>{t.professionals_title}</h2>
+          <span className="eyebrow">{tenant.copy.professionalsEyebrow}</span>
+          <h2>{tenant.copy.professionalsTitle}</h2>
         </div>
         <div className="grid team-grid">
           {professionals.map((professional) => (
@@ -128,12 +130,15 @@ export default function Home({ services, professionals, loading, error, onSucces
             </article>
           ))}
         </div>
-      </section>
+      </section>}
 
       <section className="section studio-section">
         <div className="section-heading">
           <span className="eyebrow">{tenant.space.eyebrow}</span>
           <h2>{tenant.space.title}</h2>
+          {tenant.space.description?.map((paragraph) => (
+            <p className="section-description" key={paragraph}>{paragraph}</p>
+          ))}
         </div>
         <div className="studio-photo">
           <img
@@ -147,17 +152,26 @@ export default function Home({ services, professionals, loading, error, onSucces
         </div>
       </section>
 
-      <BookingFlow
+      {tenant.bookingEnabled ? <BookingFlow
         services={services}
         professionals={professionals}
         initialServiceId={selectedServiceFromHome}
         onSuccess={onSuccess}
-      />
+      /> : (
+        <section className="section demo-scope-section">
+          <div className="demo-scope">
+            <span className="eyebrow">Demonstração visual</span>
+            <h2>Lumière mostra como o AgendaFácil se adapta a outro segmento.</h2>
+            <p>O fluxo de agendamento com dados reais está disponível na demonstração Studio Cut.</p>
+            <a className="primary-link" href="/demo/studio-cut">Testar agendamento</a>
+          </div>
+        </section>
+      )}
 
       <section className="section">
         <div className="section-heading">
-          <span className="eyebrow">{t.testimonials_eyebrow}</span>
-          <h2>{t.testimonials_title}</h2>
+          <span className="eyebrow">{tenant.copy.testimonialsEyebrow}</span>
+          <h2>{tenant.copy.testimonialsTitle}</h2>
         </div>
         <div className="grid three">
           {tenant.testimonials.map((text, i) => (
@@ -172,7 +186,8 @@ export default function Home({ services, professionals, loading, error, onSucces
       <footer className="footer">
         <div>
           <span className="footer-brand">{tenant.name}</span>
-          <p className="footer-tagline">{tenant.city} · {tenant.footer.tagline}</p>
+          <p className="footer-tagline">Demonstração da plataforma AgendaFácil · {tenant.city}</p>
+          <p className="footer-tagline">{tenant.footer.tagline}</p>
         </div>
         {tenant.contact.whatsapp && (
           <a href={`https://wa.me/${tenant.contact.whatsapp}`} target="_blank" rel="noopener noreferrer">

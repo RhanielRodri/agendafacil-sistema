@@ -6,6 +6,7 @@ import { listAvailableSlots } from "../controllers/availabilityController.js";
 import { listBusinessHours } from "../controllers/businessHoursController.js";
 import { requireAdmin, makeAdminSessionToken } from "../middleware/requireAdmin.js";
 import prisma from "../prismaClient.js";
+import { resolveDemoId } from "../config/demos.js";
 
 const router = Router();
 
@@ -95,7 +96,13 @@ router.get("/appointments", requireAdmin, listAppointments);
 
 router.get("/appointments/export.csv", requireAdmin, async (req, res, next) => {
   try {
+    const demoId = resolveDemoId(req.query.demoId);
+    if (!demoId) {
+      return res.status(400).json({ message: "Demonstração inválida" });
+    }
+
     const appointments = await prisma.appointment.findMany({
+      where: { service: { demoId }, professional: { demoId } },
       include: { service: true, professional: true },
       orderBy: [{ date: "asc" }, { time: "asc" }]
     });

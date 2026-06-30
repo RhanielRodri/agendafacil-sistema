@@ -16,6 +16,7 @@ enum AppointmentStatus {
 
 model Service {
   id           Int           @id @default(autoincrement())
+  demoId       String        @default("studio-cut")
   name         String
   description  String
   duration     Int
@@ -24,10 +25,14 @@ model Service {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   appointments Appointment[]
+
+  @@unique([demoId, name])
+  @@index([demoId, active])
 }
 
 model Professional {
   id           Int           @id @default(autoincrement())
+  demoId       String        @default("studio-cut")
   name         String
   specialty    String
   photo        String
@@ -35,6 +40,9 @@ model Professional {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   appointments Appointment[]
+
+  @@unique([demoId, name])
+  @@index([demoId, active])
 }
 
 model Appointment {

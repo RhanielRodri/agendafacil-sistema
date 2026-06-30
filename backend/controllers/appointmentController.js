@@ -1,4 +1,5 @@
 import prisma from "../prismaClient.js";
+import { resolveDemoId } from "../config/demos.js";
 import {
   allowedStatuses,
   createHttpError,
@@ -42,9 +43,11 @@ async function validateAppointmentPayload(tx, payload) {
 
   const serviceId = sanitizeId(payload.serviceId);
   const professionalId = sanitizeId(payload.professionalId);
+  const demoId = resolveDemoId(payload.demoId);
 
   if (!serviceId) throw createHttpError(400, "serviceId inválido");
   if (!professionalId) throw createHttpError(400, "professionalId inválido");
+  if (!demoId) throw createHttpError(400, "Demonstração inválida");
 
   if (!isValidDateInput(payload.date)) {
     throw createHttpError(400, "Data inválida");
@@ -61,7 +64,7 @@ async function validateAppointmentPayload(tx, payload) {
   const clientFields = validateClientFields(payload);
 
   const service = await tx.service.findFirst({
-    where: { id: serviceId, active: true }
+    where: { id: serviceId, demoId, active: true }
   });
 
   if (!service) {
@@ -69,7 +72,7 @@ async function validateAppointmentPayload(tx, payload) {
   }
 
   const professional = await tx.professional.findFirst({
-    where: { id: professionalId, active: true }
+    where: { id: professionalId, demoId, active: true }
   });
 
   if (!professional) {
@@ -126,7 +129,11 @@ async function validateAppointmentPayload(tx, payload) {
 
 export async function listAppointments(req, res, next) {
   try {
+    const demoId = resolveDemoId(req.query.demoId);
+    if (!demoId) throw createHttpError(400, "Demonstração inválida");
+
     const appointments = await prisma.appointment.findMany({
+      where: { service: { demoId }, professional: { demoId } },
       include: { service: true, professional: true },
       orderBy: [{ date: "asc" }, { time: "asc" }]
     });

@@ -1,9 +1,15 @@
 import prisma from "../prismaClient.js";
+import { resolveDemoId } from "../config/demos.js";
 import { createHttpError, intervalsOverlap, isValidDateInput, minutesToTime, normalizeDate, timeToMinutes } from "./utils.js";
 
 export async function listAvailableSlots(req, res, next) {
   try {
     const { date, professionalId, serviceId } = req.query;
+    const demoId = resolveDemoId(req.query.demoId);
+
+    if (!demoId) {
+      throw createHttpError(400, "Demonstração inválida");
+    }
 
     if (!date || !professionalId || !serviceId) {
       throw createHttpError(400, "Informe date, professionalId e serviceId");
@@ -14,7 +20,7 @@ export async function listAvailableSlots(req, res, next) {
     }
 
     const service = await prisma.service.findFirst({
-      where: { id: Number(serviceId), active: true }
+      where: { id: Number(serviceId), demoId, active: true }
     });
 
     if (!service) {
@@ -22,7 +28,7 @@ export async function listAvailableSlots(req, res, next) {
     }
 
     const professional = await prisma.professional.findFirst({
-      where: { id: Number(professionalId), active: true }
+      where: { id: Number(professionalId), demoId, active: true }
     });
 
     if (!professional) {
