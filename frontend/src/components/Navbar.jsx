@@ -13,14 +13,9 @@ export default function Navbar({ onNavigate }) {
   return (
     <header className={`navbar${scrolled ? " scrolled" : ""}`}>
       <button className="navbar-brand" onClick={() => onNavigate("home")}>
-        <span className="navbar-platform">AgendaFácil</span>
-        <span className="navbar-brand-demo">Demonstração</span>
+        <span className="navbar-brand-mark" aria-hidden="true">{tenant.logo.mark}</span>
         <span className="navbar-brand-name">{tenant.name}</span>
       </button>
-      <nav className="demo-switcher" aria-label="Demonstrações AgendaFácil">
-        <a className={tenant.slug === "studio-cut" ? "active" : ""} href="/demo/studio-cut">Studio Cut</a>
-        <a className={tenant.slug === "lumiere" ? "active" : ""} href="/demo/lumiere">Lumière</a>
-      </nav>
     </header>
   );
 }

@@ -1,10 +1,22 @@
 const lumiere = {
   slug: "lumiere",
-  bookingEnabled: true,
   name: "Lumière",
   segment: "Clínica estética",
   city: "Vila Velha, ES",
   schedule: "Seg a Sáb",
+
+  logo: {
+    mark: "L",
+    background: "#c9a97a",
+    foreground: "#2c2420"
+  },
+
+  metadata: {
+    title: "Lumière | Clínica estética em Vila Velha",
+    description: "Reserve seu horário para tratamentos faciais e corporais na clínica Lumière.",
+    themeColor: "#faf8f5",
+    image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80"
+  },
 
   hero: {
     eyebrow: "Clínica estética · Vila Velha, ES",
@@ -33,6 +45,7 @@ const lumiere = {
   copy: {
     servicesEyebrow: "Tratamentos",
     servicesTitle: "Escolha o cuidado ideal para você",
+    secondaryCta: "Ver tratamentos",
     professionalsEyebrow: "Nossa equipe",
     professionalsTitle: "Especialistas em cuidar de você",
     testimonialsEyebrow: "Depoimentos",

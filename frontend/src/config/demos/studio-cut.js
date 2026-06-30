@@ -1,10 +1,22 @@
 const studioCut = {
   slug: "studio-cut",
-  bookingEnabled: true,
   name: "Studio Cut",
   segment: "Barbearia",
   city: "Vila Velha, ES",
   schedule: "Seg a Sáb",
+
+  logo: {
+    mark: "SC",
+    background: "#ffffff",
+    foreground: "#111111"
+  },
+
+  metadata: {
+    title: "Studio Cut | Barbearia em Vila Velha",
+    description: "Agende seu corte, barba ou acabamento na Studio Cut em poucos minutos.",
+    themeColor: "#111111",
+    image: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80"
+  },
 
   hero: {
     eyebrow: "Barbearia · Vila Velha, ES",
@@ -29,6 +41,7 @@ const studioCut = {
   copy: {
     servicesEyebrow: "Serviços",
     servicesTitle: "Escolha o cuidado certo para hoje",
+    secondaryCta: "Ver serviços",
     professionalsEyebrow: "Profissionais",
     professionalsTitle: "Nossa equipe",
     testimonialsEyebrow: "Depoimentos",

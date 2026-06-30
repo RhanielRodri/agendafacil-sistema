@@ -3,10 +3,13 @@ import Navbar from "./components/Navbar.jsx";
 import Home from "./pages/Home.jsx";
 import Admin from "./pages/Admin.jsx";
 import Success from "./pages/Success.jsx";
+import PlatformLanding from "./pages/PlatformLanding.jsx";
 import { api } from "./services/api.js";
-import tenant, { adminPath, demoPath } from "./config/tenant.js";
+import tenant, { adminPath, demoPath, isPlatformLanding } from "./config/tenant.js";
+import { applyMetadata, platformMetadata } from "./utils/metadata.js";
 
 function getInitialPage() {
+  if (isPlatformLanding) return "landing";
   return window.location.pathname.endsWith("/admin") ? "admin" : "home";
 }
 
@@ -31,16 +34,19 @@ export default function App() {
   }
 
   useEffect(() => {
-    document.title = `${tenant.name} · Demonstração AgendaFácil`;
-    document.querySelector('meta[name="description"]')?.setAttribute(
-      "content",
-      `${tenant.name} é uma demonstração da plataforma de agendamento AgendaFácil.`
-    );
-    if (tenant.bookingEnabled) {
-      loadData();
-    } else {
-      setLoading(false);
-    }
+    const metadata = isPlatformLanding
+      ? platformMetadata
+      : {
+          ...tenant.metadata,
+          title: page === "admin" ? `${tenant.name} | Painel administrativo` : tenant.metadata.title,
+          mark: tenant.logo.mark,
+          background: tenant.logo.background,
+          foreground: tenant.logo.foreground,
+          siteName: tenant.name
+        };
+
+    applyMetadata(metadata);
+    if (!isPlatformLanding) loadData();
   }, []);
 
   function navigate(nextPage) {
@@ -56,6 +62,10 @@ export default function App() {
 
   if (successAppointment) {
     return <Success appointment={successAppointment} onBack={() => navigate("home")} />;
+  }
+
+  if (page === "landing") {
+    return <PlatformLanding />;
   }
 
   return (

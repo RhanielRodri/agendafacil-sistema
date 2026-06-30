@@ -31,15 +31,13 @@ export default function Home({ services, professionals, loading, error, onSucces
   }
 
   function handleStartBooking() {
-    const target = tenant.bookingEnabled ? document.getElementById("agendamento") : document.querySelector(".studio-section");
-    target?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("agendamento")?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
     <main>
       <section className="hero">
         <div className="hero-content">
-          <p className="demo-context">Demonstração da plataforma AgendaFácil para {tenant.segment}</p>
           <div className="hero-tag">
             <div className="hero-tag-line"></div>
             <span>{tenant.hero.eyebrow}</span>
@@ -55,10 +53,10 @@ export default function Home({ services, professionals, loading, error, onSucces
           <p className="hero-sub">{tenant.hero.sub}</p>
           <div className="hero-btns">
             <button className="primary-button" type="button" onClick={handleStartBooking}>
-              {tenant.bookingEnabled ? t.hero_cta : "Conhecer a demonstração"}
+              {t.hero_cta}
             </button>
             <button className="secondary-button" type="button" onClick={handleStartBooking}>
-              {tenant.bookingEnabled ? "Ver serviços" : "Sobre a Lumière"}
+              {tenant.copy.secondaryCta}
             </button>
           </div>
           <div className="hero-stats">
@@ -82,7 +80,7 @@ export default function Home({ services, professionals, loading, error, onSucces
         </div>
       </section>
 
-      {tenant.bookingEnabled && <section className="section">
+      <section className="section">
         <div className="section-heading">
           <span className="eyebrow">{tenant.copy.servicesEyebrow}</span>
           <h2>{tenant.copy.servicesTitle}</h2>
@@ -112,9 +110,9 @@ export default function Home({ services, professionals, loading, error, onSucces
             </button>
           ))}
         </div>
-      </section>}
+      </section>
 
-      {tenant.bookingEnabled && <section className="section dark">
+      <section className="section dark">
         <div className="section-heading">
           <span className="eyebrow">{tenant.copy.professionalsEyebrow}</span>
           <h2>{tenant.copy.professionalsTitle}</h2>
@@ -130,7 +128,7 @@ export default function Home({ services, professionals, loading, error, onSucces
             </article>
           ))}
         </div>
-      </section>}
+      </section>
 
       <section className="section studio-section">
         <div className="section-heading">
@@ -152,21 +150,12 @@ export default function Home({ services, professionals, loading, error, onSucces
         </div>
       </section>
 
-      {tenant.bookingEnabled ? <BookingFlow
+      <BookingFlow
         services={services}
         professionals={professionals}
         initialServiceId={selectedServiceFromHome}
         onSuccess={onSuccess}
-      /> : (
-        <section className="section demo-scope-section">
-          <div className="demo-scope">
-            <span className="eyebrow">Demonstração visual</span>
-            <h2>Lumière mostra como o AgendaFácil se adapta a outro segmento.</h2>
-            <p>O fluxo de agendamento com dados reais está disponível na demonstração Studio Cut.</p>
-            <a className="primary-link" href="/demo/studio-cut">Testar agendamento</a>
-          </div>
-        </section>
-      )}
+      />
 
       <section className="section">
         <div className="section-heading">
@@ -186,14 +175,16 @@ export default function Home({ services, professionals, loading, error, onSucces
       <footer className="footer">
         <div>
           <span className="footer-brand">{tenant.name}</span>
-          <p className="footer-tagline">Demonstração da plataforma AgendaFácil · {tenant.city}</p>
-          <p className="footer-tagline">{tenant.footer.tagline}</p>
+          <p className="footer-tagline">{tenant.city} · {tenant.footer.tagline}</p>
         </div>
-        {tenant.contact.whatsapp && (
-          <a href={`https://wa.me/${tenant.contact.whatsapp}`} target="_blank" rel="noopener noreferrer">
-            WhatsApp
-          </a>
-        )}
+        <div className="footer-links">
+          {tenant.contact.whatsapp && (
+            <a href={`https://wa.me/${tenant.contact.whatsapp}`} target="_blank" rel="noopener noreferrer">
+              WhatsApp
+            </a>
+          )}
+          <a className="footer-credit" href="/">Desenvolvido com AgendaFácil</a>
+        </div>
       </footer>
     </main>
   );

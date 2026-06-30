@@ -1,59 +1,25 @@
 .navbar-brand {
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
 }
 
-.navbar-platform {
-  color: var(--text-primary);
-  font-size: 15px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-}
-
-.navbar-brand-demo {
+.navbar-brand-mark {
   display: inline-flex;
-  padding: 3px 6px;
-  border: 1px solid var(--border-strong);
-  color: var(--text-secondary);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: var(--text-primary);
+  color: var(--bg);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
 }
 
 .navbar-brand-name {
-  color: var(--text-secondary);
-  font-size: 11px;
-}
-
-.demo-switcher {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.demo-switcher a {
-  padding: 7px 10px;
-  border: 1px solid transparent;
-  color: var(--text-muted);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-decoration: none;
-  text-transform: uppercase;
-}
-
-.demo-switcher a:hover,
-.demo-switcher a.active {
-  border-color: var(--border-strong);
   color: var(--text-primary);
-}
-
-.demo-context {
-  margin: 0 0 16px;
-  color: var(--text-secondary);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: 13px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -65,23 +31,16 @@
   line-height: 1.65;
 }
 
-.demo-scope {
-  max-width: 760px;
-  padding: 32px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+.footer-credit {
+  color: var(--text-muted);
+  font-size: 10px;
+  letter-spacing: 0.04em;
 }
 
-.demo-scope h2 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: clamp(1.5rem, 4vw, 2.2rem);
-  line-height: 1.15;
-}
-
-.demo-scope p {
-  margin: 16px 0 24px;
-  color: var(--text-secondary);
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 :root[data-demo="lumiere"] {
@@ -106,6 +65,23 @@
 
 :root[data-demo="lumiere"] .navbar.scrolled {
   background: rgba(250, 248, 245, 0.95);
+}
+
+:root[data-demo="lumiere"] .navbar-brand-mark {
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+:root[data-demo="lumiere"] .navbar-brand-name {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: none;
 }
 
 :root[data-demo="lumiere"] .hero h1,
@@ -133,8 +109,7 @@
 :root[data-demo="lumiere"] .service-card,
 :root[data-demo="lumiere"] .professional-card,
 :root[data-demo="lumiere"] .testimonial-card,
-:root[data-demo="lumiere"] .studio-photo,
-:root[data-demo="lumiere"] .demo-scope {
+:root[data-demo="lumiere"] .studio-photo {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
 }
@@ -167,17 +142,8 @@
   }
 
   .navbar-brand {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .navbar-brand-demo {
-    display: none;
-  }
-
-  .demo-switcher a {
-    padding-inline: 6px;
-    font-size: 9px;
+    align-items: center;
+    flex-direction: row;
+    gap: 10px;
   }
 }

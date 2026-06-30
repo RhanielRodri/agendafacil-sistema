@@ -10,8 +10,8 @@ import tenant from "../config/tenant.js";
 function AdminScreenHeader() {
   return (
     <div className="admin-screen-header">
-      <div className="admin-screen-brand">AgendaFácil</div>
-      <span className="admin-screen-badge">{tenant.name}</span>
+      <div className="admin-screen-brand">{tenant.name}</div>
+      <span className="admin-screen-badge">Painel</span>
     </div>
   );
 }
