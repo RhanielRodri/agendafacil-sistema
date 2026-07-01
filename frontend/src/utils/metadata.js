@@ -1,11 +1,11 @@
 export const platformMetadata = {
   title: "AgendaFácil | Sistema de agendamento para pequenos negócios",
   description: "Organize serviços, profissionais, horários e atendimentos com uma página de agendamento e painel administrativo.",
-  themeColor: "#081225",
+  themeColor: "#2D6A4F",
   image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80",
   mark: "AF",
-  background: "#081225",
-  foreground: "#ffffff",
+  background: "#2D6A4F",
+  foreground: "#FAF6F0",
   siteName: "AgendaFácil"
 };
 
