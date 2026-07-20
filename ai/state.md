@@ -3,9 +3,9 @@ project: AgendaFácil
 updated_at: 2026-07-20
 review_at: 2026-07-23
 status: active
-current_phase: null
+current_phase: A3A_concluida
 technical_baseline:
-  commit: 35182e9
+  commit: b80ce5c
   validation_status: partial
   validated_at: 2026-07-20
   validated:
@@ -38,17 +38,26 @@ technical_baseline:
     - "A2: nenhuma resposta expõe passwordHash ou tokenHash"
     - "A2: autenticação antiga removida (ADMIN_SECRET, HMAC admin-session-v1, tenant admin por query param)"
     - "A2: suíte de integração de auth com 20 casos + 7 de isolamento público, 27/27 verdes"
+    - "A3A: ProfessionalSchedule com múltiplos intervalos por dia, validação e constraint anti-sobreposição"
+    - "A3A: ScheduleBlock global ou por profissional, parcial ou dia inteiro, com proteção cross-tenant no banco"
+    - "A3A: disponibilidade centralizada por negócio, profissional, bloqueios, duração e agendamentos"
+    - "A3A: rotas admin isoladas pela sessão e painel mínimo validado em Studio Cut e Lumière"
+    - "A3A: 54/54 testes, prisma generate, migrate status e vite build verdes"
   not_validated:
-    - "conclusão visual das telas de login/painel pelo navegador (harness instável; validado por API, testes e build)"
-    - "saúde da API e do banco em produção (validação A2 foi exclusivamente local)"
-    - "aplicação das migrations tenant_foundation e admin_auth em produção (feitas só no local)"
+    - "saúde da API e do banco em produção (validação A3A foi exclusivamente local)"
+    - "aplicação das migrations A0-A3A em produção (feitas só no local)"
+    - "confirmação, cancelamento e reagendamento públicos (escopo A3B)"
   evidence:
     - "A2 em 2026-07-20: prisma migrate deploy (admin_auth) no banco Docker local; seed criou 1 admin por tenant (scrypt, hashes distintos)"
     - "A2: npm test → 27/27 verdes (tests/auth.test.js 20 + tests/tenant.test.js 7)"
     - "A2: prova ao vivo por curl — login Studio 200 (cookie HttpOnly, Path=/, SameSite=Lax, sem Secure em dev); /admin/me=studio; leitura/alteração de ID Lumière → 404; ?demoId=lumiere ignorado; CSV só Studio; sem cookie → 401; senha errada → 401; logout revoga (reuso → 401)"
     - "A2: vite build (3 entradas) e prisma generate sem erro; migrate status sem drift"
     - "A2 baseline em 35182e9 — feat: implementa autenticação por tenant"
-source: A2 executada na branch de preservação em 2026-07-20 (banco local Docker isolado)
+    - "A3A: migrations professional_schedules + hardenings aplicadas só no PostgreSQL Docker local; 35 intervalos, 6 bloqueios novos e 2 legados; zero órfãos, sobreposições, intervalos inválidos ou dados cross-tenant"
+    - "A3A: npm test → 54/54; painel Studio Cut e Lumière em 1280 px e 375 px, sem overflow ou erro de console; criar/remover bloqueio pela UI funcionou"
+    - "A3A: jornadas ao vivo — pausas e bloqueios específicos respeitados, outro profissional disponível, criações 201 persistidas e conflito por duração 409"
+    - "A3A baseline em b80ce5c — feat: implementa agenda individual e bloqueios"
+source: A3A executada na branch de preservação em 2026-07-20 (banco local Docker isolado)
 source_of_truth: .
 ---
 
@@ -56,59 +65,45 @@ source_of_truth: .
 
 ## Último resultado confirmado
 
-Fase A2 — autenticação administrativa real — concluída em 2026-07-20, na branch
+Fase A3A — agenda individual, bloqueios por intervalo e disponibilidade —
+concluída em 2026-07-20, na branch
 `preserve/agendafacil-local-2026-07-20`, exclusivamente no banco Docker local
 (`agendafacil_dev`, porta 5433), sem qualquer efeito remoto.
 
-A senha global `ADMIN_SECRET` e o token HMAC determinístico foram substituídos
-por autenticação real. Novos modelos: `AdminUser` (usuário nomeado, único por
-`tenantId+email`, senha com hash) e `AdminSession` (guarda só o `sha256` do
-token, com `expiresAt` e `revokedAt`). A senha usa `scrypt` nativo, com salt por
-usuário, parâmetros versionados no próprio hash e comparação `timingSafeEqual`;
-nunca é gravada nem registrada em texto puro. O token de sessão é aleatório
-(`base64url`), enviado só no cookie `HttpOnly`; o servidor nunca guarda o token
-bruto.
+`ProfessionalSchedule` passou a representar múltiplos intervalos por
+profissional e dia, sempre vinculados ao mesmo tenant. Constraints validam dia,
+horas, duplicidade e sobreposição, inclusive em intervalos inativos.
+`ScheduleBlock` representa bloqueio do tenant ou de um profissional, parcial ou
+de dia inteiro; a API valida o intervalo e o banco impede vínculo cross-tenant.
 
-O tenant administrativo passou a vir **exclusivamente da sessão**
-(`req.auth.tenantId`). As rotas administrativas (listagem, leitura por ID,
-mudança de status, CSV) deixaram de aceitar `demoId`/`tenantId` do cliente como
-autoridade. Login é por vertical (`/studio-cut/admin`, `/lumiere/admin`), com
-email+senha, resposta genérica para usuário inexistente/inativo/senha errada e
-rate limit por IP+email. `GET /admin/me` expõe apenas `tenantId`, `email` e
-`name`. O logout revoga a sessão no servidor; sessão expirada ou revogada é
-rejeitada mesmo com o cookie reenviado.
+O motor de disponibilidade foi centralizado e agora calcula a interseção entre
+`BusinessHours` e a agenda individual, descontando `ScheduleBlock`,
+`BlockedDate` legado e agendamentos não cancelados. A mesma lógica protege a
+consulta pública e a criação transacional do agendamento, incluindo duração,
+pausas e fechamento. A operação de primeira disponibilidade agrega os
+profissionais ativos sem alterar o contrato atual de `available-slots`.
 
-A migration versionada `20260720130000_admin_auth` (só banco local) cria as duas
-tabelas; o seed cria um admin por tenant de forma idempotente, a partir de
-variáveis locais ignoradas pelo Git. A autenticação antiga (`ADMIN_SECRET`,
-HMAC `admin-session-v1`, tenant por query param) foi removida do código ativo.
+O painel atual ganhou somente os controles necessários para listar, criar,
+editar e remover horários, além de listar, criar e remover bloqueios globais ou
+individuais. As rotas administrativas derivam tenant exclusivamente de
+`req.auth.tenantId`; IDs e profissionais de outro tenant retornam `404`.
 
-Isolamento e sessão provados por suíte de integração (`node:test`, 27/27 — 20 de
-auth + 7 de isolamento público) e por checagem ao vivo com curl: admin de um
-tenant não lê nem altera ID do outro (404), `?demoId=lumiere` é ignorado sob
-sessão Studio, CSV traz só o tenant autenticado, logout revoga (reuso → 401),
-sem cookie → 401, senha errada → 401, e nenhuma resposta expõe `passwordHash` ou
-`tokenHash`.
+As três migrations A3A foram aplicadas somente no banco local. O seed final tem
+6 profissionais, 35 intervalos, 6 bloqueios novos, 2 bloqueios legados e 4
+agendamentos. Não há órfãos, sobreposições, intervalos inválidos ou dados
+cross-tenant. Studio Cut e Lumière foram percorridos por API e navegador; o
+painel passou em 1280 px e 375 px, sem overflow ou erro de console.
 
 Nada foi publicado. `main` permanece em `ad95e6d`, sem merge e sem push.
 
-### Ressalva — validação de UI pelo navegador
-
-As telas (login com email, painel, tela de painel incorreto) não foram
-exercitadas pelo navegador por instabilidade do harness, não por defeito do app.
-Foram cobertas em nível de contrato/API, pelos 27 testes de integração e pelo
-`vite build` sem erro. A troca de vertical com sessão de outro tenant é barrada
-pelo bootstrap `/admin/me` no frontend e pelo tenant-da-sessão no backend.
-
 ## Baseline técnica
 
-`35182e9` — `feat: implementa autenticação por tenant` —, com
-`validation_status: partial`. Substitui `b12610a` para o escopo listado no
-frontmatter: autenticação real, sessões revogáveis e tenant derivado da
-identidade foram exercitados em banco local isolado (migration, seed, 27 testes,
-provas ao vivo). Segue `partial`, não `validated`, por lacunas reais: a UI não
-foi percorrida pelo navegador e nada foi validado em produção — a A2 foi
-exclusivamente local.
+`b80ce5c` — `feat: implementa agenda individual e bloqueios` —, com
+`validation_status: partial`. Substitui `35182e9` para o escopo listado no
+frontmatter: migrations, backfill, motor, APIs, painel, 54 testes, builds e
+jornadas Studio Cut/Lumière foram exercitados no ambiente local isolado. Segue
+`partial`, não `validated`, porque nada da A3A foi aplicado ou validado em
+produção.
 
 `ad95e6d` continua sendo o último commit em `main` e o único código publicado
 em produção.
@@ -116,12 +111,12 @@ em produção.
 ## git_snapshot
 
 ```text
-observed_at: 2026-07-20 (fase A2)
+observed_at: 2026-07-20 (fase A3A)
 branch: preserve/agendafacil-local-2026-07-20
-head_at_observation: 35182e9 (feat A2; o commit documental deste estado será o HEAD seguinte)
+head_at_observation: b80ce5c (feat A3A; o commit documental deste estado será o HEAD seguinte)
 base: ad95e6d
 main: ad95e6d (intacta, sem merge)
-working_tree: limpa após o commit feat A2, antes do commit documental
+working_tree: limpa após o commit feat A3A, antes do commit documental
 producao: inalterada
 ```
 
@@ -130,8 +125,8 @@ deste estado for criado, e isso é correto.
 
 ## Trabalho em andamento
 
-Nenhum. A A2 está concluída e validada localmente. A próxima fase é A3 —
-bloqueio por intervalo e agenda por profissional — e só começa sob pedido
+Nenhum. A A3A está concluída e validada localmente. A próxima fase é A3B —
+confirmação, cancelamento e reagendamento públicos — e só começa sob pedido
 explícito.
 
 ## Bloqueios
@@ -141,12 +136,20 @@ Nenhum bloqueio de ambiente: o banco local isolado está saudável e semeado, e
 evolução local:
 
 - Saúde da API e do banco em produção não foi validada nesta fase.
-- As migrations `tenant_foundation` e `admin_auth` **não** foram aplicadas em
-  Render/produção; ao promover, aplicar na ordem com os planos de reversão em
+- As migrations A0-A3A **não** foram aplicadas em Render/produção; ao promover,
+  aplicar na ordem com os planos de reversão em
   `backend/prisma/migrations/*/ROLLBACK.md`. Em produção, criar os `AdminUser`
   reais por variável de ambiente (nunca senha versionada).
 
 ## Riscos
+
+Resolvidos pela A3A (não são mais bloqueadores):
+
+- ~~Ausência de bloqueio por intervalo~~ — `ScheduleBlock` global ou por
+  profissional, parcial ou de dia inteiro.
+- ~~Ausência de agenda individual por profissional~~ — múltiplos intervalos por
+  dia, sem duplicidade ou sobreposição.
+- ~~Disponibilidade duplicada entre consulta e criação~~ — motor centralizado.
 
 Resolvidos pela A2 (não são mais bloqueadores):
 
@@ -167,8 +170,6 @@ Resolvidos antes, pela A1:
 
 Pendências de fases posteriores:
 
-- **Ausência de bloqueio por intervalo** — só dia inteiro (A3).
-- **Ausência de agenda individual por profissional** (A3).
 - **Ausência de `Lead`, `Client`** no schema (fases futuras).
 - **Ausência de confirmação, cancelamento e reagendamento públicos.**
 - **Ausência de `NO_SHOW`** no enum de status.
@@ -258,13 +259,31 @@ Acrescentadas pela A2 (autenticação por tenant, banco local Docker, 2026-07-20
 - Nenhuma resposta expõe `passwordHash` nem `tokenHash`.
 - Suíte de integração 27/27 verde (`tests/auth.test.js` 20 + `tests/tenant.test.js` 7).
 
+Acrescentadas pela A3A (agenda e disponibilidade, banco local Docker, 2026-07-20):
+
+- Migrations A3A aplicadas somente no banco local; `migrate status` sem drift.
+- Backfill de agenda por profissional e compatibilidade de leitura com
+  `BlockedDate`; bloqueios antigos preservados como dia inteiro.
+- Banco final: 6 profissionais, 35 intervalos, 6 `ScheduleBlock`, 2
+  `BlockedDate` legados e 4 agendamentos; zero órfãos, dados cross-tenant,
+  sobreposições ou bloqueios inválidos.
+- Motor único respeitando horário geral, agenda individual, pausas, bloqueios,
+  duração, agendamentos existentes e fechamento.
+- CRUD administrativo de horários e bloqueios protegido por sessão; IDs
+  cross-tenant retornam `404`; tenant enviado no body não substitui a sessão.
+- `available-slots` compatível e `first-availability` agregado por data.
+- Suíte completa `node:test` 54/54 verde; `prisma generate`, validação de sintaxe
+  e `vite build` sem erro.
+- Studio Cut e Lumière exercitados com jornadas distintas, bloqueio global e
+  específico, criação persistida e conflito por duração `409`.
+- Painel validado em 1280 px e 375 px nas duas verticais: horários visíveis,
+  criar/remover bloqueio pela UI, sem overflow ou erro de console.
+
 ## Validações não executadas
 
-- Conclusão visual das telas de login/painel pelo navegador (harness instável;
-  coberta por API, 27 testes e build).
 - Saúde da API e do banco em produção.
-- Aplicação das migrations `tenant_foundation` e `admin_auth` em produção
-  (feitas só no local).
+- Aplicação das migrations A0-A3A em produção (feitas só no local).
+- Confirmação, cancelamento e reagendamento públicos (A3B).
 
 ## Divergências entre documentação e código
 
@@ -276,9 +295,9 @@ Acrescentadas pela A2 (autenticação por tenant, banco local Docker, 2026-07-20
 
 ## Próxima ação registrada
 
-Iniciar **A3 — bloqueio por intervalo e agenda individual por profissional**,
+Iniciar **A3B — confirmação, cancelamento e reagendamento públicos**,
 sob pedido explícito, evoluindo na branch `preserve/agendafacil-local-2026-07-20`,
-sem integrar em `main`. A A3 deve tratar bloqueios por faixa de horário (não só
-dia inteiro) e disponibilidade por profissional, mantendo o isolamento por
-tenant e a autenticação da A2. Uma fase por vez: concluir a A2 não autoriza a
-A3.
+sem integrar em `main`. A A3B deve reutilizar o motor da A3A, preservar a
+transação serializável e definir transições de status e autoridade dos links
+públicos sem expor dados administrativos. Uma fase por vez: concluir a A3A não
+autoriza a A3B.
