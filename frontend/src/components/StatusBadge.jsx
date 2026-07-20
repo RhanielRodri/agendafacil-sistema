@@ -1,10 +1,11 @@
 import React from "react";
 
 const labels = {
-  NEW: "Novo",
+  PENDING: "Pendente",
   CONFIRMED: "Confirmado",
   COMPLETED: "Concluído",
-  CANCELLED: "Cancelado"
+  CANCELLED: "Cancelado",
+  NO_SHOW: "Não compareceu"
 };
 
 export default function StatusBadge({ status }) {

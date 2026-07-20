@@ -41,7 +41,10 @@ app.use((error, req, res, next) => {
   if (status === 500) console.error("[ERROR]", error);
 
   res.status(status).json({
-    message: status === 500 ? "Erro interno do servidor" : error.message
+    message: status === 500 ? "Erro interno do servidor" : error.message,
+    ...(typeof error.code === "string" && error.code.startsWith("TOKEN_")
+      ? { code: error.code }
+      : {})
   });
 });
 

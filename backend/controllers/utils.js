@@ -1,4 +1,4 @@
-export const allowedStatuses = ["NEW", "CONFIRMED", "COMPLETED", "CANCELLED"];
+export const allowedStatuses = ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"];
 
 export function createHttpError(status, message) {
   const error = new Error(message);

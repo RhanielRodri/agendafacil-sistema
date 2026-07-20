@@ -402,7 +402,7 @@
   text-transform: uppercase;
 }
 
-.badge.new {
+.badge.pending {
   background: var(--accent-muted);
   color: var(--accent);
   border: 1px solid rgba(200, 135, 74, 0.25);
@@ -445,6 +445,82 @@
 .compact-row span {
   color: var(--text-on-light-muted);
   font-size: 0.82rem;
+}
+
+.badge.no_show {
+  background: rgba(120, 90, 150, 0.12);
+  color: #765594;
+  border: 1px solid rgba(120, 90, 150, 0.25);
+}
+
+.appointment-admin-actions {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+}
+
+.appointment-admin-actions label {
+  display: grid;
+  gap: 5px;
+  color: var(--text-on-light-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.appointment-admin-actions input {
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-on-light);
+  font: inherit;
+  text-transform: none;
+}
+
+.appointment-admin-actions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.appointment-admin-actions button,
+.history-toggle {
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-on-light-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.history-toggle {
+  justify-self: start;
+}
+
+.appointment-history {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 12px 12px 30px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+}
+
+.appointment-history li {
+  color: var(--text-on-light-muted);
+  font-size: 0.78rem;
+}
+
+.appointment-history li strong,
+.appointment-history li span {
+  display: block;
 }
 
 .admin-grid-settings {

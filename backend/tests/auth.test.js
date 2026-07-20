@@ -55,6 +55,8 @@ async function api(path, { method = "GET", cookie, body } = {}) {
 before(async () => {
   await prisma.adminSession.deleteMany();
   await prisma.adminUser.deleteMany();
+  await prisma.appointmentAccessToken.deleteMany();
+  await prisma.appointmentHistoryEvent.deleteMany();
   await prisma.appointment.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.professionalSchedule.deleteMany();
@@ -201,7 +203,7 @@ test("15. admin Studio Cut não altera ID Lumière", async () => {
   const res = await api(`/appointments/${fx.lumiereAppt.id}/status`, { method: "PATCH", cookie: studioCookie, body: { status: "CANCELLED" } });
   assert.equal(res.status, 404);
   const still = await prisma.appointment.findUnique({ where: { id: fx.lumiereAppt.id } });
-  assert.equal(still.status, "NEW");
+  assert.equal(still.status, "PENDING");
 });
 
 test("16. admin Lumière não lê dados Studio Cut", async () => {

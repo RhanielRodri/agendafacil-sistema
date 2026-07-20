@@ -1,9 +1,30 @@
-import React from "react";
+import React, { useState } from "react";
 import { formatDate } from "../utils/format.js";
 import { useTranslation } from "../i18n/I18nContext.jsx";
 
 export default function Success({ appointment, onBack }) {
   const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+
+  async function copyManagementLink() {
+    const url = new URL(appointment.managementPath, window.location.origin).toString();
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const input = document.createElement("textarea");
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      input.remove();
+    }
+    setCopied(true);
+  }
+
+  function openManagement() {
+    window.history.replaceState({}, "", appointment.managementPath);
+    window.location.reload();
+  }
 
   return (
     <main className="success-page">
@@ -17,6 +38,14 @@ export default function Success({ appointment, onBack }) {
           <span>{appointment.professional.name}</span>
           <span>{formatDate(appointment.date)} {t.at} {appointment.time}</span>
           <span>{appointment.clientName}</span>
+        </div>
+        <div className="success-management">
+          <strong>Guarde seu link de gestão</strong>
+          <p>Ele permite visualizar, confirmar, cancelar ou reagendar sem criar uma conta.</p>
+          <button className="primary-button" type="button" onClick={openManagement}>Abrir meu agendamento</button>
+          <button className="secondary-button" type="button" onClick={copyManagementLink}>
+            {copied ? "Link copiado" : "Copiar link"}
+          </button>
         </div>
         <button className="primary-button" onClick={onBack}>
           {t.success_back}

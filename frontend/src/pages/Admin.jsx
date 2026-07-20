@@ -202,6 +202,9 @@ export default function Admin({ services, professionals }) {
   const [errorMsg, setErrorMsg] = useState("");
   const [foreignTenant, setForeignTenant] = useState(null);
   const [statusChangeError, setStatusChangeError] = useState("");
+  const [statusChangeSuccess, setStatusChangeSuccess] = useState("");
+  const [historyByAppointment, setHistoryByAppointment] = useState({});
+  const [historyLoadingId, setHistoryLoadingId] = useState(null);
   const [dateFilter, setDateFilter] = useState("");
   const [schedules, setSchedules] = useState([]);
   const [blocks, setBlocks] = useState([]);
@@ -310,11 +313,36 @@ export default function Admin({ services, professionals }) {
     }
   }, [professionals, scheduleForm.professionalId]);
 
-  function handleStatusChange(id, newStatus) {
+  async function handleStatusChange(id, newStatus, reason) {
     setStatusChangeError("");
-    api.updateAppointmentStatus(id, newStatus)
-      .then(loadAppointments)
-      .catch((err) => setStatusChangeError(err.message));
+    setStatusChangeSuccess("");
+    try {
+      const updated = await api.updateAppointmentStatus(id, newStatus, reason);
+      setAppointments((current) => current.map((appointment) =>
+        appointment.id === id ? updated : appointment
+      ));
+      setHistoryByAppointment((current) => ({ ...current, [id]: undefined }));
+      setStatusChangeSuccess("Status atualizado com sucesso.");
+    } catch (err) {
+      setStatusChangeError(err.message);
+    }
+  }
+
+  async function handleViewHistory(id) {
+    if (historyByAppointment[id]) {
+      setHistoryByAppointment((current) => ({ ...current, [id]: undefined }));
+      return;
+    }
+    setStatusChangeError("");
+    setHistoryLoadingId(id);
+    try {
+      const history = await api.getAppointmentHistory(id);
+      setHistoryByAppointment((current) => ({ ...current, [id]: history }));
+    } catch (err) {
+      setStatusChangeError(err.message);
+    } finally {
+      setHistoryLoadingId(null);
+    }
   }
 
   function handleLogout() {
@@ -438,6 +466,11 @@ export default function Admin({ services, professionals }) {
             {statusChangeError}
           </StateMessage>
         )}
+        {statusChangeSuccess && (
+          <StateMessage type="success" title="Alteração concluída">
+            {statusChangeSuccess}
+          </StateMessage>
+        )}
         {settingsError && (
           <StateMessage type="error" title="Erro na agenda">
             {settingsError}
@@ -454,8 +487,8 @@ export default function Admin({ services, professionals }) {
             <strong className="metric-value success">{metrics.byStatus.CONFIRMED || 0}</strong>
           </article>
           <article>
-            <span className="metric-label">Novos</span>
-            <strong className="metric-value warning">{metrics.byStatus.NEW || 0}</strong>
+            <span className="metric-label">Pendentes</span>
+            <strong className="metric-value warning">{metrics.byStatus.PENDING || 0}</strong>
           </article>
           <article>
             <span className="metric-label">Próximos 7 dias</span>
@@ -475,6 +508,9 @@ export default function Admin({ services, professionals }) {
                   key={a.id}
                   appointment={a}
                   onStatusChange={handleStatusChange}
+                  onViewHistory={handleViewHistory}
+                  history={historyByAppointment[a.id]}
+                  historyLoading={historyLoadingId === a.id}
                 />
               ))}
             </div>
@@ -534,6 +570,9 @@ export default function Admin({ services, professionals }) {
                   key={a.id}
                   appointment={a}
                   onStatusChange={handleStatusChange}
+                  onViewHistory={handleViewHistory}
+                  history={historyByAppointment[a.id]}
+                  historyLoading={historyLoadingId === a.id}
                 />
               ))}
             </div>

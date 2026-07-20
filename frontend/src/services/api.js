@@ -15,13 +15,14 @@ async function request(path, options = {}) {
     throw new Error("Serviço temporariamente indisponível");
   }
 
+  const { headers, ...requestOptions } = options;
   const response = await fetch(`${API_URL}${path}`, {
+    ...requestOptions,
     headers: {
       "Content-Type": "application/json",
-      ...options.headers
+      ...headers
     },
-    credentials: "include",
-    ...options
+    credentials: "include"
   }).catch(() => {
     throw new Error("Serviço temporariamente indisponível");
   });
@@ -34,6 +35,7 @@ async function request(path, options = {}) {
       : data?.message || "Não foi possível concluir a solicitação";
     const error = new Error(message);
     error.status = response.status;
+    error.code = data?.code;
     throw error;
   }
 
@@ -59,6 +61,32 @@ export const api = {
       body: JSON.stringify({ ...payload, demoId })
     });
   },
+  getManagedAppointment: (token) =>
+    request(`/public/appointment?${getBusinessQuery()}`, {
+      headers: { "X-Appointment-Token": token }
+    }),
+  confirmManagedAppointment: (token) =>
+    request(`/public/appointment/confirm?${getBusinessQuery()}`, {
+      method: "POST",
+      headers: { "X-Appointment-Token": token },
+      body: JSON.stringify({})
+    }),
+  cancelManagedAppointment: (token, reason) =>
+    request(`/public/appointment/cancel?${getBusinessQuery()}`, {
+      method: "POST",
+      headers: { "X-Appointment-Token": token },
+      body: JSON.stringify({ reason })
+    }),
+  getRescheduleAvailability: ({ token, date, professionalId }) =>
+    request(`/public/appointment/reschedule-availability?date=${encodeURIComponent(date)}&professionalId=${encodeURIComponent(professionalId)}&${getBusinessQuery()}`, {
+      headers: { "X-Appointment-Token": token }
+    }),
+  rescheduleManagedAppointment: (token, payload) =>
+    request(`/public/appointment/reschedule?${getBusinessQuery()}`, {
+      method: "POST",
+      headers: { "X-Appointment-Token": token },
+      body: JSON.stringify(payload)
+    }),
 
   // Administrativas — tenant derivado da sessão; nada de demoId como autoridade.
   adminLogin: (email, password) => {
@@ -104,10 +132,11 @@ export const api = {
     }),
   deleteScheduleBlock: (id) =>
     request(`/admin/schedule-blocks/${id}`, { method: "DELETE" }),
-  updateAppointmentStatus: (id, status) =>
+  updateAppointmentStatus: (id, status, reason) =>
     request(`/appointments/${id}/status`, {
       method: "PATCH",
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ status, reason })
     }),
+  getAppointmentHistory: (id) => request(`/appointments/${id}/history`),
   getExportUrl: () => `${API_URL}/appointments/export.csv`
 };

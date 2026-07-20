@@ -41,3 +41,27 @@
   color: var(--text-muted);
   font-size: 13px;
 }
+
+.success-management {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+  padding: 18px;
+  border: 0.5px solid var(--border);
+}
+
+.success-management strong {
+  color: var(--text-primary);
+}
+
+.success-management p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.success-management .primary-button,
+.success-management .secondary-button {
+  text-align: center;
+  text-decoration: none;
+}

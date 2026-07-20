@@ -4,12 +4,15 @@ import Home from "./pages/Home.jsx";
 import Admin from "./pages/Admin.jsx";
 import Success from "./pages/Success.jsx";
 import PlatformLanding from "./pages/PlatformLanding.jsx";
+import ManageAppointment from "./pages/ManageAppointment.jsx";
 import { api } from "./services/api.js";
 import tenant, { adminPath, currentRoute, homePath, isNeutralRoute } from "./config/tenant.js";
 import { applyMetadata, rootMetadata } from "./utils/metadata.js";
 
 export default function App() {
-  const [page, setPage] = useState(currentRoute.page);
+  const initialManagementToken = new URLSearchParams(window.location.hash.slice(1)).get("agendamento") || "";
+  const [managementToken, setManagementToken] = useState(initialManagementToken);
+  const [page, setPage] = useState(managementToken ? "manage" : currentRoute.page);
   const [services, setServices] = useState([]);
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(!isNeutralRoute);
@@ -49,10 +52,26 @@ export default function App() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    function syncManagementRoute() {
+      const token = new URLSearchParams(window.location.hash.slice(1)).get("agendamento") || "";
+      setManagementToken(token);
+      if (token) setPage("manage");
+    }
+
+    window.addEventListener("hashchange", syncManagementRoute);
+    window.addEventListener("popstate", syncManagementRoute);
+    return () => {
+      window.removeEventListener("hashchange", syncManagementRoute);
+      window.removeEventListener("popstate", syncManagementRoute);
+    };
+  }, []);
+
   function navigate(nextPage) {
     if (!tenant) return;
 
     setSuccessAppointment(null);
+    setManagementToken("");
     setPage(nextPage);
     window.history.pushState({}, "", nextPage === "admin" ? adminPath : homePath);
   }
@@ -68,6 +87,16 @@ export default function App() {
 
   if (successAppointment) {
     return <Success appointment={successAppointment} onBack={() => navigate("home")} />;
+  }
+
+  if (page === "manage") {
+    return (
+      <ManageAppointment
+        token={managementToken}
+        professionals={professionals}
+        onBack={() => navigate("home")}
+      />
+    );
   }
 
   return (

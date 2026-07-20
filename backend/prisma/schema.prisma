@@ -8,10 +8,32 @@ datasource db {
 }
 
 enum AppointmentStatus {
-  NEW
+  PENDING
   CONFIRMED
   COMPLETED
   CANCELLED
+  NO_SHOW
+}
+
+enum AppointmentHistoryType {
+  CREATED
+  CONFIRMED
+  CANCELLED
+  RESCHEDULED_FROM
+  RESCHEDULED_TO
+  COMPLETED
+  NO_SHOW
+  STATUS_CHANGED
+}
+
+enum AppointmentActorType {
+  ADMIN
+  CUSTOMER
+  SYSTEM
+}
+
+enum AppointmentTokenPurpose {
+  MANAGE
 }
 
 model Tenant {
@@ -29,6 +51,8 @@ model Tenant {
   professionalSchedules ProfessionalSchedule[]
   scheduleBlocks        ScheduleBlock[]
   adminUsers            AdminUser[]
+  appointmentHistory    AppointmentHistoryEvent[]
+  appointmentTokens     AppointmentAccessToken[]
 }
 
 model AdminUser {
@@ -98,25 +122,67 @@ model Professional {
 }
 
 model Appointment {
-  id             Int               @id @default(autoincrement())
-  tenantId       String            @map("demoId")
-  serviceId      Int
-  professionalId Int
-  clientName     String
-  clientPhone    String
-  clientEmail    String?
-  date           DateTime          @db.Date
-  time           String
-  status         AppointmentStatus @default(NEW)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  tenant         Tenant            @relation(fields: [tenantId], references: [slug])
-  service        Service           @relation(fields: [serviceId], references: [id])
-  professional   Professional      @relation(fields: [professionalId], references: [id])
+  id                  Int                       @id @default(autoincrement())
+  tenantId            String                    @map("demoId")
+  serviceId           Int
+  professionalId      Int
+  clientName          String
+  clientPhone         String
+  clientEmail         String?
+  date                DateTime                  @db.Date
+  time                String
+  status              AppointmentStatus         @default(PENDING)
+  cancellationReason  String?                   @db.VarChar(300)
+  rescheduledFromId   Int?                      @unique
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  tenant              Tenant                    @relation(fields: [tenantId], references: [slug])
+  service             Service                   @relation(fields: [serviceId], references: [id])
+  professional        Professional              @relation(fields: [professionalId], references: [id])
+  rescheduledFrom     Appointment?              @relation("AppointmentReschedule", fields: [rescheduledFromId], references: [id])
+  rescheduledTo       Appointment?              @relation("AppointmentReschedule")
+  historyEvents       AppointmentHistoryEvent[]
+  accessTokens        AppointmentAccessToken[]
 
-  @@unique([professionalId, date, time])
+  @@unique([id, tenantId])
   @@index([tenantId, date])
   @@index([date, professionalId])
+  @@index([professionalId, date, time])
+  @@index([tenantId, status, date])
+}
+
+model AppointmentHistoryEvent {
+  id            Int                    @id @default(autoincrement())
+  tenantId      String
+  appointmentId Int
+  type          AppointmentHistoryType
+  fromStatus    AppointmentStatus?
+  toStatus      AppointmentStatus?
+  metadata      Json?
+  actorType     AppointmentActorType
+  actorId       Int?
+  createdAt     DateTime               @default(now())
+  tenant        Tenant                 @relation(fields: [tenantId], references: [slug])
+  appointment   Appointment            @relation(fields: [appointmentId, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  @@index([tenantId, appointmentId, createdAt])
+}
+
+model AppointmentAccessToken {
+  id            Int                     @id @default(autoincrement())
+  tenantId      String
+  appointmentId Int
+  tokenHash     String                  @unique @db.Char(64)
+  purpose       AppointmentTokenPurpose @default(MANAGE)
+  expiresAt     DateTime
+  usedAt        DateTime?
+  revokedAt     DateTime?
+  createdAt     DateTime                @default(now())
+  tenant        Tenant                  @relation(fields: [tenantId], references: [slug])
+  appointment   Appointment             @relation(fields: [appointmentId, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  @@index([tenantId, appointmentId])
+  @@index([expiresAt])
 }
 
 model BusinessHours {

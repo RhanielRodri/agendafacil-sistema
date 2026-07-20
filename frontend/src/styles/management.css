@@ -1,0 +1,166 @@
+.manage-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.manage-panel {
+  width: min(620px, 100%);
+  padding: 36px;
+  border: 0.5px solid var(--border);
+  background: var(--surface);
+}
+
+.manage-panel h1,
+.manage-panel h2 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.manage-panel h1 {
+  font-size: clamp(1.8rem, 6vw, 2.4rem);
+  text-transform: uppercase;
+}
+
+.manage-panel h2 {
+  font-size: 1.15rem;
+}
+
+.manage-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 10px 0 20px;
+}
+
+.manage-summary {
+  margin-bottom: 20px;
+}
+
+.manage-actions,
+.manage-form,
+.manage-form label {
+  display: grid;
+  gap: 12px;
+}
+
+.manage-form {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 0.5px solid var(--border);
+}
+
+.manage-form label,
+.manage-form legend {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.manage-form input,
+.manage-form select,
+.manage-form textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0.5px solid var(--border);
+  background: var(--bg);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.manage-form textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.manage-form fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 14px;
+  border: 0.5px solid var(--border);
+}
+
+.manage-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.manage-slots button {
+  min-height: 40px;
+  border: 0.5px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.manage-slots button.selected {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.manage-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.danger-button,
+.secondary-button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 0.5px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.danger-button {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.manage-terminal {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.manage-back {
+  margin-top: 22px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .manage-page {
+    align-items: start;
+    padding: 12px;
+  }
+
+  .manage-panel {
+    padding: 24px 18px;
+  }
+
+  .manage-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .manage-form-actions {
+    display: grid;
+  }
+}

@@ -76,6 +76,8 @@ async function replaceSchedule(professionalId, intervals, tenantId = STUDIO) {
 before(async () => {
   await prisma.adminSession.deleteMany();
   await prisma.adminUser.deleteMany();
+  await prisma.appointmentAccessToken.deleteMany();
+  await prisma.appointmentHistoryEvent.deleteMany();
   await prisma.appointment.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.professionalSchedule.deleteMany();
@@ -137,6 +139,8 @@ before(async () => {
 });
 
 beforeEach(async () => {
+  await prisma.appointmentAccessToken.deleteMany();
+  await prisma.appointmentHistoryEvent.deleteMany();
   await prisma.appointment.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.professionalSchedule.deleteMany();

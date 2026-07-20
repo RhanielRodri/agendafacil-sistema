@@ -16,7 +16,7 @@ function requireId(value, field) {
   return id;
 }
 
-async function loadAvailability(client, { tenantId, date, serviceId, professionalId }) {
+async function loadAvailability(client, { tenantId, date, serviceId, professionalId, excludeAppointmentId }) {
   if (!isValidDateInput(date)) throw createHttpError(400, "Data inválida");
 
   const normalizedServiceId = requireId(serviceId, "serviceId");
@@ -63,6 +63,7 @@ async function loadAvailability(client, { tenantId, date, serviceId, professiona
         tenantId,
         date: appointmentDate,
         professionalId: normalizedProfessionalId,
+        ...(excludeAppointmentId ? { id: { not: excludeAppointmentId } } : {}),
         status: { not: "CANCELLED" }
       },
       include: { service: true }
@@ -115,8 +116,8 @@ function buildSlots(context) {
   return [...slots].sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
 }
 
-export async function calculateAvailability({ client = prisma, tenantId, date, serviceId, professionalId }) {
-  const context = await loadAvailability(client, { tenantId, date, serviceId, professionalId });
+export async function calculateAvailability({ client = prisma, tenantId, date, serviceId, professionalId, excludeAppointmentId }) {
+  const context = await loadAvailability(client, { tenantId, date, serviceId, professionalId, excludeAppointmentId });
   return {
     appointmentDate: context.appointmentDate,
     professional: context.professional,
@@ -125,12 +126,12 @@ export async function calculateAvailability({ client = prisma, tenantId, date, s
   };
 }
 
-export async function assertAvailableSlot({ client = prisma, tenantId, date, time, serviceId, professionalId }) {
+export async function assertAvailableSlot({ client = prisma, tenantId, date, time, serviceId, professionalId, excludeAppointmentId }) {
   if (!isValidTimeFormat(time)) {
     throw createHttpError(400, "Horário inválido — use o formato HH:MM");
   }
 
-  const context = await loadAvailability(client, { tenantId, date, serviceId, professionalId });
+  const context = await loadAvailability(client, { tenantId, date, serviceId, professionalId, excludeAppointmentId });
   const slots = buildSlots(context);
   if (!slots.includes(time)) {
     const start = timeToMinutes(time);

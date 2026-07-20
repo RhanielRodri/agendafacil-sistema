@@ -34,6 +34,8 @@ async function api(path, { method = "GET", body } = {}) {
 }
 
 before(async () => {
+  await prisma.appointmentAccessToken.deleteMany();
+  await prisma.appointmentHistoryEvent.deleteMany();
   await prisma.appointment.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.professionalSchedule.deleteMany();

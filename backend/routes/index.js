@@ -1,7 +1,21 @@
 import { Router } from "express";
+import { createHash } from "node:crypto";
 import { listServices } from "../controllers/serviceController.js";
 import { listProfessionals } from "../controllers/professionalController.js";
-import { listAppointments, getAppointment, createAppointment, updateAppointmentStatus } from "../controllers/appointmentController.js";
+import {
+  createAppointment,
+  getAppointment,
+  listAppointmentHistory,
+  listAppointments,
+  updateAppointmentStatus
+} from "../controllers/appointmentController.js";
+import {
+  cancelPublicAppointment,
+  confirmPublicAppointment,
+  getPublicAppointment,
+  getRescheduleAvailability,
+  reschedulePublicAppointment
+} from "../controllers/publicAppointmentController.js";
 import { getFirstAvailability, listAvailableSlots } from "../controllers/availabilityController.js";
 import { listBusinessHours } from "../controllers/businessHoursController.js";
 import { requireAuth } from "../middleware/requireAuth.js";
@@ -26,6 +40,10 @@ const router = Router();
 // ─── Rate limit (in-memory, sem dependência extra) ───────────────────────────
 const rlStore = new Map();
 
+export function clearRateLimitStore() {
+  rlStore.clear();
+}
+
 function rateLimit({ windowMs, max, message, keyFn }) {
   return (req, res, next) => {
     const key = keyFn ? keyFn(req) : (req.ip || "unknown");
@@ -44,6 +62,12 @@ function rateLimit({ windowMs, max, message, keyFn }) {
 function loginKey(req) {
   const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
   return `login|${req.ip || "unknown"}|${email}`;
+}
+
+function publicManageKey(req) {
+  const token = req.get("X-Appointment-Token") || "";
+  const tokenKey = createHash("sha256").update(token).digest("hex");
+  return `appointment-manage|${req.ip || "unknown"}|${tokenKey}`;
 }
 
 // ─── Saúde ───────────────────────────────────────────────────────────────────
@@ -73,6 +97,36 @@ router.post(
   rateLimit({ windowMs: 60_000, max: 10, message: "Muitas tentativas. Aguarde um momento." }),
   resolveTenant("body"),
   createAppointment
+);
+router.get(
+  "/public/appointment",
+  rateLimit({ windowMs: 60_000, max: 60, message: "Muitas tentativas. Aguarde um momento.", keyFn: publicManageKey }),
+  resolveTenant("query"),
+  getPublicAppointment
+);
+router.post(
+  "/public/appointment/confirm",
+  rateLimit({ windowMs: 60_000, max: 10, message: "Muitas tentativas. Aguarde um momento.", keyFn: publicManageKey }),
+  resolveTenant("query"),
+  confirmPublicAppointment
+);
+router.post(
+  "/public/appointment/cancel",
+  rateLimit({ windowMs: 60_000, max: 10, message: "Muitas tentativas. Aguarde um momento.", keyFn: publicManageKey }),
+  resolveTenant("query"),
+  cancelPublicAppointment
+);
+router.get(
+  "/public/appointment/reschedule-availability",
+  rateLimit({ windowMs: 60_000, max: 30, message: "Muitas tentativas. Aguarde um momento.", keyFn: publicManageKey }),
+  resolveTenant("query"),
+  getRescheduleAvailability
+);
+router.post(
+  "/public/appointment/reschedule",
+  rateLimit({ windowMs: 60_000, max: 10, message: "Muitas tentativas. Aguarde um momento.", keyFn: publicManageKey }),
+  resolveTenant("query"),
+  reschedulePublicAppointment
 );
 
 // ─── Autenticação admin (sessão real por tenant) ──────────────────────────────
@@ -122,6 +176,7 @@ router.get("/appointments/export.csv", requireAuth, async (req, res, next) => {
 
 router.get("/appointments/:id", requireAuth, getAppointment);
 router.patch("/appointments/:id/status", requireAuth, updateAppointmentStatus);
+router.get("/appointments/:id/history", requireAuth, listAppointmentHistory);
 router.get("/admin/professional-schedules", requireAuth, listProfessionalSchedules);
 router.post("/admin/professional-schedules", requireAuth, createProfessionalSchedule);
 router.patch("/admin/professional-schedules/:id", requireAuth, updateProfessionalSchedule);

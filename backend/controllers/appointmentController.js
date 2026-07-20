@@ -1,12 +1,25 @@
 import prisma from "../prismaClient.js";
 import { assertAvailableSlot } from "../services/availabilityService.js";
 import {
-  allowedStatuses,
+  appendHistoryEvent,
+  lockAppointment,
+  sanitizeReason,
+  transitionAppointment
+} from "../services/appointmentLifecycleService.js";
+import { createManageToken, managementPath } from "../services/appointmentTokenService.js";
+import {
   createHttpError,
   isDateInPast,
   isValidDateInput,
   sanitizeId
 } from "./utils.js";
+
+const appointmentInclude = {
+  service: true,
+  professional: true,
+  rescheduledFrom: { select: { id: true, date: true, time: true } },
+  rescheduledTo: { select: { id: true, date: true, time: true } }
+};
 
 function validateClientFields(payload) {
   const name = typeof payload.clientName === "string" ? payload.clientName.trim() : "";
@@ -52,11 +65,19 @@ async function validateAppointmentPayload(tx, tenantId, payload) {
   return { ...availability, serviceId, professionalId, clientFields };
 }
 
+function mapTransactionError(error) {
+  if (error.code === "P2034" || (error.code === "P2010" && error.meta?.code === "40001")) {
+    return createHttpError(409, "Horário indisponível — tente novamente");
+  }
+  if (error.code === "P2002") return createHttpError(409, "Horário já ocupado");
+  return error;
+}
+
 export async function listAppointments(req, res, next) {
   try {
     const appointments = await prisma.appointment.findMany({
       where: { tenantId: req.auth.tenantId },
-      include: { service: true, professional: true },
+      include: appointmentInclude,
       orderBy: [{ date: "asc" }, { time: "asc" }]
     });
     res.json(appointments);
@@ -71,7 +92,7 @@ export async function getAppointment(req, res, next) {
     if (!id) throw createHttpError(400, "ID inválido");
     const appointment = await prisma.appointment.findFirst({
       where: { id, tenantId: req.auth.tenantId },
-      include: { service: true, professional: true }
+      include: appointmentInclude
     });
     if (!appointment) throw createHttpError(404, "Agendamento não encontrado");
     res.json(appointment);
@@ -83,12 +104,12 @@ export async function getAppointment(req, res, next) {
 export async function createAppointment(req, res, next) {
   try {
     const tenantId = req.tenant.slug;
-    let appointment;
+    let result;
     try {
-      appointment = await prisma.$transaction(async (tx) => {
+      result = await prisma.$transaction(async (tx) => {
         const { appointmentDate, serviceId, professionalId, clientFields } =
           await validateAppointmentPayload(tx, tenantId, req.body);
-        return tx.appointment.create({
+        const appointment = await tx.appointment.create({
           data: {
             tenantId,
             serviceId,
@@ -98,19 +119,28 @@ export async function createAppointment(req, res, next) {
             clientEmail: clientFields.email,
             date: appointmentDate,
             time: req.body.time,
-            status: "NEW"
+            status: "PENDING"
           },
-          include: { service: true, professional: true }
+          include: appointmentInclude
         });
+        await appendHistoryEvent(tx, {
+          tenantId,
+          appointmentId: appointment.id,
+          type: "CREATED",
+          toStatus: "PENDING",
+          actorType: "CUSTOMER"
+        });
+        const rawToken = await createManageToken(tx, appointment);
+        return { appointment, rawToken };
       }, { isolationLevel: "Serializable" });
     } catch (txError) {
-      if (txError.code === "P2034") {
-        throw createHttpError(409, "Horário indisponível — tente novamente");
-      }
-      if (txError.code === "P2002") throw createHttpError(409, "Horário já ocupado");
-      throw txError;
+      throw mapTransactionError(txError);
     }
-    res.status(201).json(appointment);
+
+    res.status(201).json({
+      ...result.appointment,
+      managementPath: managementPath(tenantId, result.rawToken)
+    });
   } catch (error) {
     next(error);
   }
@@ -120,23 +150,46 @@ export async function updateAppointmentStatus(req, res, next) {
   try {
     const id = sanitizeId(req.params.id);
     if (!id) throw createHttpError(400, "ID inválido");
-    const { status } = req.body;
-    if (!allowedStatuses.includes(status)) throw createHttpError(400, "Status inválido");
+    const toStatus = req.body?.status;
+    const reason = sanitizeReason(req.body?.reason);
 
+    const result = await prisma.$transaction(async (tx) => {
+      await lockAppointment(tx, id, req.auth.tenantId);
+      const appointment = await tx.appointment.findFirst({
+        where: { id, tenantId: req.auth.tenantId },
+        include: appointmentInclude
+      });
+      if (!appointment) throw createHttpError(404, "Agendamento não encontrado");
+      return transitionAppointment(tx, {
+        appointment,
+        toStatus,
+        actorType: "ADMIN",
+        actorId: req.auth.userId,
+        reason
+      });
+    }, { isolationLevel: "Serializable" });
+
+    res.json(result.appointment);
+  } catch (error) {
+    next(mapTransactionError(error));
+  }
+}
+
+export async function listAppointmentHistory(req, res, next) {
+  try {
+    const id = sanitizeId(req.params.id);
+    if (!id) throw createHttpError(400, "ID inválido");
     const appointment = await prisma.appointment.findFirst({
-      where: { id, tenantId: req.auth.tenantId }
+      where: { id, tenantId: req.auth.tenantId },
+      select: { id: true }
     });
     if (!appointment) throw createHttpError(404, "Agendamento não encontrado");
-    if (appointment.status === "CANCELLED" && status === "COMPLETED") {
-      throw createHttpError(400, "Não é permitido alterar CANCELLED para COMPLETED");
-    }
 
-    const updated = await prisma.appointment.update({
-      where: { id: appointment.id },
-      data: { status },
-      include: { service: true, professional: true }
+    const events = await prisma.appointmentHistoryEvent.findMany({
+      where: { appointmentId: id, tenantId: req.auth.tenantId },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }]
     });
-    res.json(updated);
+    res.json(events);
   } catch (error) {
     next(error);
   }

@@ -15,6 +15,8 @@ async function main() {
     process.exit(1);
   }
 
+  await prisma.appointmentAccessToken.deleteMany();
+  await prisma.appointmentHistoryEvent.deleteMany();
   await prisma.appointment.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.professionalSchedule.deleteMany();
@@ -261,7 +263,7 @@ async function main() {
         clientEmail: "marcos@email.com",
         date: toDate(todayIso),
         time: "10:00",
-        status: "NEW"
+        status: "PENDING"
       },
       {
         tenantId: STUDIO_CUT,
@@ -294,9 +296,21 @@ async function main() {
         clientEmail: "juliana@email.com",
         date: toDate(tomorrowIso),
         time: "10:00",
-        status: "NEW"
+        status: "PENDING"
       }
     ]
+  });
+
+  const seededAppointments = await prisma.appointment.findMany();
+  await prisma.appointmentHistoryEvent.createMany({
+    data: seededAppointments.map((appointment) => ({
+      tenantId: appointment.tenantId,
+      appointmentId: appointment.id,
+      type: "STATUS_CHANGED",
+      toStatus: appointment.status,
+      metadata: { source: "SEED" },
+      actorType: "SYSTEM"
+    }))
   });
 
   await prisma.scheduleBlock.createMany({
