@@ -37,78 +37,162 @@
   letter-spacing: 0.04em;
 }
 
-.footer-links {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+:root[data-demo="studio-cut"] {
+  --bg: #101010;
+  --surface: #1a1a1a;
+  --surface-2: #242424;
+  --text-primary: #ffffff;
+  --text-secondary: #b7b7b7;
+  --text-muted: #777777;
+  --border: #303030;
+  --border-strong: #5c5c5c;
+  --accent: #ffffff;
+  --accent-hover: #dedede;
+  --accent-muted: rgba(255, 255, 255, 0.07);
+  --accent-text: #101010;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --shadow-sm: none;
+  --shadow-md: none;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+:root[data-demo="studio-cut"] .navbar,
+:root[data-demo="studio-cut"] .navbar.scrolled {
+  background: rgba(16, 16, 16, 0.97);
+}
+
+:root[data-demo="studio-cut"] .hero h1,
+:root[data-demo="studio-cut"] .section-heading h2,
+:root[data-demo="studio-cut"] .detail-card h3,
+:root[data-demo="studio-cut"] .process-card h3 {
+  font-family: "Barlow Condensed", Impact, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+}
+
+:root[data-demo="studio-cut"] .services-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+:root[data-demo="studio-cut"] .details-section,
+:root[data-demo="studio-cut"] .studio-section {
+  background: #151515;
+}
+
+:root[data-demo="studio-cut"] .professional-card img,
+:root[data-demo="studio-cut"] .studio-photo img,
+:root[data-demo="studio-cut"] .hero-image img {
+  filter: grayscale(100%) contrast(1.08) brightness(0.72);
 }
 
 :root[data-demo="lumiere"] {
-  --bg: #faf8f5;
+  --bg: #faf7f1;
   --surface: #ffffff;
-  --surface-2: #efeae3;
-  --text-primary: #2c2420;
-  --text-secondary: #6f625b;
-  --text-muted: #8a7f76;
-  --border: #ded5ca;
-  --border-strong: #c9a97a;
-  --accent: #c9a97a;
-  --accent-hover: #b6915f;
-  --accent-muted: rgba(201, 169, 122, 0.16);
-  --accent-text: #2c2420;
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --shadow-sm: 0 2px 12px rgba(44, 36, 32, 0.06);
-  --shadow-md: 0 16px 40px rgba(44, 36, 32, 0.1);
+  --surface-2: #f0e9df;
+  --text-primary: #302722;
+  --text-secondary: #6e625b;
+  --text-muted: #8d8178;
+  --border: #ded3c6;
+  --border-strong: #b89265;
+  --accent: #b89265;
+  --accent-hover: #a17c52;
+  --accent-muted: rgba(184, 146, 101, 0.14);
+  --accent-text: #ffffff;
+  --radius-sm: 12px;
+  --radius-md: 22px;
+  --radius-lg: 32px;
+  --shadow-sm: 0 8px 30px rgba(70, 54, 45, 0.06);
+  --shadow-md: 0 18px 48px rgba(70, 54, 45, 0.11);
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
 }
 
+:root[data-demo="lumiere"] .navbar,
 :root[data-demo="lumiere"] .navbar.scrolled {
-  background: rgba(250, 248, 245, 0.95);
+  background: rgba(250, 247, 241, 0.96);
+}
+
+:root[data-demo="lumiere"] .navbar {
+  height: 76px;
+  border-color: rgba(184, 146, 101, 0.25);
 }
 
 :root[data-demo="lumiere"] .navbar-brand-mark {
   border-radius: 50%;
   background: var(--accent);
-  color: var(--accent-text);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 18px;
-  font-weight: 500;
+  color: #ffffff;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 21px;
+  font-weight: 600;
 }
 
 :root[data-demo="lumiere"] .navbar-brand-name {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.035em;
   text-transform: none;
+}
+
+:root[data-demo="lumiere"] .hero {
+  grid-template-columns: 1.06fr 0.94fr;
+  min-height: 660px;
+}
+
+:root[data-demo="lumiere"] .hero-content {
+  order: 2;
+  padding-inline: clamp(40px, 8vw, 120px);
+}
+
+:root[data-demo="lumiere"] .hero-image {
+  order: 1;
+  margin: 28px 0 28px 5vw;
+  border-radius: 220px 220px 24px 24px;
 }
 
 :root[data-demo="lumiere"] .hero h1,
 :root[data-demo="lumiere"] .section-heading h2,
+:root[data-demo="lumiere"] .detail-card h3,
+:root[data-demo="lumiere"] .process-card h3,
 :root[data-demo="lumiere"] .studio-caption strong {
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 500;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
   text-transform: none;
 }
 
+:root[data-demo="lumiere"] .hero h1 {
+  font-size: clamp(3.5rem, 7vw, 6.2rem);
+  line-height: 0.84;
+}
+
 :root[data-demo="lumiere"] .hero h1 .dim {
-  color: #b98a6e;
+  color: #b89265;
 }
 
 :root[data-demo="lumiere"] .hero-image img,
 :root[data-demo="lumiere"] .studio-photo img,
 :root[data-demo="lumiere"] .professional-card img {
-  filter: saturate(0.8) brightness(0.92);
+  filter: saturate(0.72) brightness(0.94);
 }
 
 :root[data-demo="lumiere"] .hero-image-badge {
-  background: rgba(250, 248, 245, 0.92);
+  border: 0;
+  border-radius: 999px;
+  background: rgba(250, 247, 241, 0.92);
+}
+
+:root[data-demo="lumiere"] .details-section,
+:root[data-demo="lumiere"] .professionals-section {
+  background: #f0e9df;
 }
 
 :root[data-demo="lumiere"] .service-card,
 :root[data-demo="lumiere"] .professional-card,
-:root[data-demo="lumiere"] .testimonial-card,
+:root[data-demo="lumiere"] .detail-card,
+:root[data-demo="lumiere"] .process-card,
 :root[data-demo="lumiere"] .studio-photo {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
@@ -122,7 +206,7 @@
 :root[data-demo="lumiere"] .primary-button,
 :root[data-demo="lumiere"] .primary-link {
   border-color: var(--accent);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   background: var(--accent);
   color: var(--accent-text);
 }
@@ -130,20 +214,39 @@
 :root[data-demo="lumiere"] .secondary-button,
 :root[data-demo="lumiere"] input,
 :root[data-demo="lumiere"] select,
-:root[data-demo="lumiere"] textarea {
+:root[data-demo="lumiere"] textarea,
+:root[data-demo="lumiere"] .state,
+:root[data-demo="lumiere"] .panel {
   border-radius: var(--radius-sm);
 }
 
-@media (max-width: 639px) {
-  .navbar {
-    height: auto;
-    min-height: 64px;
-    padding-block: 10px;
+:root[data-demo="lumiere"] .services-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 720px) {
+  :root[data-demo="studio-cut"] .services-grid,
+  :root[data-demo="lumiere"] .services-grid {
+    grid-template-columns: 1fr;
   }
 
-  .navbar-brand {
-    align-items: center;
-    flex-direction: row;
-    gap: 10px;
+  :root[data-demo="lumiere"] .navbar {
+    height: 68px;
+  }
+
+  :root[data-demo="lumiere"] .hero {
+    grid-template-columns: 1fr;
+  }
+
+  :root[data-demo="lumiere"] .hero-content {
+    order: 1;
+    padding-inline: 5vw;
+  }
+
+  :root[data-demo="lumiere"] .hero-image {
+    order: 2;
+    min-height: 380px;
+    margin: 0 5vw 32px;
+    border-radius: 160px 160px 20px 20px;
   }
 }

@@ -187,7 +187,7 @@ export default function Admin({ services, professionals }) {
         if (err.status === 401) {
           setAppointments([]);
           setStatus("unauthenticated");
-        } else if (err.status === 503) {
+        } else if (!err.status || err.status >= 500) {
           setStatus("unavailable");
         } else {
           setErrorMsg(err.message || "Erro ao carregar agendamentos");

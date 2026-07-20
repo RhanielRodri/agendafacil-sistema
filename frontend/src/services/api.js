@@ -1,11 +1,18 @@
 import tenant from "../config/tenant.js";
 
 const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
-const demoQuery = `demoId=${encodeURIComponent(tenant.slug)}`;
+
+function getBusinessQuery() {
+  if (!tenant) {
+    throw new Error("Experiência indisponível");
+  }
+
+  return `demoId=${encodeURIComponent(tenant.slug)}`;
+}
 
 async function request(path, options = {}) {
   if (!API_URL) {
-    throw new Error("VITE_API_URL não configurada");
+    throw new Error("Serviço temporariamente indisponível");
   }
 
   const response = await fetch(`${API_URL}${path}`, {
@@ -16,32 +23,42 @@ async function request(path, options = {}) {
     credentials: "include",
     ...options
   }).catch(() => {
-    throw new Error("Não foi possível conectar ao servidor. Verifique sua conexão.");
+    throw new Error("Serviço temporariamente indisponível");
   });
 
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const err = new Error(data?.message || "Erro ao comunicar com a API");
-    err.status = response.status;
-    throw err;
+    const message = response.status >= 500
+      ? "Serviço temporariamente indisponível"
+      : data?.message || "Não foi possível concluir a solicitação";
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
   }
 
   return data;
 }
 
 export const api = {
-  getServices: () => request(`/services?${demoQuery}`),
-  getProfessionals: () => request(`/professionals?${demoQuery}`),
-  getAppointments: () => request(`/appointments?${demoQuery}`),
+  getServices: () => request(`/services?${getBusinessQuery()}`),
+  getProfessionals: () => request(`/professionals?${getBusinessQuery()}`),
+  getAppointments: () => request(`/appointments?${getBusinessQuery()}`),
   getBusinessHours: () => request("/business-hours"),
   getAvailableSlots: ({ date, professionalId, serviceId }) =>
-    request(`/available-slots?date=${encodeURIComponent(date)}&professionalId=${encodeURIComponent(professionalId)}&serviceId=${encodeURIComponent(serviceId)}&${demoQuery}`),
-  createAppointment: (payload) =>
-    request("/appointments", {
+    request(`/available-slots?date=${encodeURIComponent(date)}&professionalId=${encodeURIComponent(professionalId)}&serviceId=${encodeURIComponent(serviceId)}&${getBusinessQuery()}`),
+  createAppointment: (payload) => {
+    const demoId = tenant?.slug;
+
+    if (!demoId) {
+      throw new Error("Experiência indisponível");
+    }
+
+    return request("/appointments", {
       method: "POST",
-      body: JSON.stringify({ ...payload, demoId: tenant.slug })
-    }),
+      body: JSON.stringify({ ...payload, demoId })
+    });
+  },
   updateAppointmentStatus: (id, status) =>
     request(`/appointments/${id}/status`, {
       method: "PATCH",
@@ -52,7 +69,6 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ password })
     }),
-  adminLogout: () =>
-    request("/admin/session", { method: "DELETE" }),
-  getExportUrl: () => `${API_URL}/appointments/export.csv?${demoQuery}`
+  adminLogout: () => request("/admin/session", { method: "DELETE" }),
+  getExportUrl: () => `${API_URL}/appointments/export.csv?${getBusinessQuery()}`
 };

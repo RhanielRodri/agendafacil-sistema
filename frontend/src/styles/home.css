@@ -368,27 +368,86 @@
   color: var(--text-secondary);
 }
 
-/* === TESTIMONIALS === */
-
-.testimonial-card {
-  padding: 24px;
-  background: var(--bg);
-  border: none;
+.hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin-top: 34px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
 }
 
-.testimonial-quote {
-  color: var(--border-strong);
-  font-size: 2.2rem;
-  line-height: 1;
-  font-weight: 800;
-  margin-bottom: 10px;
-  display: block;
+.hero-facts span {
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-.testimonial-card p {
+.services-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--border);
+}
+
+.detail-grid,
+.process-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.detail-card,
+.process-card {
+  padding: clamp(24px, 4vw, 40px);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.detail-card h3,
+.process-card h3 {
+  margin: 0 0 10px;
+  color: var(--text-primary);
+  font-size: 24px;
+}
+
+.detail-card p,
+.process-card p {
   margin: 0;
   color: var(--text-secondary);
-  font-style: italic;
   font-size: 13px;
-  line-height: 1.65;
+  line-height: 1.7;
+}
+
+.process-card > span {
+  display: block;
+  margin-bottom: 44px;
+  color: var(--border-strong);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.booking-state {
+  min-height: 360px;
+}
+
+.business-site .state.error p {
+  max-width: 560px;
+}
+
+@media (max-width: 720px) {
+  .detail-grid,
+  .process-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-facts {
+    gap: 8px 16px;
+  }
+
+  .process-card > span {
+    margin-bottom: 24px;
+  }
 }

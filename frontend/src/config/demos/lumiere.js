@@ -1,7 +1,7 @@
 const lumiere = {
   slug: "lumiere",
-  name: "Lumière",
-  segment: "Clínica estética",
+  name: "Lumière Estética",
+  segment: "Clínica de estética",
   city: "Vila Velha, ES",
   schedule: "Seg a Sáb",
 
@@ -12,60 +12,65 @@ const lumiere = {
   },
 
   metadata: {
-    title: "Lumière | Clínica estética em Vila Velha",
-    description: "Reserve seu horário para tratamentos faciais e corporais na clínica Lumière.",
+    title: "Lumière Estética | Cuidados em Vila Velha",
+    description: "Agende seu horário para cuidados faciais e corporais na Lumière Estética.",
     themeColor: "#faf8f5",
-    image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80"
+    image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+    canonical: "https://agendafacil-sistema.vercel.app/lumiere"
   },
 
   hero: {
-    eyebrow: "Clínica estética · Vila Velha, ES",
-    headline: ["BELEZA", "COM", "CUIDADO."],
-    sub: "Procedimentos estéticos em um espaço pensado para acolher, cuidar e valorizar sua beleza.",
-    stats: [
-      { value: "4.9", label: "Avaliação" },
-      { value: "+500", label: "Clientes" },
-      { value: "Premium", label: "Experiência" }
-    ],
+    eyebrow: "Estética e cuidado · Vila Velha, ES",
+    headline: ["CUIDADO", "EM CADA", "DETALHE."],
+    sub: "Escolha seu tratamento e reserve um momento pensado para cuidado e atendimento individual.",
+    primaryCta: "Agendar avaliação",
+    secondaryCta: "Conhecer tratamentos",
+    highlights: ["Atendimento individual", "Cuidados faciais e corporais", "Seg a Sáb"],
     image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Interior da clínica Lumière"
+    imageAlt: "Ambiente de cuidado da Lumière Estética",
+    badge: "Consulte a agenda abaixo"
+  },
+
+  details: {
+    eyebrow: "Cuidados e confiança",
+    title: "Uma experiência tranquila desde a escolha do tratamento",
+    items: [
+      { title: "Atendimento individual", text: "Cada agendamento começa com a escolha do cuidado e da profissional." },
+      { title: "Informações claras", text: "Tratamentos, duração e horários aparecem antes da confirmação." },
+      { title: "Escolha no seu tempo", text: "Consulte a agenda e selecione a opção adequada para sua rotina." }
+    ]
+  },
+
+  process: {
+    eyebrow: "Processo de atendimento",
+    title: "Do cuidado escolhido ao horário reservado",
+    items: [
+      { number: "01", title: "Escolha o tratamento", text: "Consulte as opções disponíveis para cuidados faciais e corporais." },
+      { number: "02", title: "Selecione a profissional", text: "Veja a equipe e escolha com quem deseja realizar o atendimento." },
+      { number: "03", title: "Reserve o horário", text: "Defina data, horário e dados de contato para enviar sua solicitação." }
+    ]
   },
 
   space: {
-    eyebrow: "Sobre a clínica",
-    title: "Um espaço pensado para o seu bem-estar",
+    eyebrow: "A clínica",
+    title: "Leveza e atenção em cada etapa",
     description: [
-      "Cada detalhe foi desenhado para acolher, da recepção às salas de procedimento.",
-      "Tecnologia, protocolos personalizados e cuidado para resultados naturais."
+      "Um ambiente voltado para cuidado, conforto e atendimento individual.",
+      "A escolha do tratamento e do horário acontece de forma simples e transparente."
     ],
     image: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1400&q=80",
-    imageAlt: "Espaço de atendimento da clínica Lumière"
+    imageAlt: "Espaço de atendimento da Lumière Estética"
   },
 
   copy: {
     servicesEyebrow: "Tratamentos",
-    servicesTitle: "Escolha o cuidado ideal para você",
-    secondaryCta: "Ver tratamentos",
-    professionalsEyebrow: "Nossa equipe",
-    professionalsTitle: "Especialistas em cuidar de você",
-    testimonialsEyebrow: "Depoimentos",
-    testimonialsTitle: "O que nossas clientes dizem"
-  },
-
-  testimonials: [
-    "Resultado incrível já na primeira sessão. Nunca me senti tão bem na minha própria pele.",
-    "Ambiente sofisticado, atendimento impecável. Voltarei com certeza.",
-    "O atendimento foi exatamente o que eu queria: natural, cuidadoso e elegante."
-  ],
-
-  contact: {
-    whatsapp: null,
-    instagram: null,
-    address: null
+    servicesTitle: "Cuidados para diferentes momentos",
+    professionalsEyebrow: "Equipe",
+    professionalsTitle: "Profissionais que acompanham seu atendimento"
   },
 
   footer: {
-    tagline: "Beleza com cuidado, elegância com resultado."
+    tagline: "Cuidado e atendimento individual"
   }
 };
 

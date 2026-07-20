@@ -1,8 +1,47 @@
 {
+  "redirects": [
+    {
+      "source": "/demo/studio-cut",
+      "destination": "/studio-cut",
+      "permanent": true
+    },
+    {
+      "source": "/demo/lumiere",
+      "destination": "/lumiere",
+      "permanent": true
+    },
+    {
+      "source": "/demo/studio-cut/admin",
+      "destination": "/studio-cut/admin",
+      "permanent": true
+    },
+    {
+      "source": "/demo/lumiere/admin",
+      "destination": "/lumiere/admin",
+      "permanent": true
+    },
+    {
+      "source": "/admin",
+      "destination": "/studio-cut/admin",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/studio-cut",
+      "destination": "/studio-cut/index.html"
+    },
+    {
+      "source": "/studio-cut/admin",
+      "destination": "/studio-cut/index.html"
+    },
+    {
+      "source": "/lumiere",
+      "destination": "/lumiere/index.html"
+    },
+    {
+      "source": "/lumiere/admin",
+      "destination": "/lumiere/index.html"
     }
   ]
 }
