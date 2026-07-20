@@ -5,7 +5,7 @@ review_at: 2026-07-23
 status: active
 current_phase: null
 technical_baseline:
-  commit: b12610a
+  commit: 35182e9
   validation_status: partial
   validated_at: 2026-07-20
   validated:
@@ -29,17 +29,26 @@ technical_baseline:
     - "A1: prevenção de sobreposição mantida (409)"
     - "A1: suíte de integração node:test com 10 casos, todos verdes, contra banco local"
     - "A1: ausência de efeitos remotos (sem push, merge, deploy ou escrita em produção)"
+    - "A2: modelos AdminUser (único por tenant+email) e AdminSession (só hash do token, com expiração/revogação); migration admin_auth aplicada só no banco local; migrate status sem drift"
+    - "A2: senha com scrypt nativo (salt por usuário, parâmetros versionados, timingSafeEqual); hash não determinístico entre usuários com a mesma senha"
+    - "A2: login por vertical (email+senha); tenant derivado da sessão; rotas admin ignoram demoId/tenantId do cliente"
+    - "A2: sessão opaca só no cookie HttpOnly; logout revoga no servidor; sessão expirada e revogada rejeitadas"
+    - "A2: resposta genérica para usuário inexistente/inativo/senha errada; rate limit de login por IP+email"
+    - "A2: isolamento autenticado — admin de um tenant não lista, lê nem altera ID do outro (404); CSV só do tenant da sessão"
+    - "A2: nenhuma resposta expõe passwordHash ou tokenHash"
+    - "A2: autenticação antiga removida (ADMIN_SECRET, HMAC admin-session-v1, tenant admin por query param)"
+    - "A2: suíte de integração de auth com 20 casos + 7 de isolamento público, 27/27 verdes"
   not_validated:
-    - "autenticação real e sessões (senha compartilhada, token determinístico, sem expiração/revogação) — escopo A2"
-    - "conclusão visual da jornada Lumière pelo navegador (harness instável; validada por API e testes)"
-    - "saúde da API e do banco em produção (validação A1 foi exclusivamente local)"
+    - "conclusão visual das telas de login/painel pelo navegador (harness instável; validado por API, testes e build)"
+    - "saúde da API e do banco em produção (validação A2 foi exclusivamente local)"
+    - "aplicação das migrations tenant_foundation e admin_auth em produção (feitas só no local)"
   evidence:
-    - "A1 em 2026-07-20: prisma migrate deploy no banco Docker local (5433); backfill conferido por psql (Tenant=2, appts ids 1-6 preservados, BusinessHours 7/tenant, BlockedDate 1/tenant, sem FK órfã)"
-    - "A1: npm test → 10/10 testes de integração verdes (tests/tenant.test.js)"
-    - "A1: prova ao vivo por curl — bloqueio só no Studio em 2026-07-22 (quarta) → Studio [] e Lumière 17 slots; segunda aberta no Studio e fechada na Lumière; leitura/alteração cruzada por ID → 404"
-    - "A1: vite build (48 módulos, 3 entradas) e prisma generate sem erro; prisma migrate status sem drift"
-    - "A1 baseline em b12610a — feat: fundamenta isolamento por tenant"
-source: A1 executada na branch de preservação em 2026-07-20 (banco local Docker isolado)
+    - "A2 em 2026-07-20: prisma migrate deploy (admin_auth) no banco Docker local; seed criou 1 admin por tenant (scrypt, hashes distintos)"
+    - "A2: npm test → 27/27 verdes (tests/auth.test.js 20 + tests/tenant.test.js 7)"
+    - "A2: prova ao vivo por curl — login Studio 200 (cookie HttpOnly, Path=/, SameSite=Lax, sem Secure em dev); /admin/me=studio; leitura/alteração de ID Lumière → 404; ?demoId=lumiere ignorado; CSV só Studio; sem cookie → 401; senha errada → 401; logout revoga (reuso → 401)"
+    - "A2: vite build (3 entradas) e prisma generate sem erro; migrate status sem drift"
+    - "A2 baseline em 35182e9 — feat: implementa autenticação por tenant"
+source: A2 executada na branch de preservação em 2026-07-20 (banco local Docker isolado)
 source_of_truth: .
 ---
 
@@ -47,54 +56,59 @@ source_of_truth: .
 
 ## Último resultado confirmado
 
-Fase A1 — fundação de tenant — concluída em 2026-07-20, na branch
+Fase A2 — autenticação administrativa real — concluída em 2026-07-20, na branch
 `preserve/agendafacil-local-2026-07-20`, exclusivamente no banco Docker local
 (`agendafacil_dev`, porta 5433), sem qualquer efeito remoto.
 
-O tenancy embrionário por `demoId` virou uma fundação estrutural. Foi criada a
-entidade `Tenant` (`studio-cut` e `lumiere`, ativos). A coluna física `demoId`
-foi preservada e passou a ser exposta como `tenantId` (via `@map`), agora com
-chave estrangeira para `Tenant(slug)` em `Service`, `Professional`,
-`Appointment`, `BusinessHours` e `BlockedDate`. `BusinessHours` e `BlockedDate`
-saíram da unicidade global para composta por tenant (`tenantId+dayOfWeek` e
-`tenantId+date`); `Appointment` ganhou tenant explícito e consistente com o
-serviço e o profissional.
+A senha global `ADMIN_SECRET` e o token HMAC determinístico foram substituídos
+por autenticação real. Novos modelos: `AdminUser` (usuário nomeado, único por
+`tenantId+email`, senha com hash) e `AdminSession` (guarda só o `sha256` do
+token, com `expiresAt` e `revokedAt`). A senha usa `scrypt` nativo, com salt por
+usuário, parâmetros versionados no próprio hash e comparação `timingSafeEqual`;
+nunca é gravada nem registrada em texto puro. O token de sessão é aleatório
+(`base64url`), enviado só no cookie `HttpOnly`; o servidor nunca guarda o token
+bruto.
 
-A migration versionada `20260720120000_tenant_foundation` foi aplicada só no
-banco local, com backfill idempotente: os 6 agendamentos existentes (ids 1-6)
-foram preservados, os 7 horários e 1 bloqueio globais foram atribuídos ao
-Studio Cut e duplicados para a Lumière, sem órfãos de FK. `prisma migrate
-status` não acusa drift.
+O tenant administrativo passou a vir **exclusivamente da sessão**
+(`req.auth.tenantId`). As rotas administrativas (listagem, leitura por ID,
+mudança de status, CSV) deixaram de aceitar `demoId`/`tenantId` do cliente como
+autoridade. Login é por vertical (`/studio-cut/admin`, `/lumiere/admin`), com
+email+senha, resposta genérica para usuário inexistente/inativo/senha errada e
+rate limit por IP+email. `GET /admin/me` expõe apenas `tenantId`, `email` e
+`name`. O logout revoga a sessão no servidor; sessão expirada ou revogada é
+rejeitada mesmo com o cookie reenviado.
 
-A resolução e validação de tenant foram centralizadas em
-`backend/config/tenant.js` e `backend/middleware/tenant.js` (aceita só tenant
-registrado e ativo; rejeita slug inválido). As rotas administrativas por ID
-passaram a filtrar `id + tenantId`: ler ou alterar um agendamento da Lumière no
-contexto Studio Cut agora devolve `404`, sem vazar a existência do registro.
+A migration versionada `20260720130000_admin_auth` (só banco local) cria as duas
+tabelas; o seed cria um admin por tenant de forma idempotente, a partir de
+variáveis locais ignoradas pelo Git. A autenticação antiga (`ADMIN_SECRET`,
+HMAC `admin-session-v1`, tenant por query param) foi removida do código ativo.
 
-Isolamento provado por suíte de integração (`node:test`, 10/10) e por checagem
-ao vivo com curl: bloqueio só no Studio numa quarta zera os slots do Studio e
-mantém 17 slots na Lumière; a segunda-feira aberta no Studio permanece fechada
-na Lumière; serviço/profissional de tenants distintos é recusado (404);
-sobreposição continua bloqueada (409).
+Isolamento e sessão provados por suíte de integração (`node:test`, 27/27 — 20 de
+auth + 7 de isolamento público) e por checagem ao vivo com curl: admin de um
+tenant não lê nem altera ID do outro (404), `?demoId=lumiere` é ignorado sob
+sessão Studio, CSV traz só o tenant autenticado, logout revoga (reuso → 401),
+sem cookie → 401, senha errada → 401, e nenhuma resposta expõe `passwordHash` ou
+`tokenHash`.
 
 Nada foi publicado. `main` permanece em `ad95e6d`, sem merge e sem push.
 
-### Ressalva — jornada Lumière
+### Ressalva — validação de UI pelo navegador
 
-A conclusão visual da jornada Lumière segue sem exercício pelo navegador por
-instabilidade do harness, não por defeito do app. Na A1 ela foi coberta pela
-API e pelos testes de integração: dados próprios e isolados, criação com tenant
-correto e ausência de leitura/alteração cruzada.
+As telas (login com email, painel, tela de painel incorreto) não foram
+exercitadas pelo navegador por instabilidade do harness, não por defeito do app.
+Foram cobertas em nível de contrato/API, pelos 27 testes de integração e pelo
+`vite build` sem erro. A troca de vertical com sessão de outro tenant é barrada
+pelo bootstrap `/admin/me` no frontend e pelo tenant-da-sessão no backend.
 
 ## Baseline técnica
 
-`b12610a` — `feat: fundamenta isolamento por tenant` —, com
-`validation_status: partial`. Substitui `256a996` para o escopo listado no
-frontmatter: a fundação de tenant foi exercitada em banco local isolado
-(migration, backfill, isolamento de dados, rotas por ID, testes). Segue
-`partial`, não `validated`, por lacunas reais: autenticação e sessões reais são
-escopo da A2, e nada foi validado em produção — a A1 foi exclusivamente local.
+`35182e9` — `feat: implementa autenticação por tenant` —, com
+`validation_status: partial`. Substitui `b12610a` para o escopo listado no
+frontmatter: autenticação real, sessões revogáveis e tenant derivado da
+identidade foram exercitados em banco local isolado (migration, seed, 27 testes,
+provas ao vivo). Segue `partial`, não `validated`, por lacunas reais: a UI não
+foi percorrida pelo navegador e nada foi validado em produção — a A2 foi
+exclusivamente local.
 
 `ad95e6d` continua sendo o último commit em `main` e o único código publicado
 em produção.
@@ -102,12 +116,12 @@ em produção.
 ## git_snapshot
 
 ```text
-observed_at: 2026-07-20 (fase A1)
+observed_at: 2026-07-20 (fase A2)
 branch: preserve/agendafacil-local-2026-07-20
-head_at_observation: b12610a (feat A1; o commit documental deste estado será o HEAD seguinte)
+head_at_observation: 35182e9 (feat A2; o commit documental deste estado será o HEAD seguinte)
 base: ad95e6d
 main: ad95e6d (intacta, sem merge)
-working_tree: limpa após o commit feat A1, antes do commit documental
+working_tree: limpa após o commit feat A2, antes do commit documental
 producao: inalterada
 ```
 
@@ -116,8 +130,9 @@ deste estado for criado, e isso é correto.
 
 ## Trabalho em andamento
 
-Nenhum. A A1 está concluída e validada localmente. A próxima fase é A2 —
-autenticação e sessões reais — e só começa sob pedido explícito.
+Nenhum. A A2 está concluída e validada localmente. A próxima fase é A3 —
+bloqueio por intervalo e agenda por profissional — e só começa sob pedido
+explícito.
 
 ## Bloqueios
 
@@ -126,42 +141,39 @@ Nenhum bloqueio de ambiente: o banco local isolado está saudável e semeado, e
 evolução local:
 
 - Saúde da API e do banco em produção não foi validada nesta fase.
-- A migration `tenant_foundation` **não** foi aplicada em Render/produção; ao
-  promover, aplicar com o backfill e o plano de reversão documentados em
-  `backend/prisma/migrations/20260720120000_tenant_foundation/ROLLBACK.md`.
+- As migrations `tenant_foundation` e `admin_auth` **não** foram aplicadas em
+  Render/produção; ao promover, aplicar na ordem com os planos de reversão em
+  `backend/prisma/migrations/*/ROLLBACK.md`. Em produção, criar os `AdminUser`
+  reais por variável de ambiente (nunca senha versionada).
 
 ## Riscos
 
-Resolvidos pela A1 (não são mais bloqueadores):
+Resolvidos pela A2 (não são mais bloqueadores):
 
-- ~~`BusinessHours` global~~ — agora por tenant (`tenantId+dayOfWeek`).
-- ~~`BlockedDate` global~~ — agora por tenant (`tenantId+date`).
-- ~~Leitura cruzada de agendamento por ID~~ — `getAppointment` filtra
-  `id+tenantId` (404 no contexto cruzado).
-- ~~Alteração cruzada de status por ID~~ — `updateAppointmentStatus` filtra
-  `id+tenantId` (404 no contexto cruzado).
+- ~~Senha administrativa compartilhada~~ — cada tenant tem `AdminUser` próprio,
+  com senha por hash `scrypt`.
+- ~~`ADMIN_SECRET` como chave HMAC~~ — autenticação por `ADMIN_SECRET` removida.
+- ~~Token determinístico~~ — token aleatório opaco; servidor guarda só o hash.
+- ~~Token aceito após logout~~ — logout revoga no servidor (`revokedAt`).
+- ~~Ausência de expiração e revogação no servidor~~ — `AdminSession.expiresAt` +
+  `revokedAt`, verificados a cada requisição.
+- ~~Tenant administrativo por query param~~ — tenant vem só da sessão; `demoId`
+  do cliente é ignorado nas rotas admin.
 
-Confirmados como **bloqueadores da A2** (autenticação e sessões):
+Resolvidos antes, pela A1:
 
-- **Senha administrativa compartilhada** — o mesmo cookie abre os dois tenants;
-  a A1 impede o vazamento *acidental* por ID, mas um admin com a senha ainda
-  escolhe o tenant via `demoId`.
-- **`ADMIN_SECRET` usado também como chave HMAC** do token de sessão.
-- **Token determinístico** — sem entropia de sessão.
-- **Token aceito após logout** — sem revogação no servidor; `clearCookie` só
-  age no cliente.
-- **Ausência de expiração e revogação no servidor** — validade só no `maxAge`
-  do cookie.
-- **Tenant administrativo por query param** (`demoId`) — aceitável na A1 por
-  decisão de escopo; a A2 substitui pelo tenant da sessão autenticada.
+- ~~`BusinessHours`/`BlockedDate` globais~~ — agora por tenant.
+- ~~Leitura/alteração cruzada de agendamento por ID~~ — filtram `id+tenantId`.
 
-Pendências de fases posteriores (fora do escopo A1/A2):
+Pendências de fases posteriores:
 
-- **Ausência de `Lead`, `Client` e `AdminUser`** no schema.
+- **Ausência de bloqueio por intervalo** — só dia inteiro (A3).
+- **Ausência de agenda individual por profissional** (A3).
+- **Ausência de `Lead`, `Client`** no schema (fases futuras).
 - **Ausência de confirmação, cancelamento e reagendamento públicos.**
 - **Ausência de `NO_SHOW`** no enum de status.
-- **Ausência de bloqueio por intervalo** — só dia inteiro (A3).
-- **Ausência de agenda individual por profissional.**
+- **Recuperação de senha / convite de admin** — fora do escopo A2; hoje admins
+  só existem via seed/variável local.
 
 Riscos anteriores que permanecem:
 
@@ -231,14 +243,28 @@ Acrescentadas pela A1 (fundação de tenant, banco local Docker, 2026-07-20):
 - Prevenção de sobreposição mantida (409).
 - Suíte de integração `node:test` (`tests/tenant.test.js`) 10/10 verde.
 
+Acrescentadas pela A2 (autenticação por tenant, banco local Docker, 2026-07-20):
+
+- Modelos `AdminUser` e `AdminSession`; migration `admin_auth` só no banco
+  local; `migrate status` sem drift; `prisma generate` e `vite build` sem erro.
+- Seed idempotente: um admin por tenant, senha `scrypt`, hashes distintos.
+- Login por vertical (email+senha) 200; senha errada, usuário inexistente e
+  usuário inativo → 401 genérico; rate limit de login (429).
+- Sessão válida acessa; sem cookie → 401; sessão expirada → 401; sessão
+  revogada → 401; logout revoga (reuso do cookie → 401).
+- Cookie `HttpOnly`, `Path=/`, `SameSite=Lax`, sem `Secure` em dev.
+- Tenant da sessão não substituível por `?demoId=`; admin de um tenant não
+  lista, lê nem altera ID do outro (404); CSV só do tenant autenticado.
+- Nenhuma resposta expõe `passwordHash` nem `tokenHash`.
+- Suíte de integração 27/27 verde (`tests/auth.test.js` 20 + `tests/tenant.test.js` 7).
+
 ## Validações não executadas
 
-- Autenticação e sessões reais (senha compartilhada, token determinístico, sem
-  expiração/revogação) — escopo A2.
-- Conclusão visual da jornada Lumière pelo navegador (harness instável;
-  coberta por API e testes na A1).
+- Conclusão visual das telas de login/painel pelo navegador (harness instável;
+  coberta por API, 27 testes e build).
 - Saúde da API e do banco em produção.
-- Aplicação da migration `tenant_foundation` em produção (feita só no local).
+- Aplicação das migrations `tenant_foundation` e `admin_auth` em produção
+  (feitas só no local).
 
 ## Divergências entre documentação e código
 
@@ -250,10 +276,9 @@ Acrescentadas pela A1 (fundação de tenant, banco local Docker, 2026-07-20):
 
 ## Próxima ação registrada
 
-Iniciar **A2 — autenticação e sessões reais**, sob pedido explícito, evoluindo
-na branch `preserve/agendafacil-local-2026-07-20`, sem integrar em `main`. A2
-deve introduzir `AdminUser`, sessão com expiração e revogação no servidor, fim
-da senha administrativa compartilhada e do token determinístico, e derivar o
-tenant administrativo da sessão autenticada em vez do query param `demoId`.
-A fundação de tenant da A1 é o pré-requisito atendido. Uma fase por vez:
-concluir a A1 não autoriza a A2.
+Iniciar **A3 — bloqueio por intervalo e agenda individual por profissional**,
+sob pedido explícito, evoluindo na branch `preserve/agendafacil-local-2026-07-20`,
+sem integrar em `main`. A A3 deve tratar bloqueios por faixa de horário (não só
+dia inteiro) e disponibilidade por profissional, mantendo o isolamento por
+tenant e a autenticação da A2. Uma fase por vez: concluir a A2 não autoriza a
+A3.
