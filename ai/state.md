@@ -5,45 +5,41 @@ review_at: 2026-07-23
 status: active
 current_phase: null
 technical_baseline:
-  commit: 256a996
+  commit: b12610a
   validation_status: partial
   validated_at: 2026-07-20
   validated:
     - "npm ci reproduzível, sem alteração de lockfile (frontend e backend)"
-    - "npm run build sem erro nem aviso"
-    - "geração das três entradas: raiz, studio-cut e lumiere"
-    - "rotas /, /studio-cut e /lumiere"
-    - "redirecionamentos das rotas antigas /demo/<slug> e /admin"
-    - "404 real em rota desconhecida no Preview"
+    - "vite build sem erro nem aviso; 48 módulos; três entradas: raiz, studio-cut e lumiere"
+    - "backend prisma generate sem erro"
+    - "rotas /, /studio-cut e /lumiere; redirecionamentos legados /demo/<slug> e /admin"
     - "metadados por negócio: título, descrição, canonical e og"
     - "ausência visual da marca AgendaFácil no corpo das páginas"
     - "responsividade básica em 375 px e 1280 px"
-    - "caminho de indisponibilidade de rede, com mensagem genérica"
-    - "A0: PostgreSQL 18 local isolado em Docker (container agendafacil-postgres-dev, banco agendafacil_dev na porta 5433)"
-    - "A0: cinco migrations aplicadas e seed executados exclusivamente no banco local"
-    - "A0: /api/health com banco saudável"
-    - "A0: carregamento de serviços e profissionais distintos por tenant (studio-cut e lumiere)"
-    - "A0: disponibilidade de horários considerando duração do serviço"
-    - "A0: prevenção de conflito por sobreposição (409)"
-    - "A0: bloqueio por data (BlockedDate)"
-    - "A0: validações de payload (campos ausentes, data passada, telefone curto, tenant cruzado 404)"
-    - "A0: criação e persistência — Studio Cut pela jornada pública completa; Lumière pela API com demoId correto"
-    - "A0: painel administrativo — login 200/401, listagem filtrada por tenant, alteração de status, exportação CSV, logout"
-    - "A0: rate limit público (429 a partir do 10º POST/60s)"
-    - "A0: jornada pública Studio Cut completa em 375 px, console sem erros"
-    - "A0: ausência de efeitos remotos (sem commit de código, push, deploy ou escrita em produção durante a validação)"
+    - "A1: entidade Tenant criada; studio-cut e lumiere ativos"
+    - "A1: migration versionada tenant_foundation aplicada só no banco Docker local; migrate status sem drift"
+    - "A1: backfill preservou 6 agendamentos (ids 1-6); duplicou 7 horários e 1 bloqueio por tenant; sem órfãos de FK; tenant de cada agendamento coerente com o serviço"
+    - "A1: horários independentes por tenant (Studio abre segunda; Lumière fechada segunda)"
+    - "A1: bloqueios independentes por tenant (Studio bloqueado numa quarta → 0 slots; Lumière na mesma data → 17 slots)"
+    - "A1: serviços e profissionais isolados por tenant"
+    - "A1: criação de agendamento com tenantId explícito e consistente"
+    - "A1: rejeição de serviço/profissional de tenants distintos (404)"
+    - "A1: leitura por ID cruzada bloqueada (404 sem vazar existência)"
+    - "A1: alteração de status por ID cruzada bloqueada (404; registro permanece NEW)"
+    - "A1: prevenção de sobreposição mantida (409)"
+    - "A1: suíte de integração node:test com 10 casos, todos verdes, contra banco local"
+    - "A1: ausência de efeitos remotos (sem push, merge, deploy ou escrita em produção)"
   not_validated:
-    - "conclusão visual da jornada Lumière pelo navegador (harness instável; ver ressalva)"
-    - "autenticação administrativa pela UI (login exercitado via API, não pelo formulário)"
-    - "eliminação da marca interna no domínio e nas URLs canônicas"
-    - "saúde da API e do banco em produção (validação A0 foi exclusivamente local)"
+    - "autenticação real e sessões (senha compartilhada, token determinístico, sem expiração/revogação) — escopo A2"
+    - "conclusão visual da jornada Lumière pelo navegador (harness instável; validada por API e testes)"
+    - "saúde da API e do banco em produção (validação A1 foi exclusivamente local)"
   evidence:
-    - "npm ci e vite build locais em 2026-07-20, lockfile inalterado (frontend e backend)"
-    - "vite preview local: rotas, fallback de cliente e responsividade"
-    - "Preview Deployment dpl_8Mc914mPR3i7zGgKvfT7wEoobRWy: rotas 200, redirecionamentos 3xx, rota desconhecida 404"
-    - "A0 em 2026-07-20: banco local Docker isolado (5433), migrations+seed, API validada por curl, jornada Studio Cut ponta a ponta no navegador com persistência conferida no banco"
-    - "A0: appointment id 6 (Studio Cut) criado pela UI e persistido; id 5 (Lumière) criado pela API com demoId=lumiere"
-source: A0 executada na branch de preservação em 2026-07-20 (banco local Docker isolado)
+    - "A1 em 2026-07-20: prisma migrate deploy no banco Docker local (5433); backfill conferido por psql (Tenant=2, appts ids 1-6 preservados, BusinessHours 7/tenant, BlockedDate 1/tenant, sem FK órfã)"
+    - "A1: npm test → 10/10 testes de integração verdes (tests/tenant.test.js)"
+    - "A1: prova ao vivo por curl — bloqueio só no Studio em 2026-07-22 (quarta) → Studio [] e Lumière 17 slots; segunda aberta no Studio e fechada na Lumière; leitura/alteração cruzada por ID → 404"
+    - "A1: vite build (48 módulos, 3 entradas) e prisma generate sem erro; prisma migrate status sem drift"
+    - "A1 baseline em b12610a — feat: fundamenta isolamento por tenant"
+source: A1 executada na branch de preservação em 2026-07-20 (banco local Docker isolado)
 source_of_truth: .
 ---
 
@@ -51,50 +47,54 @@ source_of_truth: .
 
 ## Último resultado confirmado
 
-Fase A0 concluída em 2026-07-20: o fluxo de dados, antes sem prova, foi
-validado ponta a ponta em ambiente local isolado. Um PostgreSQL 18 foi criado
-em Docker (container `agendafacil-postgres-dev`, banco `agendafacil_dev` na
-porta 5433), separado do PostgreSQL do Windows (5432) e sem qualquer conexão
-com Render, Vercel ou produção. As cinco migrations e o seed rodaram apenas
-nesse banco local.
+Fase A1 — fundação de tenant — concluída em 2026-07-20, na branch
+`preserve/agendafacil-local-2026-07-20`, exclusivamente no banco Docker local
+(`agendafacil_dev`, porta 5433), sem qualquer efeito remoto.
 
-Com esse banco, foram exercitados: `/api/health` com banco saudável; serviços
-e profissionais distintos por tenant; disponibilidade considerando duração;
-prevenção de conflito por sobreposição (409); bloqueio por data; validações de
-payload e recusa de tenant cruzado na criação (404); rate limit público (429).
-A jornada pública do Studio Cut foi percorrida inteira no navegador em 375 px
-até a tela de sucesso, sem erro de console, com o agendamento persistido no
-banco. O painel administrativo teve login (200/401), listagem filtrada por
-tenant, alteração de status, exportação CSV e logout validados. A criação da
-Lumière com `demoId` correto foi comprovada pela API.
+O tenancy embrionário por `demoId` virou uma fundação estrutural. Foi criada a
+entidade `Tenant` (`studio-cut` e `lumiere`, ativos). A coluna física `demoId`
+foi preservada e passou a ser exposta como `tenantId` (via `@map`), agora com
+chave estrangeira para `Tenant(slug)` em `Service`, `Professional`,
+`Appointment`, `BusinessHours` e `BlockedDate`. `BusinessHours` e `BlockedDate`
+saíram da unicidade global para composta por tenant (`tenantId+dayOfWeek` e
+`tenantId+date`); `Appointment` ganhou tenant explícito e consistente com o
+serviço e o profissional.
 
-Nada foi publicado. `main` permanece em `ad95e6d`, sem merge e sem push; a
-evolução segue na branch `preserve/agendafacil-local-2026-07-20`. Último commit
-de código conhecido em `main`: `ad95e6d` — `redesign: nova landing com
-identidade Caderno de Horários`.
+A migration versionada `20260720120000_tenant_foundation` foi aplicada só no
+banco local, com backfill idempotente: os 6 agendamentos existentes (ids 1-6)
+foram preservados, os 7 horários e 1 bloqueio globais foram atribuídos ao
+Studio Cut e duplicados para a Lumière, sem órfãos de FK. `prisma migrate
+status` não acusa drift.
+
+A resolução e validação de tenant foram centralizadas em
+`backend/config/tenant.js` e `backend/middleware/tenant.js` (aceita só tenant
+registrado e ativo; rejeita slug inválido). As rotas administrativas por ID
+passaram a filtrar `id + tenantId`: ler ou alterar um agendamento da Lumière no
+contexto Studio Cut agora devolve `404`, sem vazar a existência do registro.
+
+Isolamento provado por suíte de integração (`node:test`, 10/10) e por checagem
+ao vivo com curl: bloqueio só no Studio numa quarta zera os slots do Studio e
+mantém 17 slots na Lumière; a segunda-feira aberta no Studio permanece fechada
+na Lumière; serviço/profissional de tenants distintos é recusado (404);
+sobreposição continua bloqueada (409).
+
+Nada foi publicado. `main` permanece em `ad95e6d`, sem merge e sem push.
 
 ### Ressalva — jornada Lumière
 
-A conclusão visual da jornada Lumière não foi exercitada pelo navegador por
-instabilidade do harness (deriva de coordenadas de clique e screenshots que
-expiram), não por defeito do app. A tela usa o mesmo `BookingFlow` já validado
-ponta a ponta no Studio Cut, carregou dados próprios e isolados, não apresentou
-erro de console, e a seleção de serviço registrou na UI. A criação de
-agendamento Lumière com `demoId` correto foi comprovada via API.
+A conclusão visual da jornada Lumière segue sem exercício pelo navegador por
+instabilidade do harness, não por defeito do app. Na A1 ela foi coberta pela
+API e pelos testes de integração: dados próprios e isolados, criação com tenant
+correto e ausência de leitura/alteração cruzada.
 
 ## Baseline técnica
 
-`256a996`, com `validation_status: partial`. Substitui `ad95e6d` para o escopo
-listado no frontmatter, e apenas para ele. Os commits posteriores até `ecae405`
-são documentais e não substituem a baseline técnica.
-
-A A0 ampliou o escopo comprovado sobre `256a996`: além de build, rotas,
-redirecionamentos, metadados e identidade pública, o fluxo de dados
-(serviços, profissionais, disponibilidade, agendamento, painel, CSV, rate
-limit) foi exercitado em banco local isolado. Segue `partial`, não `validated`,
-por lacunas reais: a conclusão visual da Lumière não foi percorrida pelo
-navegador, o login do painel não foi exercitado pela UI, e nada foi validado em
-produção — a A0 foi exclusivamente local.
+`b12610a` — `feat: fundamenta isolamento por tenant` —, com
+`validation_status: partial`. Substitui `256a996` para o escopo listado no
+frontmatter: a fundação de tenant foi exercitada em banco local isolado
+(migration, backfill, isolamento de dados, rotas por ID, testes). Segue
+`partial`, não `validated`, por lacunas reais: autenticação e sessões reais são
+escopo da A2, e nada foi validado em produção — a A1 foi exclusivamente local.
 
 `ad95e6d` continua sendo o último commit em `main` e o único código publicado
 em produção.
@@ -102,68 +102,66 @@ em produção.
 ## git_snapshot
 
 ```text
-observed_at: 2026-07-20 (checkpoint A0)
+observed_at: 2026-07-20 (fase A1)
 branch: preserve/agendafacil-local-2026-07-20
-head_at_observation: ecae405
+head_at_observation: b12610a (feat A1; o commit documental deste estado será o HEAD seguinte)
 base: ad95e6d
 main: ad95e6d (intacta, sem merge)
-upstream: origin/preserve/agendafacil-local-2026-07-20 (sincronizada, 0/0)
-working_tree: limpa antes do commit documental A0
-arquivos_staged: 0
-preview_deployment: dpl_8Mc914mPR3i7zGgKvfT7wEoobRWy (target preview, Ready)
+working_tree: limpa após o commit feat A1, antes do commit documental
 producao: inalterada
 ```
 
 Observação datada. Ficará anterior ao `HEAD` assim que o commit documental
-desta operação for criado, e isso é correto.
-
-## Classificação da working tree
-
-Limpa. Os 18 arquivos rastreados modificados e os 2 diretórios não
-rastreados foram versionados em `256a996`, com hashes conferidos antes e
-depois da preservação.
+deste estado for criado, e isso é correto.
 
 ## Trabalho em andamento
 
-Decisão operacional registrada pela A0: a branch preservada é base segura e a
-evolução do produto continua nela. A próxima fase é A1 — fundação de tenant.
+Nenhum. A A1 está concluída e validada localmente. A próxima fase é A2 —
+autenticação e sessões reais — e só começa sob pedido explícito.
 
 ## Bloqueios
 
-Nenhum bloqueio de ambiente para A1: o banco local isolado está saudável e
-semeado, e `backend/.env` aponta para ele. Permanecem abertos, para produção e
-não para a evolução local:
+Nenhum bloqueio de ambiente: o banco local isolado está saudável e semeado, e
+`backend/.env` aponta para ele. Permanecem abertos, para produção e não para a
+evolução local:
 
-- `VITE_API_URL` não está definida no ambiente Preview da Vercel; o Preview
-  Deployment não valida o fluxo de dados (a validação A0 foi local, não no
-  preview).
 - Saúde da API e do banco em produção não foi validada nesta fase.
+- A migration `tenant_foundation` **não** foi aplicada em Render/produção; ao
+  promover, aplicar com o backfill e o plano de reversão documentados em
+  `backend/prisma/migrations/20260720120000_tenant_foundation/ROLLBACK.md`.
 
 ## Riscos
 
-Confirmados na A0 como **bloqueadores das próximas fases** (não corrigir na A0):
+Resolvidos pela A1 (não são mais bloqueadores):
 
-- **`BusinessHours` global** — sem `demoId`; horário de funcionamento é único
-  para os dois tenants.
-- **`BlockedDate` global** — bloqueio de data compartilhado entre tenants.
-- **Senha administrativa compartilhada** — o mesmo cookie abre os dois tenants.
+- ~~`BusinessHours` global~~ — agora por tenant (`tenantId+dayOfWeek`).
+- ~~`BlockedDate` global~~ — agora por tenant (`tenantId+date`).
+- ~~Leitura cruzada de agendamento por ID~~ — `getAppointment` filtra
+  `id+tenantId` (404 no contexto cruzado).
+- ~~Alteração cruzada de status por ID~~ — `updateAppointmentStatus` filtra
+  `id+tenantId` (404 no contexto cruzado).
+
+Confirmados como **bloqueadores da A2** (autenticação e sessões):
+
+- **Senha administrativa compartilhada** — o mesmo cookie abre os dois tenants;
+  a A1 impede o vazamento *acidental* por ID, mas um admin com a senha ainda
+  escolhe o tenant via `demoId`.
 - **`ADMIN_SECRET` usado também como chave HMAC** do token de sessão.
 - **Token determinístico** — sem entropia de sessão.
 - **Token aceito após logout** — sem revogação no servidor; `clearCookie` só
   age no cliente.
 - **Ausência de expiração e revogação no servidor** — validade só no `maxAge`
   do cookie.
-- **Tenant administrativo por query param** (`demoId`).
-- **Leitura cruzada de agendamento por ID** — `getAppointment` não filtra
-  `demoId`.
-- **Alteração cruzada de status por ID** — `updateAppointmentStatus` não filtra
-  `demoId` (comprovado: appt Lumière cancelado por sessão qualquer).
+- **Tenant administrativo por query param** (`demoId`) — aceitável na A1 por
+  decisão de escopo; a A2 substitui pelo tenant da sessão autenticada.
+
+Pendências de fases posteriores (fora do escopo A1/A2):
+
 - **Ausência de `Lead`, `Client` e `AdminUser`** no schema.
 - **Ausência de confirmação, cancelamento e reagendamento públicos.**
 - **Ausência de `NO_SHOW`** no enum de status.
-- **Ausência de bloqueio por intervalo** — só dia inteiro.
-- **Ausência de agenda individual por profissional** — horário vem só do
-  `BusinessHours` global.
+- **Ausência de bloqueio por intervalo** — só dia inteiro (A3).
+- **Ausência de agenda individual por profissional.**
 
 Riscos anteriores que permanecem:
 
@@ -213,12 +211,34 @@ Acrescentadas pela A0 (banco local Docker isolado, 2026-07-20):
 - Rate limit público (429 a partir do 10º POST/60s).
 - Ausência de efeitos remotos durante a validação.
 
+Acrescentadas pela A1 (fundação de tenant, banco local Docker, 2026-07-20):
+
+- Entidade `Tenant` criada; `studio-cut` e `lumiere` ativos e referenciados por
+  FK em todas as tabelas tenantizadas.
+- Migration `tenant_foundation` aplicada só no banco local; `migrate status`
+  sem drift; `prisma generate` e `vite build` sem erro.
+- Backfill: 6 agendamentos preservados (ids 1-6); 7 horários e 1 bloqueio
+  duplicados por tenant; nenhum FK órfão; tenant coerente com o serviço.
+- Horários independentes por tenant (segunda aberta no Studio, fechada na
+  Lumière).
+- Bloqueios independentes por tenant (bloqueio só no Studio em 2026-07-22 →
+  Studio `[]`, Lumière 17 slots).
+- Serviços e profissionais isolados por tenant.
+- Criação de agendamento com `tenantId` explícito e consistente.
+- Serviço/profissional de tenants distintos recusados (404).
+- Leitura por ID cruzada bloqueada (404 sem vazar existência).
+- Alteração de status por ID cruzada bloqueada (404; registro segue `NEW`).
+- Prevenção de sobreposição mantida (409).
+- Suíte de integração `node:test` (`tests/tenant.test.js`) 10/10 verde.
+
 ## Validações não executadas
 
-- Conclusão visual da jornada Lumière pelo navegador (harness instável).
-- Login do painel administrativo pela UI (exercitado via API).
+- Autenticação e sessões reais (senha compartilhada, token determinístico, sem
+  expiração/revogação) — escopo A2.
+- Conclusão visual da jornada Lumière pelo navegador (harness instável;
+  coberta por API e testes na A1).
 - Saúde da API e do banco em produção.
-- Página neutra como resposta a rota desconhecida na Vercel; hoje é 404.
+- Aplicação da migration `tenant_foundation` em produção (feita só no local).
 
 ## Divergências entre documentação e código
 
@@ -230,10 +250,10 @@ Acrescentadas pela A0 (banco local Docker isolado, 2026-07-20):
 
 ## Próxima ação registrada
 
-Iniciar **A1 — fundação de tenant**, evoluindo na branch
-`preserve/agendafacil-local-2026-07-20`, sem integrar em `main` ainda. A1 deve
-priorizar o isolamento de dados, especialmente as rotas por ID
-(`getAppointment` e `updateAppointmentStatus`, hoje sem filtro de `demoId`) e o
-escopo por tenant de `BusinessHours` e `BlockedDate`. A2 tratará autenticação e
-sessões reais (`AdminUser`, expiração e revogação de sessão, fim da senha
-compartilhada e do token determinístico).
+Iniciar **A2 — autenticação e sessões reais**, sob pedido explícito, evoluindo
+na branch `preserve/agendafacil-local-2026-07-20`, sem integrar em `main`. A2
+deve introduzir `AdminUser`, sessão com expiração e revogação no servidor, fim
+da senha administrativa compartilhada e do token determinístico, e derivar o
+tenant administrativo da sessão autenticada em vez do query param `demoId`.
+A fundação de tenant da A1 é o pré-requisito atendido. Uma fase por vez:
+concluir a A1 não autoriza a A2.
