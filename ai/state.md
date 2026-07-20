@@ -4,7 +4,35 @@ updated_at: 2026-07-20
 review_at: 2026-07-23
 status: active
 current_phase: null
-technical_baseline: ad95e6d
+technical_baseline:
+  commit: 256a996
+  validation_status: partial
+  validated_at: 2026-07-20
+  validated:
+    - "npm ci reproduzível, sem alteração de lockfile"
+    - "npm run build sem erro nem aviso"
+    - "geração das três entradas: raiz, studio-cut e lumiere"
+    - "rotas /, /studio-cut e /lumiere"
+    - "redirecionamentos das rotas antigas /demo/<slug> e /admin"
+    - "404 real em rota desconhecida no Preview"
+    - "metadados por negócio: título, descrição, canonical e og"
+    - "ausência visual da marca AgendaFácil no corpo das páginas"
+    - "responsividade básica em 375 px e 1280 px"
+    - "caminho de indisponibilidade de rede, com mensagem genérica"
+  not_validated:
+    - "carregamento de serviços"
+    - "carregamento de profissionais"
+    - "disponibilidade de horários"
+    - "criação de agendamento"
+    - "autenticação administrativa"
+    - "respostas reais 401 e 503 do backend"
+    - "integração completa com a API"
+    - "eliminação da marca interna no domínio e nas URLs canônicas"
+  evidence:
+    - "npm ci e vite build locais em 2026-07-20, lockfile inalterado"
+    - "vite preview local: rotas, fallback de cliente e responsividade"
+    - "Preview Deployment dpl_8Mc914mPR3i7zGgKvfT7wEoobRWy: rotas 200, redirecionamentos 3xx, rota desconhecida 404"
+    - "nenhuma requisição de API bem sucedida em nenhum ambiente"
 source: validação executada na branch de preservação em 2026-07-20
 source_of_truth: .
 ---
@@ -31,11 +59,21 @@ sucedida em nenhum ambiente testado. Nada foi publicado em produção.
 
 ## Baseline técnica
 
-`ad95e6d` — último commit de código validado conhecido.
+`256a996`, com `validation_status: partial`. Substitui `ad95e6d` para o escopo
+listado no frontmatter, e apenas para ele.
 
-`256a996` **não** substitui a baseline. Compila e roteia corretamente, mas
-nenhuma tela chegou a carregar serviços, profissionais ou horários. Build
-aprovado não é fluxo aprovado.
+O que sustenta a troca: build, entradas, rotas, redirecionamentos, metadados e
+identidade pública foram exercitados com evidência, inclusive em ambiente real
+da Vercel. O que impede `validated`: nenhuma chamada de API foi bem sucedida em
+nenhum ambiente, então serviços, profissionais, horários, agendamento e
+autenticação seguem sem prova.
+
+Baseline parcial não é atestado de saúde integral. Build aprovado não é fluxo
+aprovado — mas também não é motivo para tratar como não validado aquilo que já
+tem evidência.
+
+`ad95e6d` continua sendo o último commit em `main` e o único código publicado
+em produção.
 
 ## git_snapshot
 
