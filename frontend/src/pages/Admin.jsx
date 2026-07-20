@@ -5,6 +5,23 @@ import StateMessage from "../components/StateMessage.jsx";
 import { formatCurrency, todayInputValue } from "../utils/format.js";
 import tenant from "../config/tenant.js";
 
+const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+function blockWindow() {
+  const from = todayInputValue();
+  const end = new Date(`${from}T00:00:00`);
+  end.setDate(end.getDate() + 180);
+  return { from, to: end.toISOString().slice(0, 10) };
+}
+
+function emptyScheduleForm(professionalId = "") {
+  return { professionalId, dayOfWeek: 1, startTime: "09:00", endTime: "18:00", active: true };
+}
+
+function emptyBlockForm() {
+  return { professionalId: "", date: todayInputValue(), allDay: true, startTime: "09:00", endTime: "10:00", reason: "" };
+}
+
 // ─── Telas de estado (fundo escuro, card centralizado) ──────────────────────
 
 function AdminScreenHeader() {
@@ -186,10 +203,18 @@ export default function Admin({ services, professionals }) {
   const [foreignTenant, setForeignTenant] = useState(null);
   const [statusChangeError, setStatusChangeError] = useState("");
   const [dateFilter, setDateFilter] = useState("");
+  const [schedules, setSchedules] = useState([]);
+  const [blocks, setBlocks] = useState([]);
+  const [settingsError, setSettingsError] = useState("");
+  const [editingScheduleId, setEditingScheduleId] = useState(null);
+  const [scheduleForm, setScheduleForm] = useState(emptyScheduleForm());
+  const [blockForm, setBlockForm] = useState(emptyBlockForm());
 
   const safeAppointments = Array.isArray(appointments) ? appointments : [];
   const safeServices = Array.isArray(services) ? services : [];
   const safeProfessionals = Array.isArray(professionals) ? professionals : [];
+  const safeSchedules = Array.isArray(schedules) ? schedules : [];
+  const safeBlocks = Array.isArray(blocks) ? blocks : [];
 
   // Todos os hooks ANTES de qualquer early return
   const metrics = useMemo(() => {
@@ -226,9 +251,17 @@ export default function Admin({ services, professionals }) {
     setStatus("loading");
     setErrorMsg("");
     setStatusChangeError("");
-    api.getAppointments()
-      .then((data) => {
-        setAppointments(Array.isArray(data) ? data : []);
+    setSettingsError("");
+    const { from, to } = blockWindow();
+    Promise.all([
+      api.getAppointments(),
+      api.getProfessionalSchedules(),
+      api.getScheduleBlocks(from, to)
+    ])
+      .then(([appointmentData, scheduleData, blockData]) => {
+        setAppointments(Array.isArray(appointmentData) ? appointmentData : []);
+        setSchedules(Array.isArray(scheduleData) ? scheduleData : []);
+        setBlocks(Array.isArray(blockData) ? blockData : []);
         setStatus("authenticated");
       })
       .catch((err) => {
@@ -271,6 +304,12 @@ export default function Admin({ services, professionals }) {
     bootstrap();
   }, []);
 
+  useEffect(() => {
+    if (!scheduleForm.professionalId && safeProfessionals.length) {
+      setScheduleForm((current) => ({ ...current, professionalId: String(safeProfessionals[0].id) }));
+    }
+  }, [professionals, scheduleForm.professionalId]);
+
   function handleStatusChange(id, newStatus) {
     setStatusChangeError("");
     api.updateAppointmentStatus(id, newStatus)
@@ -284,6 +323,79 @@ export default function Admin({ services, professionals }) {
         setAppointments([]);
         setStatus("unauthenticated");
       });
+  }
+
+  async function handleScheduleSubmit(event) {
+    event.preventDefault();
+    setSettingsError("");
+    const payload = {
+      ...scheduleForm,
+      professionalId: Number(scheduleForm.professionalId),
+      dayOfWeek: Number(scheduleForm.dayOfWeek)
+    };
+    try {
+      if (editingScheduleId) {
+        await api.updateProfessionalSchedule(editingScheduleId, payload);
+      } else {
+        await api.createProfessionalSchedule(payload);
+      }
+      setEditingScheduleId(null);
+      setScheduleForm(emptyScheduleForm(scheduleForm.professionalId));
+      loadAppointments();
+    } catch (error) {
+      setSettingsError(error.message);
+    }
+  }
+
+  function editSchedule(schedule) {
+    setEditingScheduleId(schedule.id);
+    setScheduleForm({
+      professionalId: String(schedule.professionalId),
+      dayOfWeek: schedule.dayOfWeek,
+      startTime: schedule.startTime,
+      endTime: schedule.endTime,
+      active: schedule.active
+    });
+  }
+
+  async function removeSchedule(id) {
+    setSettingsError("");
+    try {
+      await api.deleteProfessionalSchedule(id);
+      loadAppointments();
+    } catch (error) {
+      setSettingsError(error.message);
+    }
+  }
+
+  async function handleBlockSubmit(event) {
+    event.preventDefault();
+    setSettingsError("");
+    const payload = {
+      professionalId: blockForm.professionalId ? Number(blockForm.professionalId) : null,
+      date: blockForm.date,
+      allDay: blockForm.allDay,
+      startTime: blockForm.allDay ? null : blockForm.startTime,
+      endTime: blockForm.allDay ? null : blockForm.endTime,
+      reason: blockForm.reason
+    };
+    try {
+      await api.createScheduleBlock(payload);
+      setBlockForm(emptyBlockForm());
+      loadAppointments();
+    } catch (error) {
+      setSettingsError(error.message);
+    }
+  }
+
+  async function removeBlock(id) {
+    setSettingsError("");
+    try {
+      await api.deleteScheduleBlock(id);
+      loadAppointments();
+    } catch (error) {
+      setSettingsError(error.message);
+    }
   }
 
   // ─── Estados de tela completa ──────────────────────────────────────────────
@@ -324,6 +436,11 @@ export default function Admin({ services, professionals }) {
         {statusChangeError && (
           <StateMessage type="error" title="Erro ao alterar status">
             {statusChangeError}
+          </StateMessage>
+        )}
+        {settingsError && (
+          <StateMessage type="error" title="Erro na agenda">
+            {settingsError}
           </StateMessage>
         )}
 
@@ -432,6 +549,179 @@ export default function Admin({ services, professionals }) {
                 <div className="compact-row" key={p.id}>
                   <strong>{p.name}</strong>
                   <span>{p.specialty}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <div className="admin-grid admin-grid-settings">
+          <section className="panel">
+            <h2>Horários por profissional</h2>
+            <form className="admin-form-grid" onSubmit={handleScheduleSubmit}>
+              <label>
+                Profissional
+                <select
+                  value={scheduleForm.professionalId}
+                  onChange={(event) => setScheduleForm({ ...scheduleForm, professionalId: event.target.value })}
+                  required
+                >
+                  {safeProfessionals.map((professional) => (
+                    <option key={professional.id} value={professional.id}>{professional.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Dia
+                <select
+                  value={scheduleForm.dayOfWeek}
+                  onChange={(event) => setScheduleForm({ ...scheduleForm, dayOfWeek: Number(event.target.value) })}
+                >
+                  {weekDays.map((day, index) => <option key={day} value={index}>{day}</option>)}
+                </select>
+              </label>
+              <label>
+                Início
+                <input
+                  type="time"
+                  value={scheduleForm.startTime}
+                  onChange={(event) => setScheduleForm({ ...scheduleForm, startTime: event.target.value })}
+                  required
+                />
+              </label>
+              <label>
+                Fim
+                <input
+                  type="time"
+                  value={scheduleForm.endTime}
+                  onChange={(event) => setScheduleForm({ ...scheduleForm, endTime: event.target.value })}
+                  required
+                />
+              </label>
+              <label className="admin-check-field">
+                <input
+                  type="checkbox"
+                  checked={scheduleForm.active}
+                  onChange={(event) => setScheduleForm({ ...scheduleForm, active: event.target.checked })}
+                />
+                Intervalo ativo
+              </label>
+              <div className="admin-form-actions">
+                <button className="admin-action-primary" type="submit">
+                  {editingScheduleId ? "Salvar horário" : "Adicionar horário"}
+                </button>
+                {editingScheduleId && (
+                  <button
+                    className="admin-action-secondary"
+                    type="button"
+                    onClick={() => {
+                      setEditingScheduleId(null);
+                      setScheduleForm(emptyScheduleForm(scheduleForm.professionalId));
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </form>
+            <div className="stack admin-settings-list">
+              {safeSchedules
+                .filter((schedule) => String(schedule.professionalId) === String(scheduleForm.professionalId))
+                .map((schedule) => (
+                  <div className="admin-settings-row" key={schedule.id}>
+                    <div>
+                      <strong>{weekDays[schedule.dayOfWeek]}</strong>
+                      <span>{schedule.startTime}–{schedule.endTime}{schedule.active ? "" : " · inativo"}</span>
+                    </div>
+                    <div className="admin-row-actions">
+                      <button type="button" onClick={() => editSchedule(schedule)}>Editar</button>
+                      <button type="button" onClick={() => removeSchedule(schedule.id)}>Remover</button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </section>
+
+          <section className="panel">
+            <h2>Bloqueios</h2>
+            <form className="admin-form-grid" onSubmit={handleBlockSubmit}>
+              <label>
+                Data
+                <input
+                  type="date"
+                  value={blockForm.date}
+                  onChange={(event) => setBlockForm({ ...blockForm, date: event.target.value })}
+                  required
+                />
+              </label>
+              <label>
+                Aplicar a
+                <select
+                  value={blockForm.professionalId}
+                  onChange={(event) => setBlockForm({ ...blockForm, professionalId: event.target.value })}
+                >
+                  <option value="">Todo o negócio</option>
+                  {safeProfessionals.map((professional) => (
+                    <option key={professional.id} value={professional.id}>{professional.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="admin-check-field">
+                <input
+                  type="checkbox"
+                  checked={blockForm.allDay}
+                  onChange={(event) => setBlockForm({ ...blockForm, allDay: event.target.checked })}
+                />
+                Dia inteiro
+              </label>
+              {!blockForm.allDay && (
+                <>
+                  <label>
+                    Início
+                    <input
+                      type="time"
+                      value={blockForm.startTime}
+                      onChange={(event) => setBlockForm({ ...blockForm, startTime: event.target.value })}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Fim
+                    <input
+                      type="time"
+                      value={blockForm.endTime}
+                      onChange={(event) => setBlockForm({ ...blockForm, endTime: event.target.value })}
+                      required
+                    />
+                  </label>
+                </>
+              )}
+              <label className="admin-form-wide">
+                Motivo opcional
+                <input
+                  type="text"
+                  maxLength="200"
+                  value={blockForm.reason}
+                  onChange={(event) => setBlockForm({ ...blockForm, reason: event.target.value })}
+                />
+              </label>
+              <div className="admin-form-actions">
+                <button className="admin-action-primary" type="submit">Criar bloqueio</button>
+              </div>
+            </form>
+            <div className="stack admin-settings-list">
+              {safeBlocks.map((block) => (
+                <div className="admin-settings-row" key={block.id}>
+                  <div>
+                    <strong>{block.date.slice(0, 10)} · {block.professional?.name || "Todo o negócio"}</strong>
+                    <span>
+                      {block.allDay ? "Dia inteiro" : `${block.startTime}–${block.endTime}`}
+                      {block.reason ? ` · ${block.reason}` : ""}
+                    </span>
+                  </div>
+                  <div className="admin-row-actions">
+                    <button type="button" onClick={() => removeBlock(block.id)}>Remover</button>
+                  </div>
                 </div>
               ))}
             </div>

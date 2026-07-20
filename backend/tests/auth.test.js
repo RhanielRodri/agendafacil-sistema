@@ -56,6 +56,8 @@ before(async () => {
   await prisma.adminSession.deleteMany();
   await prisma.adminUser.deleteMany();
   await prisma.appointment.deleteMany();
+  await prisma.scheduleBlock.deleteMany();
+  await prisma.professionalSchedule.deleteMany();
   await prisma.blockedDate.deleteMany();
   await prisma.businessHours.deleteMany();
   await prisma.professional.deleteMany();

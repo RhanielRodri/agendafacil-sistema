@@ -16,6 +16,8 @@ async function main() {
   }
 
   await prisma.appointment.deleteMany();
+  await prisma.scheduleBlock.deleteMany();
+  await prisma.professionalSchedule.deleteMany();
   await prisma.blockedDate.deleteMany();
   await prisma.businessHours.deleteMany();
   await prisma.professional.deleteMany();
@@ -196,6 +198,40 @@ async function main() {
     ]
   });
 
+  const openHours = await prisma.businessHours.findMany({ where: { isOpen: true } });
+  const allProfessionals = [...professionals, ...lumiereProfessionals];
+  await prisma.professionalSchedule.createMany({
+    data: allProfessionals.flatMap((professional) =>
+      openHours
+        .filter((hours) => hours.tenantId === professional.tenantId)
+        .map((hours) => ({
+          tenantId: professional.tenantId,
+          professionalId: professional.id,
+          dayOfWeek: hours.dayOfWeek,
+          startTime: hours.openTime,
+          endTime: hours.closeTime,
+          active: true
+        }))
+    )
+  });
+
+  await prisma.professionalSchedule.deleteMany({
+    where: {
+      OR: [
+        { professionalId: professionals[0].id, dayOfWeek: 1 },
+        { professionalId: lumiereProfessionals[0].id, dayOfWeek: 4 }
+      ]
+    }
+  });
+  await prisma.professionalSchedule.createMany({
+    data: [
+      { tenantId: STUDIO_CUT, professionalId: professionals[0].id, dayOfWeek: 1, startTime: "09:00", endTime: "12:00" },
+      { tenantId: STUDIO_CUT, professionalId: professionals[0].id, dayOfWeek: 1, startTime: "13:00", endTime: "17:00" },
+      { tenantId: LUMIERE, professionalId: lumiereProfessionals[0].id, dayOfWeek: 4, startTime: "11:00", endTime: "14:00" },
+      { tenantId: LUMIERE, professionalId: lumiereProfessionals[0].id, dayOfWeek: 4, startTime: "15:00", endTime: "19:00" }
+    ]
+  });
+
   const today = new Date();
   const todayIso = today.toISOString().slice(0, 10);
   const tomorrow = new Date(today);
@@ -207,6 +243,12 @@ async function main() {
   const lumiereBlocked = new Date(today);
   lumiereBlocked.setDate(today.getDate() + 10);
   const lumiereBlockedIso = lumiereBlocked.toISOString().slice(0, 10);
+  const studioPartial = new Date(today);
+  studioPartial.setDate(today.getDate() + 14);
+  const studioPartialIso = studioPartial.toISOString().slice(0, 10);
+  const lumierePartial = new Date(today);
+  lumierePartial.setDate(today.getDate() + 17);
+  const lumierePartialIso = lumierePartial.toISOString().slice(0, 10);
 
   await prisma.appointment.createMany({
     data: [
@@ -257,10 +299,14 @@ async function main() {
     ]
   });
 
-  await prisma.blockedDate.createMany({
+  await prisma.scheduleBlock.createMany({
     data: [
-      { tenantId: STUDIO_CUT, date: toDate(studioBlockedIso), reason: "Treinamento interno" },
-      { tenantId: LUMIERE, date: toDate(lumiereBlockedIso), reason: "Feriado interno" }
+      { tenantId: STUDIO_CUT, date: toDate(studioBlockedIso), allDay: true, reason: "Treinamento interno" },
+      { tenantId: LUMIERE, date: toDate(lumiereBlockedIso), allDay: true, reason: "Feriado interno" },
+      { tenantId: STUDIO_CUT, date: toDate(studioPartialIso), startTime: "12:00", endTime: "12:30", reason: "Pausa geral" },
+      { tenantId: STUDIO_CUT, professionalId: professionals[0].id, date: toDate(studioPartialIso), startTime: "15:00", endTime: "16:00", reason: "Compromisso do profissional" },
+      { tenantId: LUMIERE, date: toDate(lumierePartialIso), startTime: "13:30", endTime: "14:00", reason: "Pausa da clínica" },
+      { tenantId: LUMIERE, professionalId: lumiereProfessionals[0].id, date: toDate(lumierePartialIso), startTime: "16:00", endTime: "17:00", reason: "Procedimento interno" }
     ]
   });
 }

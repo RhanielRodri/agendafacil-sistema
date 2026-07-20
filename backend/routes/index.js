@@ -2,11 +2,23 @@ import { Router } from "express";
 import { listServices } from "../controllers/serviceController.js";
 import { listProfessionals } from "../controllers/professionalController.js";
 import { listAppointments, getAppointment, createAppointment, updateAppointmentStatus } from "../controllers/appointmentController.js";
-import { listAvailableSlots } from "../controllers/availabilityController.js";
+import { getFirstAvailability, listAvailableSlots } from "../controllers/availabilityController.js";
 import { listBusinessHours } from "../controllers/businessHoursController.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { resolveTenant } from "../middleware/tenant.js";
 import { login, logout, me } from "../controllers/authController.js";
+import {
+  createProfessionalSchedule,
+  deleteProfessionalSchedule,
+  listProfessionalSchedules,
+  updateProfessionalSchedule
+} from "../controllers/professionalScheduleController.js";
+import {
+  createScheduleBlock,
+  deleteScheduleBlock,
+  listScheduleBlocks,
+  updateScheduleBlock
+} from "../controllers/scheduleBlockController.js";
 import prisma from "../prismaClient.js";
 
 const router = Router();
@@ -53,6 +65,7 @@ router.get("/health", async (req, res) => {
 router.get("/services", resolveTenant("query"), listServices);
 router.get("/professionals", resolveTenant("query"), listProfessionals);
 router.get("/available-slots", resolveTenant("query"), listAvailableSlots);
+router.get("/first-availability", resolveTenant("query"), getFirstAvailability);
 router.get("/business-hours", resolveTenant("query"), listBusinessHours);
 
 router.post(
@@ -109,5 +122,13 @@ router.get("/appointments/export.csv", requireAuth, async (req, res, next) => {
 
 router.get("/appointments/:id", requireAuth, getAppointment);
 router.patch("/appointments/:id/status", requireAuth, updateAppointmentStatus);
+router.get("/admin/professional-schedules", requireAuth, listProfessionalSchedules);
+router.post("/admin/professional-schedules", requireAuth, createProfessionalSchedule);
+router.patch("/admin/professional-schedules/:id", requireAuth, updateProfessionalSchedule);
+router.delete("/admin/professional-schedules/:id", requireAuth, deleteProfessionalSchedule);
+router.get("/admin/schedule-blocks", requireAuth, listScheduleBlocks);
+router.post("/admin/schedule-blocks", requireAuth, createScheduleBlock);
+router.patch("/admin/schedule-blocks/:id", requireAuth, updateScheduleBlock);
+router.delete("/admin/schedule-blocks/:id", requireAuth, deleteScheduleBlock);
 
 export default router;

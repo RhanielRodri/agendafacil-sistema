@@ -446,3 +446,139 @@
   color: var(--text-on-light-muted);
   font-size: 0.82rem;
 }
+
+.admin-grid-settings {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.admin-form-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-on-light-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-form-grid input,
+.admin-form-grid select {
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-light-surface);
+  color: var(--text-on-light);
+  font: inherit;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.admin-form-grid .admin-check-field {
+  display: flex;
+  align-items: center;
+  align-self: end;
+  min-height: 40px;
+  gap: 8px;
+}
+
+.admin-form-grid .admin-check-field input {
+  width: 16px;
+  min-height: 16px;
+}
+
+.admin-form-wide,
+.admin-form-actions {
+  grid-column: 1 / -1;
+}
+
+.admin-form-actions,
+.admin-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-action-primary,
+.admin-action-secondary,
+.admin-row-actions button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.admin-action-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.admin-action-secondary,
+.admin-row-actions button {
+  background: transparent;
+  color: var(--text-on-light-muted);
+}
+
+.admin-settings-list {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.admin-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border-light);
+}
+
+.admin-settings-row > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-settings-row strong {
+  color: var(--text-on-light);
+  font-size: 0.86rem;
+}
+
+.admin-settings-row span {
+  color: var(--text-on-light-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 900px) {
+  .admin-grid-settings {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-form-wide,
+  .admin-form-actions {
+    grid-column: auto;
+  }
+
+  .admin-settings-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -35,6 +35,8 @@ async function api(path, { method = "GET", body } = {}) {
 
 before(async () => {
   await prisma.appointment.deleteMany();
+  await prisma.scheduleBlock.deleteMany();
+  await prisma.professionalSchedule.deleteMany();
   await prisma.blockedDate.deleteMany();
   await prisma.businessHours.deleteMany();
   await prisma.professional.deleteMany();
@@ -54,6 +56,14 @@ before(async () => {
       { tenantId: STUDIO, dayOfWeek: 3, openTime: "09:00", closeTime: "18:00", isOpen: true },
       { tenantId: LUMIERE, dayOfWeek: 1, openTime: "00:00", closeTime: "00:00", isOpen: false },
       { tenantId: LUMIERE, dayOfWeek: 3, openTime: "10:00", closeTime: "19:00", isOpen: true }
+    ]
+  });
+
+  await prisma.professionalSchedule.createMany({
+    data: [
+      { tenantId: STUDIO, professionalId: fx.studioPro.id, dayOfWeek: 1, startTime: "09:00", endTime: "18:00" },
+      { tenantId: STUDIO, professionalId: fx.studioPro.id, dayOfWeek: 3, startTime: "09:00", endTime: "18:00" },
+      { tenantId: LUMIERE, professionalId: fx.lumierePro.id, dayOfWeek: 3, startTime: "10:00", endTime: "19:00" }
     ]
   });
 

@@ -76,6 +76,34 @@ export const api = {
   adminMe: () => request("/admin/me"),
   adminLogout: () => request("/admin/session", { method: "DELETE" }),
   getAppointments: () => request("/appointments"),
+  getProfessionalSchedules: (professionalId) =>
+    request(`/admin/professional-schedules${professionalId ? `?professionalId=${encodeURIComponent(professionalId)}` : ""}`),
+  createProfessionalSchedule: (payload) =>
+    request("/admin/professional-schedules", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  updateProfessionalSchedule: (id, payload) =>
+    request(`/admin/professional-schedules/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload)
+    }),
+  deleteProfessionalSchedule: (id) =>
+    request(`/admin/professional-schedules/${id}`, { method: "DELETE" }),
+  getScheduleBlocks: (from, to) =>
+    request(`/admin/schedule-blocks?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
+  createScheduleBlock: (payload) =>
+    request("/admin/schedule-blocks", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  updateScheduleBlock: (id, payload) =>
+    request(`/admin/schedule-blocks/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload)
+    }),
+  deleteScheduleBlock: (id) =>
+    request(`/admin/schedule-blocks/${id}`, { method: "DELETE" }),
   updateAppointmentStatus: (id, status) =>
     request(`/appointments/${id}/status`, {
       method: "PATCH",

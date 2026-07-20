@@ -15,18 +15,20 @@ enum AppointmentStatus {
 }
 
 model Tenant {
-  id            Int             @id @default(autoincrement())
-  slug          String          @unique
-  name          String
-  active        Boolean         @default(true)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  services      Service[]
-  professionals Professional[]
-  appointments  Appointment[]
-  businessHours BusinessHours[]
-  blockedDates  BlockedDate[]
-  adminUsers    AdminUser[]
+  id                    Int                    @id @default(autoincrement())
+  slug                  String                 @unique
+  name                  String
+  active                Boolean                @default(true)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  services              Service[]
+  professionals         Professional[]
+  appointments          Appointment[]
+  businessHours         BusinessHours[]
+  blockedDates          BlockedDate[]
+  professionalSchedules ProfessionalSchedule[]
+  scheduleBlocks        ScheduleBlock[]
+  adminUsers            AdminUser[]
 }
 
 model AdminUser {
@@ -77,18 +79,21 @@ model Service {
 }
 
 model Professional {
-  id           Int           @id @default(autoincrement())
-  tenantId     String        @default("studio-cut") @map("demoId")
-  name         String
-  specialty    String
-  photo        String
-  active       Boolean       @default(true)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  tenant       Tenant        @relation(fields: [tenantId], references: [slug])
-  appointments Appointment[]
+  id             Int                    @id @default(autoincrement())
+  tenantId       String                 @default("studio-cut") @map("demoId")
+  name           String
+  specialty      String
+  photo          String
+  active         Boolean                @default(true)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  tenant         Tenant                 @relation(fields: [tenantId], references: [slug])
+  appointments   Appointment[]
+  schedules      ProfessionalSchedule[]
+  scheduleBlocks ScheduleBlock[]
 
   @@unique([tenantId, name])
+  @@unique([id, tenantId])
   @@index([tenantId, active])
 }
 
@@ -135,4 +140,39 @@ model BlockedDate {
   tenant    Tenant   @relation(fields: [tenantId], references: [slug])
 
   @@unique([tenantId, date])
+}
+
+model ProfessionalSchedule {
+  id             Int          @id @default(autoincrement())
+  tenantId       String
+  professionalId Int
+  dayOfWeek      Int
+  startTime      String       @db.VarChar(5)
+  endTime        String       @db.VarChar(5)
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  tenant         Tenant       @relation(fields: [tenantId], references: [slug])
+  professional   Professional @relation(fields: [professionalId, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  @@unique([tenantId, professionalId, dayOfWeek, startTime, endTime])
+  @@index([tenantId, professionalId, dayOfWeek])
+}
+
+model ScheduleBlock {
+  id             Int           @id @default(autoincrement())
+  tenantId       String
+  professionalId Int?
+  date           DateTime      @db.Date
+  allDay         Boolean       @default(false)
+  startTime      String?       @db.VarChar(5)
+  endTime        String?       @db.VarChar(5)
+  reason         String?       @db.VarChar(200)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  tenant         Tenant        @relation(fields: [tenantId], references: [slug])
+  professional   Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, date])
+  @@index([tenantId, professionalId, date])
 }
