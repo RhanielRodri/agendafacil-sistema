@@ -9,7 +9,7 @@ technical_baseline:
   validation_status: partial
   validated_at: 2026-07-20
   validated:
-    - "npm ci reproduzível, sem alteração de lockfile"
+    - "npm ci reproduzível, sem alteração de lockfile (frontend e backend)"
     - "npm run build sem erro nem aviso"
     - "geração das três entradas: raiz, studio-cut e lumiere"
     - "rotas /, /studio-cut e /lumiere"
@@ -19,21 +19,31 @@ technical_baseline:
     - "ausência visual da marca AgendaFácil no corpo das páginas"
     - "responsividade básica em 375 px e 1280 px"
     - "caminho de indisponibilidade de rede, com mensagem genérica"
+    - "A0: PostgreSQL 18 local isolado em Docker (container agendafacil-postgres-dev, banco agendafacil_dev na porta 5433)"
+    - "A0: cinco migrations aplicadas e seed executados exclusivamente no banco local"
+    - "A0: /api/health com banco saudável"
+    - "A0: carregamento de serviços e profissionais distintos por tenant (studio-cut e lumiere)"
+    - "A0: disponibilidade de horários considerando duração do serviço"
+    - "A0: prevenção de conflito por sobreposição (409)"
+    - "A0: bloqueio por data (BlockedDate)"
+    - "A0: validações de payload (campos ausentes, data passada, telefone curto, tenant cruzado 404)"
+    - "A0: criação e persistência — Studio Cut pela jornada pública completa; Lumière pela API com demoId correto"
+    - "A0: painel administrativo — login 200/401, listagem filtrada por tenant, alteração de status, exportação CSV, logout"
+    - "A0: rate limit público (429 a partir do 10º POST/60s)"
+    - "A0: jornada pública Studio Cut completa em 375 px, console sem erros"
+    - "A0: ausência de efeitos remotos (sem commit de código, push, deploy ou escrita em produção durante a validação)"
   not_validated:
-    - "carregamento de serviços"
-    - "carregamento de profissionais"
-    - "disponibilidade de horários"
-    - "criação de agendamento"
-    - "autenticação administrativa"
-    - "respostas reais 401 e 503 do backend"
-    - "integração completa com a API"
+    - "conclusão visual da jornada Lumière pelo navegador (harness instável; ver ressalva)"
+    - "autenticação administrativa pela UI (login exercitado via API, não pelo formulário)"
     - "eliminação da marca interna no domínio e nas URLs canônicas"
+    - "saúde da API e do banco em produção (validação A0 foi exclusivamente local)"
   evidence:
-    - "npm ci e vite build locais em 2026-07-20, lockfile inalterado"
+    - "npm ci e vite build locais em 2026-07-20, lockfile inalterado (frontend e backend)"
     - "vite preview local: rotas, fallback de cliente e responsividade"
     - "Preview Deployment dpl_8Mc914mPR3i7zGgKvfT7wEoobRWy: rotas 200, redirecionamentos 3xx, rota desconhecida 404"
-    - "nenhuma requisição de API bem sucedida em nenhum ambiente"
-source: validação executada na branch de preservação em 2026-07-20
+    - "A0 em 2026-07-20: banco local Docker isolado (5433), migrations+seed, API validada por curl, jornada Studio Cut ponta a ponta no navegador com persistência conferida no banco"
+    - "A0: appointment id 6 (Studio Cut) criado pela UI e persistido; id 5 (Lumière) criado pela API com demoId=lumiere"
+source: A0 executada na branch de preservação em 2026-07-20 (banco local Docker isolado)
 source_of_truth: .
 ---
 
@@ -41,36 +51,50 @@ source_of_truth: .
 
 ## Último resultado confirmado
 
-Trabalho local preservado integralmente na branch
-`preserve/agendafacil-local-2026-07-20`, em dois commits acima de `ad95e6d`:
-os 20 arquivos da fotografia em `256a996` e esta documentação em seguida.
-`main` permanece em `ad95e6d`, sem merge e sem push.
+Fase A0 concluída em 2026-07-20: o fluxo de dados, antes sem prova, foi
+validado ponta a ponta em ambiente local isolado. Um PostgreSQL 18 foi criado
+em Docker (container `agendafacil-postgres-dev`, banco `agendafacil_dev` na
+porta 5433), separado do PostgreSQL do Windows (5432) e sem qualquer conexão
+com Render, Vercel ou produção. As cinco migrations e o seed rodaram apenas
+nesse banco local.
 
-Último commit de código conhecido em `main`: `ad95e6d` — `redesign: nova
-landing com identidade Caderno de Horários`, presente no remoto.
+Com esse banco, foram exercitados: `/api/health` com banco saudável; serviços
+e profissionais distintos por tenant; disponibilidade considerando duração;
+prevenção de conflito por sobreposição (409); bloqueio por data; validações de
+payload e recusa de tenant cruzado na criação (404); rate limit público (429).
+A jornada pública do Studio Cut foi percorrida inteira no navegador em 375 px
+até a tela de sucesso, sem erro de console, com o agendamento persistido no
+banco. O painel administrativo teve login (200/401), listagem filtrada por
+tenant, alteração de status, exportação CSV e logout validados. A criação da
+Lumière com `demoId` correto foi comprovada pela API.
 
-Build e rotas da branch preservada foram validados em 2026-07-20. `npm ci` sem
-alteração de lockfile; `vite build` sem erro nem aviso, gerando as três
-entradas esperadas. Rotas, redirecionamentos legados e resolução de negócio
-por caminho conferidos no Preview Deployment automático da própria branch.
+Nada foi publicado. `main` permanece em `ad95e6d`, sem merge e sem push; a
+evolução segue na branch `preserve/agendafacil-local-2026-07-20`. Último commit
+de código conhecido em `main`: `ad95e6d` — `redesign: nova landing com
+identidade Caderno de Horários`.
 
-O fluxo de dados continua sem validação: nenhuma chamada de API foi bem
-sucedida em nenhum ambiente testado. Nada foi publicado em produção.
+### Ressalva — jornada Lumière
+
+A conclusão visual da jornada Lumière não foi exercitada pelo navegador por
+instabilidade do harness (deriva de coordenadas de clique e screenshots que
+expiram), não por defeito do app. A tela usa o mesmo `BookingFlow` já validado
+ponta a ponta no Studio Cut, carregou dados próprios e isolados, não apresentou
+erro de console, e a seleção de serviço registrou na UI. A criação de
+agendamento Lumière com `demoId` correto foi comprovada via API.
 
 ## Baseline técnica
 
 `256a996`, com `validation_status: partial`. Substitui `ad95e6d` para o escopo
-listado no frontmatter, e apenas para ele.
+listado no frontmatter, e apenas para ele. Os commits posteriores até `ecae405`
+são documentais e não substituem a baseline técnica.
 
-O que sustenta a troca: build, entradas, rotas, redirecionamentos, metadados e
-identidade pública foram exercitados com evidência, inclusive em ambiente real
-da Vercel. O que impede `validated`: nenhuma chamada de API foi bem sucedida em
-nenhum ambiente, então serviços, profissionais, horários, agendamento e
-autenticação seguem sem prova.
-
-Baseline parcial não é atestado de saúde integral. Build aprovado não é fluxo
-aprovado — mas também não é motivo para tratar como não validado aquilo que já
-tem evidência.
+A A0 ampliou o escopo comprovado sobre `256a996`: além de build, rotas,
+redirecionamentos, metadados e identidade pública, o fluxo de dados
+(serviços, profissionais, disponibilidade, agendamento, painel, CSV, rate
+limit) foi exercitado em banco local isolado. Segue `partial`, não `validated`,
+por lacunas reais: a conclusão visual da Lumière não foi percorrida pelo
+navegador, o login do painel não foi exercitado pela UI, e nada foi validado em
+produção — a A0 foi exclusivamente local.
 
 `ad95e6d` continua sendo o último commit em `main` e o único código publicado
 em produção.
@@ -78,16 +102,16 @@ em produção.
 ## git_snapshot
 
 ```text
-observed_at: 2026-07-20
+observed_at: 2026-07-20 (checkpoint A0)
 branch: preserve/agendafacil-local-2026-07-20
-head_at_observation: 796cbaf
+head_at_observation: ecae405
 base: ad95e6d
 main: ad95e6d (intacta, sem merge)
-upstream: origin/preserve/agendafacil-local-2026-07-20
-working_tree: limpa
+upstream: origin/preserve/agendafacil-local-2026-07-20 (sincronizada, 0/0)
+working_tree: limpa antes do commit documental A0
 arquivos_staged: 0
 preview_deployment: dpl_8Mc914mPR3i7zGgKvfT7wEoobRWy (target preview, Ready)
-producao: inalterada, último deploy de produção com 19 dias
+producao: inalterada
 ```
 
 Observação datada. Ficará anterior ao `HEAD` assim que o commit documental
@@ -101,42 +125,53 @@ depois da preservação.
 
 ## Trabalho em andamento
 
-Não confirmado.
-
-As alterações locais formam uma reestruturação coerente de rotas públicas e
-identidade, mas não há decisão registrada, commit, teste ou publicação que
-comprove intenção ou conclusão. O conjunto é tratado como trabalho não
-confirmado até esclarecimento.
+Decisão operacional registrada pela A0: a branch preservada é base segura e a
+evolução do produto continua nela. A próxima fase é A1 — fundação de tenant.
 
 ## Bloqueios
 
-- Natureza e intenção das alterações ainda não confirmadas pelo autor.
-- `VITE_API_URL` não está definida no ambiente Preview da Vercel. O bundle do
-  preview não contém endereço de API, então nenhuma requisição é emitida e
-  todas as seções dinâmicas caem direto no estado de indisponibilidade. Sem
-  essa variável, o Preview Deployment não valida o fluxo de dados.
-- O `.env` local aponta a API para `http://localhost:4000/api`. O build local
-  herda esse endereço, e sem backend em execução o fluxo também não é
-  exercitável nesta máquina.
+Nenhum bloqueio de ambiente para A1: o banco local isolado está saudável e
+semeado, e `backend/.env` aponta para ele. Permanecem abertos, para produção e
+não para a evolução local:
+
+- `VITE_API_URL` não está definida no ambiente Preview da Vercel; o Preview
+  Deployment não valida o fluxo de dados (a validação A0 foi local, não no
+  preview).
+- Saúde da API e do banco em produção não foi validada nesta fase.
 
 ## Riscos
 
-- **Perda de trabalho — mitigado.** O conteúdo está versionado em `256a996` e
-  publicado na branch de preservação. Deixa de depender de uma única máquina.
-- **Fluxo de dados não validado.** Build, rotas e identidade estão conferidos;
-  serviços, profissionais, horários e painel autenticado não.
-- **Marca interna no endereço público.** O domínio
-  `agendafacil-sistema.vercel.app` aparece em `canonical` e `og:url` das duas
-  experiências. O corpo das páginas está limpo, mas o link compartilhado e o
-  SEO ainda expõem o nome interno do produto.
-- **Rota desconhecida devolve 404 da Vercel.** Com a remoção da reescrita
-  coringa, um caminho inexistente deixa de cair na página neutra. Comportamento
-  observado no preview; falta decidir se é o desejado.
-- **Mistura de mudanças potencialmente independentes.** A remoção da landing
-  comercial, a mudança de rotas e o ajuste de tratamento de erro podem ser
-  decisões separadas versionadas como um bloco único.
-- **Divergência com a documentação.** O README descreve o modelo anterior de
-  rotas; publicar as alterações sem atualizá-lo amplia a defasagem.
+Confirmados na A0 como **bloqueadores das próximas fases** (não corrigir na A0):
+
+- **`BusinessHours` global** — sem `demoId`; horário de funcionamento é único
+  para os dois tenants.
+- **`BlockedDate` global** — bloqueio de data compartilhado entre tenants.
+- **Senha administrativa compartilhada** — o mesmo cookie abre os dois tenants.
+- **`ADMIN_SECRET` usado também como chave HMAC** do token de sessão.
+- **Token determinístico** — sem entropia de sessão.
+- **Token aceito após logout** — sem revogação no servidor; `clearCookie` só
+  age no cliente.
+- **Ausência de expiração e revogação no servidor** — validade só no `maxAge`
+  do cookie.
+- **Tenant administrativo por query param** (`demoId`).
+- **Leitura cruzada de agendamento por ID** — `getAppointment` não filtra
+  `demoId`.
+- **Alteração cruzada de status por ID** — `updateAppointmentStatus` não filtra
+  `demoId` (comprovado: appt Lumière cancelado por sessão qualquer).
+- **Ausência de `Lead`, `Client` e `AdminUser`** no schema.
+- **Ausência de confirmação, cancelamento e reagendamento públicos.**
+- **Ausência de `NO_SHOW`** no enum de status.
+- **Ausência de bloqueio por intervalo** — só dia inteiro.
+- **Ausência de agenda individual por profissional** — horário vem só do
+  `BusinessHours` global.
+
+Riscos anteriores que permanecem:
+
+- **Marca interna no endereço público** — `agendafacil-sistema.vercel.app` em
+  `canonical` e `og:url`; corpo limpo, link/SEO ainda expõem o nome interno.
+- **Rota desconhecida devolve 404 da Vercel** — falta decidir se é o desejado.
+- **Divergência com a documentação** — `README.md` descreve o modelo anterior
+  de rotas.
 
 ## Validações confirmadas
 
@@ -157,11 +192,31 @@ Executadas em 2026-07-20, na branch de preservação:
 - Sem transbordo horizontal em 375 px e em 1280 px nas duas experiências.
 - Mensagens de erro genéricas, sem vazamento de detalhe técnico.
 
+Acrescentadas pela A0 (banco local Docker isolado, 2026-07-20):
+
+- Instalação reproduzível de frontend e backend; lockfiles intactos.
+- Container `agendafacil-postgres-dev` saudável; banco `agendafacil_dev` na
+  porta 5433, isolado do PostgreSQL do Windows (5432) e de produção.
+- Cinco migrations aplicadas e seed executados só no banco local.
+- `/api/health` com banco saudável.
+- Serviços e profissionais distintos por tenant.
+- Disponibilidade considerando duração do serviço.
+- Prevenção de conflito por sobreposição (409).
+- Bloqueio por data (`BlockedDate`).
+- Validações de payload: campos ausentes, data passada, telefone curto, tenant
+  cruzado (404).
+- Jornada pública Studio Cut completa no navegador (375 px), sem erro de
+  console, com persistência conferida no banco (appt id 6).
+- Persistência Lumière pela API com `demoId` correto (appt id 5).
+- Painel: login 200/401, listagem filtrada por tenant, alteração de status,
+  exportação CSV, logout.
+- Rate limit público (429 a partir do 10º POST/60s).
+- Ausência de efeitos remotos durante a validação.
+
 ## Validações não executadas
 
-- Carregamento real de serviços, profissionais e horários.
-- Fluxo de agendamento além da tela inicial.
-- Login autenticado do painel administrativo.
+- Conclusão visual da jornada Lumière pelo navegador (harness instável).
+- Login do painel administrativo pela UI (exercitado via API).
 - Saúde da API e do banco em produção.
 - Página neutra como resposta a rota desconhecida na Vercel; hoje é 404.
 
@@ -175,6 +230,10 @@ Executadas em 2026-07-20, na branch de preservação:
 
 ## Próxima ação registrada
 
-Definir `VITE_API_URL` no ambiente Preview da Vercel e revalidar o fluxo de
-dados na branch de preservação, antes de decidir entre manter o commit WIP
-único ou reorganizar as mudanças em commits temáticos.
+Iniciar **A1 — fundação de tenant**, evoluindo na branch
+`preserve/agendafacil-local-2026-07-20`, sem integrar em `main` ainda. A1 deve
+priorizar o isolamento de dados, especialmente as rotas por ID
+(`getAppointment` e `updateAppointmentStatus`, hoje sem filtro de `demoId`) e o
+escopo por tenant de `BusinessHours` e `BlockedDate`. A2 tratará autenticação e
+sessões reais (`AdminUser`, expiração e revogação de sessão, fim da senha
+compartilhada e do token determinístico).
