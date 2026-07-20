@@ -49,3 +49,12 @@ export function minutesToTime(totalMinutes) {
 export function intervalsOverlap(startA, endA, startB, endB) {
   return startA < endB && startB < endA;
 }
+
+export function parseCookies(cookieHeader = "") {
+  return Object.fromEntries(
+    cookieHeader.split(";").flatMap((part) => {
+      const [k, ...v] = part.trim().split("=");
+      return k.trim() ? [[k.trim(), decodeURIComponent(v.join("="))]] : [];
+    })
+  );
+}

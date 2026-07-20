@@ -25,6 +25,7 @@ function AdminScreen({ children }) {
 }
 
 function LoginScreen({ onSuccess }) {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -34,10 +35,10 @@ function LoginScreen({ onSuccess }) {
     setLoginError("");
     setSubmitting(true);
     try {
-      await api.adminLogin(password);
+      await api.adminLogin(email.trim(), password);
       onSuccess();
     } catch (err) {
-      setLoginError(err.message || "Senha incorreta");
+      setLoginError(err.message || "Credenciais inválidas");
     } finally {
       setSubmitting(false);
     }
@@ -55,7 +56,27 @@ function LoginScreen({ onSuccess }) {
         <p className="admin-screen-error" role="alert">{loginError}</p>
       )}
       <form onSubmit={handleSubmit}>
-        <label className="admin-screen-label">
+        <label className="admin-screen-label" htmlFor="admin-email">
+          E-mail
+          <div className="admin-screen-input-wrap">
+            <svg className="admin-screen-input-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <rect x="3" y="5" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M4 6.5 10 11l6-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <input
+              id="admin-email"
+              className="admin-screen-input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoFocus
+              required
+              autoComplete="username"
+              placeholder="voce@empresa.com"
+            />
+          </div>
+        </label>
+        <label className="admin-screen-label" htmlFor="admin-password">
           Senha de acesso
           <div className="admin-screen-input-wrap">
             <svg className="admin-screen-input-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -63,12 +84,13 @@ function LoginScreen({ onSuccess }) {
               <path d="M7 9V6.5a3 3 0 0 1 6 0V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             <input
+              id="admin-password"
               className="admin-screen-input"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoFocus
               required
+              autoComplete="current-password"
               placeholder="••••••••"
             />
           </div>
@@ -82,6 +104,31 @@ function LoginScreen({ onSuccess }) {
           ) : "Entrar"}
         </button>
       </form>
+    </AdminScreen>
+  );
+}
+
+function ForeignTenantScreen({ tenantId, onLogout }) {
+  return (
+    <AdminScreen>
+      <AdminScreenHeader />
+      <div className="admin-screen-divider" />
+      <h2 className="admin-screen-title">Painel incorreto</h2>
+      <p className="admin-screen-message">
+        Sua sessão pertence a outro negócio. Acesse o painel correto para
+        continuar.
+      </p>
+      <a className="admin-screen-btn" href={`/${tenantId}/admin`}>
+        Ir para o painel correto
+      </a>
+      <button
+        className="admin-screen-btn"
+        type="button"
+        onClick={onLogout}
+        style={{ marginTop: 8, background: "none", border: "1px solid var(--border-light)" }}
+      >
+        Sair desta sessão
+      </button>
     </AdminScreen>
   );
 }
@@ -136,6 +183,7 @@ export default function Admin({ services, professionals }) {
   const [status, setStatus] = useState("loading");
   const [appointments, setAppointments] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
+  const [foreignTenant, setForeignTenant] = useState(null);
   const [statusChangeError, setStatusChangeError] = useState("");
   const [dateFilter, setDateFilter] = useState("");
 
@@ -196,8 +244,31 @@ export default function Admin({ services, professionals }) {
       });
   }
 
+  // Confirma a sessão e o tenant antes de carregar dados. O tenant vem da
+  // sessão; se não bater com a vertical desta rota, não troca silenciosamente.
+  function bootstrap() {
+    setStatus("loading");
+    setForeignTenant(null);
+    api.adminMe()
+      .then((me) => {
+        if (me.tenantId !== tenant.slug) {
+          setForeignTenant(me.tenantId);
+          setStatus("foreign");
+        } else {
+          loadAppointments();
+        }
+      })
+      .catch((err) => {
+        if (err.status === 401) {
+          setStatus("unauthenticated");
+        } else {
+          setStatus("unavailable");
+        }
+      });
+  }
+
   useEffect(() => {
-    loadAppointments();
+    bootstrap();
   }, []);
 
   function handleStatusChange(id, newStatus) {
@@ -217,8 +288,9 @@ export default function Admin({ services, professionals }) {
 
   // ─── Estados de tela completa ──────────────────────────────────────────────
   if (status === "loading") return <LoadingScreen />;
-  if (status === "unauthenticated") return <LoginScreen onSuccess={loadAppointments} />;
-  if (status === "unavailable") return <UnavailableScreen onRetry={loadAppointments} />;
+  if (status === "unauthenticated") return <LoginScreen onSuccess={bootstrap} />;
+  if (status === "foreign") return <ForeignTenantScreen tenantId={foreignTenant} onLogout={handleLogout} />;
+  if (status === "unavailable") return <UnavailableScreen onRetry={bootstrap} />;
   if (status === "error") return <ErrorScreen message={errorMsg} onRetry={loadAppointments} />;
 
   // ─── Dashboard (só renderiza quando authenticated) ─────────────────────────

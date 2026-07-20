@@ -4,8 +4,9 @@ import { listProfessionals } from "../controllers/professionalController.js";
 import { listAppointments, getAppointment, createAppointment, updateAppointmentStatus } from "../controllers/appointmentController.js";
 import { listAvailableSlots } from "../controllers/availabilityController.js";
 import { listBusinessHours } from "../controllers/businessHoursController.js";
-import { requireAdmin, makeAdminSessionToken } from "../middleware/requireAdmin.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 import { resolveTenant } from "../middleware/tenant.js";
+import { login, logout, me } from "../controllers/authController.js";
 import prisma from "../prismaClient.js";
 
 const router = Router();
@@ -13,9 +14,9 @@ const router = Router();
 // ─── Rate limit (in-memory, sem dependência extra) ───────────────────────────
 const rlStore = new Map();
 
-function rateLimit({ windowMs, max, message }) {
+function rateLimit({ windowMs, max, message, keyFn }) {
   return (req, res, next) => {
-    const key = req.ip || "unknown";
+    const key = keyFn ? keyFn(req) : (req.ip || "unknown");
     const now = Date.now();
     const cutoff = now - windowMs;
     const hits = (rlStore.get(key) || []).filter((t) => t > cutoff);
@@ -26,6 +27,11 @@ function rateLimit({ windowMs, max, message }) {
     rlStore.set(key, hits);
     next();
   };
+}
+
+function loginKey(req) {
+  const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+  return `login|${req.ip || "unknown"}|${email}`;
 }
 
 // ─── Saúde ───────────────────────────────────────────────────────────────────
@@ -56,49 +62,23 @@ router.post(
   createAppointment
 );
 
-// ─── Autenticação admin ───────────────────────────────────────────────────────
-router.post("/admin/session", (req, res) => {
-  const { password } = req.body || {};
-  const secret = process.env.ADMIN_SECRET;
+// ─── Autenticação admin (sessão real por tenant) ──────────────────────────────
+router.post(
+  "/admin/session",
+  rateLimit({ windowMs: 60_000, max: 5, message: "Muitas tentativas de login. Aguarde um momento.", keyFn: loginKey }),
+  resolveTenant("body"),
+  login
+);
+router.delete("/admin/session", logout);
+router.get("/admin/me", requireAuth, me);
 
-  if (!secret) {
-    return res.status(503).json({ message: "Autenticação administrativa não configurada" });
-  }
+// ─── Rotas administrativas (tenant derivado da sessão) ────────────────────────
+router.get("/appointments", requireAuth, listAppointments);
 
-  if (!password || password !== secret) {
-    return res.status(401).json({ message: "Senha incorreta" });
-  }
-
-  try {
-    const token = makeAdminSessionToken();
-    res.cookie("admin_session", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 8 * 60 * 60 * 1000
-    });
-    res.json({ ok: true });
-  } catch {
-    res.status(503).json({ message: "Autenticação administrativa não configurada" });
-  }
-});
-
-router.delete("/admin/session", (req, res) => {
-  res.clearCookie("admin_session", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
-  });
-  res.json({ ok: true });
-});
-
-// ─── Rotas administrativas (requerem autenticação) ────────────────────────────
-router.get("/appointments", requireAdmin, resolveTenant("query"), listAppointments);
-
-router.get("/appointments/export.csv", requireAdmin, resolveTenant("query"), async (req, res, next) => {
+router.get("/appointments/export.csv", requireAuth, async (req, res, next) => {
   try {
     const appointments = await prisma.appointment.findMany({
-      where: { tenantId: req.tenant.slug },
+      where: { tenantId: req.auth.tenantId },
       include: { service: true, professional: true },
       orderBy: [{ date: "asc" }, { time: "asc" }]
     });
@@ -127,7 +107,7 @@ router.get("/appointments/export.csv", requireAdmin, resolveTenant("query"), asy
   }
 });
 
-router.get("/appointments/:id", requireAdmin, resolveTenant("query"), getAppointment);
-router.patch("/appointments/:id/status", requireAdmin, resolveTenant("query"), updateAppointmentStatus);
+router.get("/appointments/:id", requireAuth, getAppointment);
+router.patch("/appointments/:id/status", requireAuth, updateAppointmentStatus);
 
 export default router;

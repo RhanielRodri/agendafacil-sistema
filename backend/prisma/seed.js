@@ -1,4 +1,6 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import { hashPassword } from "../lib/password.js";
 
 const prisma = new PrismaClient();
 
@@ -29,6 +31,27 @@ async function main() {
     update: { name: "Lumière Estética", active: true },
     create: { slug: LUMIERE, name: "Lumière Estética", active: true }
   });
+
+  // Usuários administrativos locais, idempotentes, a partir de variáveis
+  // ignoradas pelo Git. Sem senha em texto puro no código ou no banco.
+  const adminSeeds = [
+    { tenantId: STUDIO_CUT, name: "Administração Studio Cut", email: process.env.STUDIO_CUT_ADMIN_EMAIL, password: process.env.STUDIO_CUT_ADMIN_PASSWORD },
+    { tenantId: LUMIERE, name: "Administração Lumière", email: process.env.LUMIERE_ADMIN_EMAIL, password: process.env.LUMIERE_ADMIN_PASSWORD }
+  ];
+
+  for (const admin of adminSeeds) {
+    if (!admin.email || !admin.password) {
+      console.warn(`seed: credenciais admin de ${admin.tenantId} ausentes no .env local; usuário não criado.`);
+      continue;
+    }
+    const email = admin.email.trim().toLowerCase();
+    const passwordHash = await hashPassword(admin.password);
+    await prisma.adminUser.upsert({
+      where: { tenantId_email: { tenantId: admin.tenantId, email } },
+      update: { passwordHash, name: admin.name, active: true },
+      create: { tenantId: admin.tenantId, email, name: admin.name, passwordHash, active: true }
+    });
+  }
 
   const services = await Promise.all([
     prisma.service.create({

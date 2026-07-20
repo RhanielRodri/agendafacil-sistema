@@ -41,9 +41,9 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  // Públicas — tenant resolvido pela vertical (query demoId).
   getServices: () => request(`/services?${getBusinessQuery()}`),
   getProfessionals: () => request(`/professionals?${getBusinessQuery()}`),
-  getAppointments: () => request(`/appointments?${getBusinessQuery()}`),
   getBusinessHours: () => request(`/business-hours?${getBusinessQuery()}`),
   getAvailableSlots: ({ date, professionalId, serviceId }) =>
     request(`/available-slots?date=${encodeURIComponent(date)}&professionalId=${encodeURIComponent(professionalId)}&serviceId=${encodeURIComponent(serviceId)}&${getBusinessQuery()}`),
@@ -59,16 +59,27 @@ export const api = {
       body: JSON.stringify({ ...payload, demoId })
     });
   },
+
+  // Administrativas — tenant derivado da sessão; nada de demoId como autoridade.
+  adminLogin: (email, password) => {
+    const demoId = tenant?.slug;
+
+    if (!demoId) {
+      throw new Error("Experiência indisponível");
+    }
+
+    return request("/admin/session", {
+      method: "POST",
+      body: JSON.stringify({ email, password, demoId })
+    });
+  },
+  adminMe: () => request("/admin/me"),
+  adminLogout: () => request("/admin/session", { method: "DELETE" }),
+  getAppointments: () => request("/appointments"),
   updateAppointmentStatus: (id, status) =>
-    request(`/appointments/${id}/status?${getBusinessQuery()}`, {
+    request(`/appointments/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status })
     }),
-  adminLogin: (password) =>
-    request("/admin/session", {
-      method: "POST",
-      body: JSON.stringify({ password })
-    }),
-  adminLogout: () => request("/admin/session", { method: "DELETE" }),
-  getExportUrl: () => `${API_URL}/appointments/export.csv?${getBusinessQuery()}`
+  getExportUrl: () => `${API_URL}/appointments/export.csv`
 };

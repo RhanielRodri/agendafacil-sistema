@@ -26,6 +26,37 @@ model Tenant {
   appointments  Appointment[]
   businessHours BusinessHours[]
   blockedDates  BlockedDate[]
+  adminUsers    AdminUser[]
+}
+
+model AdminUser {
+  id           Int            @id @default(autoincrement())
+  tenantId     String
+  email        String
+  name         String
+  passwordHash String
+  active       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  tenant       Tenant         @relation(fields: [tenantId], references: [slug])
+  sessions     AdminSession[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId, active])
+}
+
+model AdminSession {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  user       AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Service {

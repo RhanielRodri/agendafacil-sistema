@@ -127,7 +127,7 @@ async function validateAppointmentPayload(tx, tenantId, payload) {
 export async function listAppointments(req, res, next) {
   try {
     const appointments = await prisma.appointment.findMany({
-      where: { tenantId: req.tenant.slug },
+      where: { tenantId: req.auth.tenantId },
       include: { service: true, professional: true },
       orderBy: [{ date: "asc" }, { time: "asc" }]
     });
@@ -144,7 +144,7 @@ export async function getAppointment(req, res, next) {
     if (!id) throw createHttpError(400, "ID inválido");
 
     const appointment = await prisma.appointment.findFirst({
-      where: { id, tenantId: req.tenant.slug },
+      where: { id, tenantId: req.auth.tenantId },
       include: { service: true, professional: true }
     });
 
@@ -211,7 +211,7 @@ export async function updateAppointmentStatus(req, res, next) {
     }
 
     const appointment = await prisma.appointment.findFirst({
-      where: { id, tenantId: req.tenant.slug }
+      where: { id, tenantId: req.auth.tenantId }
     });
 
     if (!appointment) {
