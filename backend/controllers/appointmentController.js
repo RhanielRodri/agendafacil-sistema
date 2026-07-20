@@ -1,5 +1,4 @@
 import prisma from "../prismaClient.js";
-import { resolveDemoId } from "../config/demos.js";
 import {
   allowedStatuses,
   createHttpError,
@@ -33,7 +32,7 @@ function validateClientFields(payload) {
   return { name, phone, email: email || null };
 }
 
-async function validateAppointmentPayload(tx, payload) {
+async function validateAppointmentPayload(tx, tenantId, payload) {
   const required = ["serviceId", "professionalId", "clientName", "clientPhone", "date", "time"];
   const missing = required.filter((field) => !payload[field] && payload[field] !== 0);
 
@@ -43,11 +42,9 @@ async function validateAppointmentPayload(tx, payload) {
 
   const serviceId = sanitizeId(payload.serviceId);
   const professionalId = sanitizeId(payload.professionalId);
-  const demoId = resolveDemoId(payload.demoId);
 
   if (!serviceId) throw createHttpError(400, "serviceId inválido");
   if (!professionalId) throw createHttpError(400, "professionalId inválido");
-  if (!demoId) throw createHttpError(400, "Demonstração inválida");
 
   if (!isValidDateInput(payload.date)) {
     throw createHttpError(400, "Data inválida");
@@ -64,7 +61,7 @@ async function validateAppointmentPayload(tx, payload) {
   const clientFields = validateClientFields(payload);
 
   const service = await tx.service.findFirst({
-    where: { id: serviceId, demoId, active: true }
+    where: { id: serviceId, tenantId, active: true }
   });
 
   if (!service) {
@@ -72,7 +69,7 @@ async function validateAppointmentPayload(tx, payload) {
   }
 
   const professional = await tx.professional.findFirst({
-    where: { id: professionalId, demoId, active: true }
+    where: { id: professionalId, tenantId, active: true }
   });
 
   if (!professional) {
@@ -82,7 +79,7 @@ async function validateAppointmentPayload(tx, payload) {
   const appointmentDate = normalizeDate(payload.date);
 
   const blockedDate = await tx.blockedDate.findUnique({
-    where: { date: appointmentDate }
+    where: { tenantId_date: { tenantId, date: appointmentDate } }
   });
 
   if (blockedDate) {
@@ -90,7 +87,7 @@ async function validateAppointmentPayload(tx, payload) {
   }
 
   const businessHours = await tx.businessHours.findUnique({
-    where: { dayOfWeek: appointmentDate.getUTCDay() }
+    where: { tenantId_dayOfWeek: { tenantId, dayOfWeek: appointmentDate.getUTCDay() } }
   });
 
   if (!businessHours || !businessHours.isOpen) {
@@ -129,11 +126,8 @@ async function validateAppointmentPayload(tx, payload) {
 
 export async function listAppointments(req, res, next) {
   try {
-    const demoId = resolveDemoId(req.query.demoId);
-    if (!demoId) throw createHttpError(400, "Demonstração inválida");
-
     const appointments = await prisma.appointment.findMany({
-      where: { service: { demoId }, professional: { demoId } },
+      where: { tenantId: req.tenant.slug },
       include: { service: true, professional: true },
       orderBy: [{ date: "asc" }, { time: "asc" }]
     });
@@ -149,8 +143,8 @@ export async function getAppointment(req, res, next) {
     const id = sanitizeId(req.params.id);
     if (!id) throw createHttpError(400, "ID inválido");
 
-    const appointment = await prisma.appointment.findUnique({
-      where: { id },
+    const appointment = await prisma.appointment.findFirst({
+      where: { id, tenantId: req.tenant.slug },
       include: { service: true, professional: true }
     });
 
@@ -166,15 +160,17 @@ export async function getAppointment(req, res, next) {
 
 export async function createAppointment(req, res, next) {
   try {
+    const tenantId = req.tenant.slug;
     let appointment;
 
     try {
       appointment = await prisma.$transaction(async (tx) => {
         const { appointmentDate, serviceId, professionalId, clientFields } =
-          await validateAppointmentPayload(tx, req.body);
+          await validateAppointmentPayload(tx, tenantId, req.body);
 
         return tx.appointment.create({
           data: {
+            tenantId,
             serviceId,
             professionalId,
             clientName: clientFields.name,
@@ -214,7 +210,9 @@ export async function updateAppointmentStatus(req, res, next) {
       throw createHttpError(400, "Status inválido");
     }
 
-    const appointment = await prisma.appointment.findUnique({ where: { id } });
+    const appointment = await prisma.appointment.findFirst({
+      where: { id, tenantId: req.tenant.slug }
+    });
 
     if (!appointment) {
       throw createHttpError(404, "Agendamento não encontrado");

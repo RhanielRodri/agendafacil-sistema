@@ -44,7 +44,7 @@ export const api = {
   getServices: () => request(`/services?${getBusinessQuery()}`),
   getProfessionals: () => request(`/professionals?${getBusinessQuery()}`),
   getAppointments: () => request(`/appointments?${getBusinessQuery()}`),
-  getBusinessHours: () => request("/business-hours"),
+  getBusinessHours: () => request(`/business-hours?${getBusinessQuery()}`),
   getAvailableSlots: ({ date, professionalId, serviceId }) =>
     request(`/available-slots?date=${encodeURIComponent(date)}&professionalId=${encodeURIComponent(professionalId)}&serviceId=${encodeURIComponent(serviceId)}&${getBusinessQuery()}`),
   createAppointment: (payload) => {
@@ -60,7 +60,7 @@ export const api = {
     });
   },
   updateAppointmentStatus: (id, status) =>
-    request(`/appointments/${id}/status`, {
+    request(`/appointments/${id}/status?${getBusinessQuery()}`, {
       method: "PATCH",
       body: JSON.stringify({ status })
     }),

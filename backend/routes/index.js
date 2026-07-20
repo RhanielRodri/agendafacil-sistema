@@ -5,8 +5,8 @@ import { listAppointments, getAppointment, createAppointment, updateAppointmentS
 import { listAvailableSlots } from "../controllers/availabilityController.js";
 import { listBusinessHours } from "../controllers/businessHoursController.js";
 import { requireAdmin, makeAdminSessionToken } from "../middleware/requireAdmin.js";
+import { resolveTenant } from "../middleware/tenant.js";
 import prisma from "../prismaClient.js";
-import { resolveDemoId } from "../config/demos.js";
 
 const router = Router();
 
@@ -44,14 +44,15 @@ router.get("/health", async (req, res) => {
 });
 
 // ─── Rotas públicas ───────────────────────────────────────────────────────────
-router.get("/services", listServices);
-router.get("/professionals", listProfessionals);
-router.get("/available-slots", listAvailableSlots);
-router.get("/business-hours", listBusinessHours);
+router.get("/services", resolveTenant("query"), listServices);
+router.get("/professionals", resolveTenant("query"), listProfessionals);
+router.get("/available-slots", resolveTenant("query"), listAvailableSlots);
+router.get("/business-hours", resolveTenant("query"), listBusinessHours);
 
 router.post(
   "/appointments",
   rateLimit({ windowMs: 60_000, max: 10, message: "Muitas tentativas. Aguarde um momento." }),
+  resolveTenant("body"),
   createAppointment
 );
 
@@ -92,17 +93,12 @@ router.delete("/admin/session", (req, res) => {
 });
 
 // ─── Rotas administrativas (requerem autenticação) ────────────────────────────
-router.get("/appointments", requireAdmin, listAppointments);
+router.get("/appointments", requireAdmin, resolveTenant("query"), listAppointments);
 
-router.get("/appointments/export.csv", requireAdmin, async (req, res, next) => {
+router.get("/appointments/export.csv", requireAdmin, resolveTenant("query"), async (req, res, next) => {
   try {
-    const demoId = resolveDemoId(req.query.demoId);
-    if (!demoId) {
-      return res.status(400).json({ message: "Demonstração inválida" });
-    }
-
     const appointments = await prisma.appointment.findMany({
-      where: { service: { demoId }, professional: { demoId } },
+      where: { tenantId: req.tenant.slug },
       include: { service: true, professional: true },
       orderBy: [{ date: "asc" }, { time: "asc" }]
     });
@@ -131,7 +127,7 @@ router.get("/appointments/export.csv", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.get("/appointments/:id", requireAdmin, getAppointment);
-router.patch("/appointments/:id/status", requireAdmin, updateAppointmentStatus);
+router.get("/appointments/:id", requireAdmin, resolveTenant("query"), getAppointment);
+router.patch("/appointments/:id/status", requireAdmin, resolveTenant("query"), updateAppointmentStatus);
 
 export default router;

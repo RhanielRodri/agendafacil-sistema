@@ -14,9 +14,23 @@ enum AppointmentStatus {
   CANCELLED
 }
 
+model Tenant {
+  id            Int             @id @default(autoincrement())
+  slug          String          @unique
+  name          String
+  active        Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  services      Service[]
+  professionals Professional[]
+  appointments  Appointment[]
+  businessHours BusinessHours[]
+  blockedDates  BlockedDate[]
+}
+
 model Service {
   id           Int           @id @default(autoincrement())
-  demoId       String        @default("studio-cut")
+  tenantId     String        @default("studio-cut") @map("demoId")
   name         String
   description  String
   duration     Int
@@ -24,29 +38,32 @@ model Service {
   active       Boolean       @default(true)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  tenant       Tenant        @relation(fields: [tenantId], references: [slug])
   appointments Appointment[]
 
-  @@unique([demoId, name])
-  @@index([demoId, active])
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
 }
 
 model Professional {
   id           Int           @id @default(autoincrement())
-  demoId       String        @default("studio-cut")
+  tenantId     String        @default("studio-cut") @map("demoId")
   name         String
   specialty    String
   photo        String
   active       Boolean       @default(true)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  tenant       Tenant        @relation(fields: [tenantId], references: [slug])
   appointments Appointment[]
 
-  @@unique([demoId, name])
-  @@index([demoId, active])
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
 }
 
 model Appointment {
   id             Int               @id @default(autoincrement())
+  tenantId       String            @map("demoId")
   serviceId      Int
   professionalId Int
   clientName     String
@@ -57,24 +74,34 @@ model Appointment {
   status         AppointmentStatus @default(NEW)
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
+  tenant         Tenant            @relation(fields: [tenantId], references: [slug])
   service        Service           @relation(fields: [serviceId], references: [id])
   professional   Professional      @relation(fields: [professionalId], references: [id])
 
   @@unique([professionalId, date, time])
+  @@index([tenantId, date])
   @@index([date, professionalId])
 }
 
 model BusinessHours {
   id        Int     @id @default(autoincrement())
-  dayOfWeek Int     @unique
+  tenantId  String  @map("demoId")
+  dayOfWeek Int
   openTime  String
   closeTime String
   isOpen    Boolean @default(true)
+  tenant    Tenant  @relation(fields: [tenantId], references: [slug])
+
+  @@unique([tenantId, dayOfWeek])
 }
 
 model BlockedDate {
   id        Int      @id @default(autoincrement())
-  date      DateTime @unique @db.Date
+  tenantId  String   @map("demoId")
+  date      DateTime @db.Date
   reason    String
   createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [slug])
+
+  @@unique([tenantId, date])
 }
