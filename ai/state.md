@@ -3,33 +3,32 @@ project: AgendaFácil
 updated_at: 2026-07-20
 review_at: 2026-07-23
 status: active
-current_phase: A4A_concluida
+current_phase: A4B_concluida
 technical_baseline:
-  commit: b730b55
+  commit: 944a39cab23c555fc2634a2a5acdc9be6b4d7415
   validation_status: partial
   validated_at: 2026-07-20
   validated:
     - "A0-A3B preservadas: tenant, autenticação, agenda individual, bloqueios e ciclo do agendamento"
-    - "A4A: Client deduplicado por tenant e telefone normalizado"
-    - "A4A: Appointment obrigatoriamente vinculado a Client após backfill"
-    - "A4A: Lead, FollowUp e RelationshipHistoryEvent separados do histórico de agendamento"
-    - "A4A: captura pública configurada para Studio Cut e Lumière"
-    - "A4A: APIs e interface administrativa mínimas com isolamento por tenant"
-    - "A4A: 114/114 testes backend, Prisma e builds backend/frontend verdes"
-    - "A4A: jornadas reais em 375, 768 e 1440 px sem overflow ou erro inesperado"
+    - "A4A preservada: Client, Lead, FollowUp e RelationshipHistoryEvent isolados por tenant"
+    - "A4B: máquina de estados, prioridade, responsável e qualificação por vertical"
+    - "A4B: próxima ação, perda estruturada, conversão transacional e notas append-only"
+    - "A4B: paginação, busca, filtros, pipeline administrativo e ficha do Lead"
+    - "A4B: 149/149 testes backend, sendo 114 preservados e 35 novos"
+    - "A4B: Studio Cut e Lumière validadas no navegador, mobile sem overflow e console limpo"
   not_validated:
-    - "API, banco ou interface A4A em produção"
-    - "aplicação das migrations A0-A4A fora do PostgreSQL Docker local"
+    - "API, banco ou interface A4B em produção"
+    - "aplicação das migrations A0-A4B fora do PostgreSQL Docker local"
     - "retenção definitiva, exclusão por solicitação e consentimentos especiais"
-    - "uso operacional com volume, paginação ou múltiplas instâncias"
+    - "uso operacional com múltiplas instâncias ou alto volume"
   evidence:
-    - "migration 20260720230000 aplicada somente em agendafacil_dev: 13 migrations em dia"
-    - "node:test: 114/114 verdes, sendo 84 preservados e 30 casos A4A"
+    - "migration 20260721000000 aplicada somente em agendafacil_dev: 14 migrations em dia e checksum conferido"
+    - "node:test: 149/149 verdes, sendo 114 preservados e 35 casos A4B"
     - "Vite build: 51 módulos e três entradas geradas"
-    - "Prisma validate, generate, migrate status, sintaxe backend, diff e segredos sem erro"
-    - "navegador local: captura, qualificação, follow-up e histórico nos dois tenants"
-    - "baseline A4A em b730b55: feat: cria fundação de clientes e leads"
-source: A4A executada na branch de preservação em 2026-07-20, somente no banco Docker local
+    - "Prisma validate/generate, sintaxe backend, diff e segredos sem erro"
+    - "navegador local: pipeline e ficha completos nos dois tenants, rollback real e console limpo"
+    - "baseline A4B em 944a39c: feat: operacionaliza pipeline comercial"
+source: A4B executada na branch de preservação em 2026-07-20, somente no banco Docker local
 source_of_truth: .
 ---
 
@@ -37,7 +36,7 @@ source_of_truth: .
 
 ## Último resultado confirmado
 
-A fase A4A foi concluída na branch
+A fase A4B foi aprovada localmente na branch
 `preserve/agendafacil-local-2026-07-20`, exclusivamente no PostgreSQL Docker
 local `agendafacil_dev`, porta 5433. Nenhum serviço remoto foi alterado.
 
@@ -62,13 +61,15 @@ Studio Cut aceita `WAITLIST`/`CONTACT`; Lumière aceita
 payload válido, deduplicação, rate limit e honeypot. Navegação anônima não cria
 lead. Respostas públicas não expõem IDs, notas ou chave interna.
 
-O painel atual possui seção funcional de clientes, leads, follow-ups e histórico
-com loading, vazio, erro e sucesso. Não houve Kanban, métricas, gráficos,
-drag-and-drop, automação ou redesign.
+O painel agora possui pipeline paginado em cinco estados e ficha operacional do
+Lead. Prioridade, responsável, qualificação por vertical, próxima ação, perda,
+conversão e notas são auditáveis. Não houve métricas, gráficos, drag-and-drop,
+automação, notificação ou redesign fora da fase.
 
 ## Baseline técnica
 
-`b730b55` — `feat: cria fundação de clientes e leads` — é a baseline A4A, com
+`944a39cab23c555fc2634a2a5acdc9be6b4d7415` —
+`feat: operacionaliza pipeline comercial` — é a baseline A4B, com
 `validation_status: partial`. Código, migration/backfill, suíte, builds, banco e
 jornadas foram validados localmente. Permanece `partial`, não `validated`, porque
 produção não foi alterada nem exercitada.
@@ -79,10 +80,10 @@ branch de preservação não foi integrada nem enviada ao remoto.
 ## git_snapshot
 
 ```text
-observed_at: 2026-07-20 (após commit de código A4A)
+observed_at: 2026-07-20 (após commit de código A4B)
 branch: preserve/agendafacil-local-2026-07-20
-head_at_observation: b730b55267cdadca801dfd7b019745885986d459
-technical_baseline: b730b55267cdadca801dfd7b019745885986d459
+head_at_observation: 944a39cab23c555fc2634a2a5acdc9be6b4d7415
+technical_baseline: 944a39cab23c555fc2634a2a5acdc9be6b4d7415
 main: ad95e6d7083f188860f1026cd15f15715050dea0 (intacta, sem merge)
 origin_preservation_branch: ecae405b071cd96122217c20ffc586233995a805 (inalterada)
 production: inalterada
@@ -91,35 +92,35 @@ production: inalterada
 O commit documental deste estado será o HEAD seguinte e não substitui a
 baseline técnica.
 
-## Banco local final
+## Banco e migration local
 
-- 2 tenants;
-- 6 profissionais;
-- 35 intervalos profissionais;
-- 6 `ScheduleBlock` e 2 `BlockedDate` legados;
-- 4 agendamentos fictícios e 4 `Client` vinculados;
-- 4 eventos de histórico de agendamento;
-- 8 eventos comerciais de seed;
-- 0 lead, follow-up, token ou admin temporário de QA;
-- 0 agendamento órfão, vínculo cross-tenant ou lead ativo duplicado.
+- 14 migrations em dia no Docker local;
+- `20260721000000_operational_pipeline` concluída, sem rollback e com checksum
+  idêntico ao arquivo versionado;
+- enum, oito campos, sete constraints e três índices A4B conferidos;
+- nenhum banco remoto recebeu migration;
+- um dump de recuperação da validação interrompida permanece fora do repositório.
 
 ## Validações confirmadas
 
-- 114/114 testes: auth 20, A3A 27, A3B 30, A4A 30 e tenant 7.
+- 149/149 testes: 114 preservados e 35 A4B.
 - Criação e reuso de `Client`, mesmo telefone entre tenants e concorrência.
 - Vínculo obrigatório com `Appointment`, reagendamento e backfill sem órfão.
-- Lead sem agendamento, deduplicação ativa, perda, vínculo e conversão.
-- Follow-up criado, vencido, concluído e isolado por tenant.
+- Máquina de estados sem regressão ou reabertura terminal.
+- Prioridade, responsável ativo do mesmo tenant e qualificação por vertical.
+- Próxima ação obrigatória para avanço operacional e conclusão encadeada.
+- Perda estruturada, conversão `Serializable`, idempotência e rollback integral.
+- Paginação, busca e filtros combinados com ordem determinística.
 - Histórico append-only pela aplicação, ordenado e sem nota interna pública.
-- Studio Cut: encaixe, WAITLIST, follow-up, qualificação, agendamento, conversão
-  e sequência comercial.
-- Lumière: avaliação, EVALUATION, interesse não clínico, follow-up,
-  qualificação, agendamento, conversão e sequência comercial.
+- Studio Cut: `WAITLIST`, urgência, prioridade alta, responsável, qualificação,
+  nota, avanço de etapa e conversão criando Appointment.
+- Lumière: `EVALUATION`, qualificação não clínica, sequência de estados,
+  rollback de slot inválido e conversão por Appointment válido.
 - Admin e IDs não atravessam Studio Cut/Lumière; respostas públicas não expõem
   identificadores internos desnecessários.
-- 375, 768 e 1440 px sem overflow; zero erro de aplicação ou HTTP inesperado.
-- Prisma válido; 13 migrations locais em dia; builds backend/frontend e sintaxe
-  concluídos; diff limpo e varredura de segredos sem achado.
+- Mobile sem overflow e console final sem erro ou warning de aplicação.
+- Prisma válido e Client gerado; 14 migrations locais em dia; build frontend,
+  sintaxe backend, diff e varredura de segredos aprovados.
 
 ## Validações não executadas
 
@@ -129,28 +130,35 @@ baseline técnica.
 - Notificação por WhatsApp, e-mail ou SMS.
 - Operação com múltiplas instâncias ou volume acima de 100 registros por lista.
 
-## Riscos para A4B
+## Riscos resolvidos na A4B
 
-- O rate limit é em memória e não coordena múltiplas instâncias.
-- Listas administrativas ainda não possuem paginação por cursor.
-- Notas usam um campo acumulado limitado; volume maior pode exigir entidade
-  própria.
-- Follow-up público depende de admin ativo para receber atribuição.
-- A deduplicação de interesse é textual e não une descrições semanticamente
-  equivalentes.
-- Retenção definitiva, exportação e exclusão ainda precisam de decisão antes do
-  deploy público.
-- O rollout de A0-A4A fora do Docker local continua não validado.
+- listas administrativas deixaram o limite fixo e receberam paginação/filtros;
+- notas comerciais deixaram o campo acumulado e viraram eventos append-only;
+- Lead recebeu responsável explícito, prioridade e qualificação por vertical;
+- conversão passou a ser transacional, idempotente e com rollback comprovado;
+- filas sem próxima ação, vencidas e não atribuídas ficaram identificáveis.
+
+## Riscos remanescentes para A5
+
+- rate limit em memória não coordena múltiplas instâncias;
+- paginação ainda é por offset, não cursor;
+- follow-up público depende de admin ativo e entra sem responsável;
+- não há métricas, drag-and-drop, automação ou notificações;
+- retenção, exportação e exclusão por solicitação não têm política final;
+- `prisma migrate diff` global aponta drift legado de A3A em defaults de
+  `updatedAt` e nome de índice; os objetos A4B coincidem com a migration aplicada;
+- rollout de A0–A4B fora do Docker local continua não validado.
 
 ## Divergências documentais
 
 `README.md` ainda descreve partes do modelo antigo. O estado vigente desta
 branch está em `docs/a3a-agenda-profissional.md`,
-`docs/a3b-ciclo-agendamento.md`, `docs/a4a-relacionamento.md` e neste arquivo.
+`docs/a3b-ciclo-agendamento.md`, `docs/a4a-relacionamento.md`,
+`docs/a4b-operacao-pipeline.md` e neste arquivo.
 
 ## Próxima ação registrada
 
-Definir e autorizar explicitamente A4B: operação diária simples para filas de
-leads/follow-ups, responsável, paginação/busca e UX própria de lista de espera e
-avaliação. A4A não autoriza Kanban avançado, métricas, automação, notificação,
-pagamento, dados clínicos, deploy, merge ou push.
+Definir e autorizar explicitamente A5. Antes de ampliar o produto, decidir se o
+próximo ganho validável será produtividade manual ou automação e tratar o drift
+legado sem editar migrations já aplicadas. A4B não autoriza métricas,
+drag-and-drop, automação, notificação, pagamento, deploy, merge ou push.
