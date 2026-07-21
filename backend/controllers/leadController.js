@@ -100,6 +100,8 @@ export async function listLeads(req, res, next) {
     const createdTo = parseDate(req.query.createdTo, true);
     const overdue = parseBoolean(req.query.overdue, "Filtro de vencidos");
     const noNextAction = parseBoolean(req.query.noNextAction, "Filtro sem próxima ação");
+    const unassigned = parseBoolean(req.query.unassigned, "Filtro sem responsável");
+    const attention = parseBoolean(req.query.attention, "Filtro de atenção");
     if (status && !statuses.includes(status)) throw createHttpError(400, "Status inválido");
     if (source && !sources.includes(source)) throw createHttpError(400, "Origem inválida");
     if (priority && !leadPriorities.includes(priority)) throw createHttpError(400, "Prioridade inválida");
@@ -111,6 +113,7 @@ export async function listLeads(req, res, next) {
       ...(source ? { source } : {}),
       ...(priority ? { priority } : {}),
       ...(ownerUserId ? { ownerUserId } : {}),
+      ...(unassigned ? { ownerUserId: null } : {}),
       ...(search ? {
         OR: [
           { client: { name: { contains: search, mode: "insensitive" } } },
@@ -126,6 +129,19 @@ export async function listLeads(req, res, next) {
       ...(noNextAction ? {
         status: { in: activeLeadStatuses },
         followUps: { none: { status: "OPEN" } }
+      } : {}),
+      ...(unassigned && !noNextAction && !status ? { status: { in: activeLeadStatuses } } : {}),
+      // Fila de atenção: lead ativo sem próxima ação, com follow-up vencido ou
+      // sem responsável. Expresso em AND para não colidir com a busca textual.
+      ...(attention ? {
+        status: { in: activeLeadStatuses },
+        AND: [{
+          OR: [
+            { followUps: { none: { status: "OPEN" } } },
+            { followUps: { some: { status: "OPEN", dueAt: { lt: new Date() } } } },
+            { ownerUserId: null }
+          ]
+        }]
       } : {})
     };
 

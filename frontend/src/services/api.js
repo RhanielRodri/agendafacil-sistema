@@ -113,6 +113,14 @@ export const api = {
   getAdminUsers: () => request("/admin/users"),
   adminLogout: () => request("/admin/session", { method: "DELETE" }),
   getAppointments: () => request("/appointments"),
+  getOverview: (date) => request(`/admin/overview${date ? `?date=${encodeURIComponent(date)}` : ""}`),
+  getAgendaDay: (filters = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== "" && value !== null && value !== undefined) params.set(key, String(value));
+    });
+    return request(`/admin/agenda${params.size ? `?${params}` : ""}`);
+  },
   getProfessionalSchedules: (professionalId) =>
     request(`/admin/professional-schedules${professionalId ? `?professionalId=${encodeURIComponent(professionalId)}` : ""}`),
   createProfessionalSchedule: (payload) =>
@@ -186,5 +194,6 @@ export const api = {
   createFollowUp: (payload) => request("/admin/follow-ups", { method: "POST", body: JSON.stringify(payload) }),
   completeFollowUp: (id, nextFollowUp) => request(`/admin/follow-ups/${id}/complete`, { method: "POST", body: JSON.stringify(nextFollowUp ? { nextFollowUp } : {}) }),
   cancelFollowUp: (id) => request(`/admin/follow-ups/${id}/cancel`, { method: "POST", body: JSON.stringify({}) }),
+  assignFollowUpOwner: (id, ownerUserId) => request(`/admin/follow-ups/${id}/owner`, { method: "PATCH", body: JSON.stringify({ ownerUserId }) }),
   getExportUrl: () => `${API_URL}/appointments/export.csv`
 };

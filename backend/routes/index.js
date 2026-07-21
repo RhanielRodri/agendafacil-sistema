@@ -56,11 +56,13 @@ import {
   updateLeadStatus
 } from "../controllers/leadController.js";
 import {
+  assignFollowUpOwner,
   cancelFollowUp,
   completeFollowUp,
   createFollowUp,
   listFollowUps
 } from "../controllers/followUpController.js";
+import { getAgendaDay, getOverview } from "../controllers/overviewController.js";
 
 const router = Router();
 
@@ -211,6 +213,8 @@ router.get("/appointments/export.csv", requireAuth, async (req, res, next) => {
 router.get("/appointments/:id", requireAuth, getAppointment);
 router.patch("/appointments/:id/status", requireAuth, updateAppointmentStatus);
 router.get("/appointments/:id/history", requireAuth, listAppointmentHistory);
+router.get("/admin/overview", requireAuth, getOverview);
+router.get("/admin/agenda", requireAuth, getAgendaDay);
 router.get("/admin/clients", requireAuth, listClients);
 router.get("/admin/clients/:id", requireAuth, getClient);
 router.patch("/admin/clients/:id", requireAuth, updateClient);
@@ -231,6 +235,7 @@ router.get("/admin/follow-ups", requireAuth, listFollowUps);
 router.post("/admin/follow-ups", requireAuth, createFollowUp);
 router.post("/admin/follow-ups/:id/complete", requireAuth, completeFollowUp);
 router.post("/admin/follow-ups/:id/cancel", requireAuth, cancelFollowUp);
+router.patch("/admin/follow-ups/:id/owner", requireAuth, assignFollowUpOwner);
 router.get("/admin/professional-schedules", requireAuth, listProfessionalSchedules);
 router.post("/admin/professional-schedules", requireAuth, createProfessionalSchedule);
 router.patch("/admin/professional-schedules/:id", requireAuth, updateProfessionalSchedule);

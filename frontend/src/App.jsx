@@ -99,21 +99,22 @@ export default function App() {
     );
   }
 
+  // O painel tem barra própria; a navegação pública não aparece dentro dele.
+  if (page === "admin") {
+    return <Admin services={services} professionals={professionals} />;
+  }
+
   return (
     <>
       <Navbar onNavigate={navigate} />
-      {page === "admin" ? (
-        <Admin services={services} professionals={professionals} />
-      ) : (
-        <Home
-          services={services}
-          professionals={professionals}
-          loading={loading}
-          error={error}
-          onSuccess={handleSuccess}
-          onRetry={loadData}
-        />
-      )}
+      <Home
+        services={services}
+        professionals={professionals}
+        loading={loading}
+        error={error}
+        onSuccess={handleSuccess}
+        onRetry={loadData}
+      />
     </>
   );
 }

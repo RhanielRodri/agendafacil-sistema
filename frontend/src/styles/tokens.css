@@ -20,6 +20,34 @@
   --warning: #ff9800;
   --warning-bg: rgba(255,152,0,0.1);
 
+  /* Painel administrativo: telas de sessão em fundo escuro; operação diária em
+     superfície clara e densa. Antes da A5A esses nomes eram usados pelo CSS do
+     admin sem nunca terem sido definidos. */
+  --bg-dark: #101012;
+  --bg-dark-surface: #17171a;
+  --border-dark: #2b2b30;
+  --text-on-dark: #ffffff;
+  --text-on-dark-muted: #9a9aa4;
+
+  --bg-light: #f3f4f6;
+  --surface-light: #ffffff;
+  --surface-light-2: #fafafb;
+  --border-light: #d8dae0;
+  --border-light-strong: #b4b8c1;
+  --text-on-light: #15171a;
+  --text-on-light-muted: #585e68;
+
+  --status-pending: #96560a;
+  --status-pending-bg: #fdf3e6;
+  --status-confirmed: #146b3f;
+  --status-confirmed-bg: #e8f5ee;
+  --status-completed: #33383f;
+  --status-completed-bg: #eef0f3;
+  --status-cancelled: #a12a26;
+  --status-cancelled-bg: #fdecec;
+  --status-noshow: #6d3792;
+  --status-noshow-bg: #f4ecfa;
+
   --radius-sm: 0px;
   --radius-md: 0px;
   --radius-lg: 0px;

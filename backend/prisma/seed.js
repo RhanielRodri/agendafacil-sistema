@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { hashPassword } from "../lib/password.js";
+import { leadDedupeKey } from "../services/relationshipService.js";
 
 const prisma = new PrismaClient();
 
@@ -245,6 +246,9 @@ async function main() {
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
   const tomorrowIso = tomorrow.toISOString().slice(0, 10);
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const yesterdayIso = yesterday.toISOString().slice(0, 10);
   const studioBlocked = new Date(today);
   studioBlocked.setDate(today.getDate() + 7);
   const studioBlockedIso = studioBlocked.toISOString().slice(0, 10);
@@ -263,7 +267,11 @@ async function main() {
       { tenantId: STUDIO_CUT, name: "Marcos Silva", phone: "(27) 99999-1111", normalizedPhone: "27999991111", email: "marcos@email.com", normalizedEmail: "marcos@email.com" },
       { tenantId: STUDIO_CUT, name: "Pedro Lima", phone: "(27) 99999-2222", normalizedPhone: "27999992222", email: "pedro@email.com", normalizedEmail: "pedro@email.com" },
       { tenantId: STUDIO_CUT, name: "André Souza", phone: "(27) 99999-3333", normalizedPhone: "27999993333", email: "andre@email.com", normalizedEmail: "andre@email.com" },
-      { tenantId: LUMIERE, name: "Juliana Prado", phone: "(27) 98888-4444", normalizedPhone: "27988884444", email: "juliana@email.com", normalizedEmail: "juliana@email.com" }
+      { tenantId: STUDIO_CUT, name: "Caio Ribeiro", phone: "(27) 99999-5555", normalizedPhone: "27999995555", email: "caio@email.com", normalizedEmail: "caio@email.com" },
+      { tenantId: STUDIO_CUT, name: "Tiago Nunes", phone: "(27) 99999-6666", normalizedPhone: "27999996666", email: "tiago@email.com", normalizedEmail: "tiago@email.com" },
+      { tenantId: LUMIERE, name: "Juliana Prado", phone: "(27) 98888-4444", normalizedPhone: "27988884444", email: "juliana@email.com", normalizedEmail: "juliana@email.com" },
+      { tenantId: LUMIERE, name: "Renata Alves", phone: "(27) 98888-7777", normalizedPhone: "27988887777", email: "renata@email.com", normalizedEmail: "renata@email.com" },
+      { tenantId: LUMIERE, name: "Carla Menezes", phone: "(27) 98888-8888", normalizedPhone: "27988888888", email: "carla@email.com", normalizedEmail: "carla@email.com" }
     ]
   });
   const seededClients = await prisma.client.findMany();
@@ -272,57 +280,45 @@ async function main() {
     client
   ]));
 
+  // Agenda de demonstração: o dia atual precisa mostrar estados diferentes em
+  // cada vertical, incluindo não comparecimento e cancelamento.
+  const appointmentSeeds = [
+    // Studio Cut — hoje
+    { tenantId: STUDIO_CUT, service: services[0], professional: professionals[0], phone: "27999991111", date: todayIso, time: "09:00", status: "CONFIRMED" },
+    { tenantId: STUDIO_CUT, service: services[2], professional: professionals[1], phone: "27999992222", date: todayIso, time: "10:00", status: "PENDING" },
+    { tenantId: STUDIO_CUT, service: services[1], professional: professionals[2], phone: "27999993333", date: todayIso, time: "11:00", status: "COMPLETED" },
+    { tenantId: STUDIO_CUT, service: services[3], professional: professionals[0], phone: "27999996666", date: todayIso, time: "14:00", status: "PENDING" },
+    { tenantId: STUDIO_CUT, service: services[0], professional: professionals[1], phone: "27999995555", date: todayIso, time: "15:30", status: "NO_SHOW" },
+    { tenantId: STUDIO_CUT, service: services[1], professional: professionals[2], phone: "27999992222", date: todayIso, time: "16:30", status: "CANCELLED", cancellationReason: "Cliente pediu para remarcar" },
+    // Studio Cut — cliente recorrente e próximos dias
+    { tenantId: STUDIO_CUT, service: services[0], professional: professionals[0], phone: "27999991111", date: yesterdayIso, time: "10:00", status: "COMPLETED" },
+    { tenantId: STUDIO_CUT, service: services[2], professional: professionals[1], phone: "27999993333", date: tomorrowIso, time: "11:30", status: "PENDING" },
+    // Lumière — hoje
+    { tenantId: LUMIERE, service: lumiereServices[0], professional: lumiereProfessionals[0], phone: "27988884444", date: todayIso, time: "10:00", status: "CONFIRMED" },
+    { tenantId: LUMIERE, service: lumiereServices[1], professional: lumiereProfessionals[1], phone: "27988887777", date: todayIso, time: "11:30", status: "PENDING" },
+    { tenantId: LUMIERE, service: lumiereServices[2], professional: lumiereProfessionals[2], phone: "27988888888", date: todayIso, time: "14:00", status: "COMPLETED" },
+    { tenantId: LUMIERE, service: lumiereServices[0], professional: lumiereProfessionals[1], phone: "27988888888", date: todayIso, time: "16:00", status: "CANCELLED", cancellationReason: "Reagendamento solicitado pela cliente" },
+    // Lumière — próximos dias
+    { tenantId: LUMIERE, service: lumiereServices[1], professional: lumiereProfessionals[0], phone: "27988884444", date: tomorrowIso, time: "10:00", status: "PENDING" }
+  ];
+
   await prisma.appointment.createMany({
-    data: [
-      {
-        tenantId: STUDIO_CUT,
-        serviceId: services[0].id,
-        professionalId: professionals[0].id,
-        clientId: clientByPhone[`${STUDIO_CUT}:27999991111`].id,
-        clientName: "Marcos Silva",
-        clientPhone: "(27) 99999-1111",
-        clientEmail: "marcos@email.com",
-        date: toDate(todayIso),
-        time: "10:00",
-        status: "PENDING"
-      },
-      {
-        tenantId: STUDIO_CUT,
-        serviceId: services[2].id,
-        professionalId: professionals[1].id,
-        clientId: clientByPhone[`${STUDIO_CUT}:27999992222`].id,
-        clientName: "Pedro Lima",
-        clientPhone: "(27) 99999-2222",
-        clientEmail: "pedro@email.com",
-        date: toDate(todayIso),
-        time: "14:00",
-        status: "CONFIRMED"
-      },
-      {
-        tenantId: STUDIO_CUT,
-        serviceId: services[1].id,
-        professionalId: professionals[2].id,
-        clientId: clientByPhone[`${STUDIO_CUT}:27999993333`].id,
-        clientName: "André Souza",
-        clientPhone: "(27) 99999-3333",
-        clientEmail: "andre@email.com",
-        date: toDate(tomorrowIso),
-        time: "11:30",
-        status: "COMPLETED"
-      },
-      {
-        tenantId: LUMIERE,
-        serviceId: lumiereServices[0].id,
-        professionalId: lumiereProfessionals[0].id,
-        clientId: clientByPhone[`${LUMIERE}:27988884444`].id,
-        clientName: "Juliana Prado",
-        clientPhone: "(27) 98888-4444",
-        clientEmail: "juliana@email.com",
-        date: toDate(tomorrowIso),
-        time: "10:00",
-        status: "PENDING"
-      }
-    ]
+    data: appointmentSeeds.map((seed) => {
+      const client = clientByPhone[`${seed.tenantId}:${seed.phone}`];
+      return {
+        tenantId: seed.tenantId,
+        serviceId: seed.service.id,
+        professionalId: seed.professional.id,
+        clientId: client.id,
+        clientName: client.name,
+        clientPhone: client.phone,
+        clientEmail: client.email,
+        date: toDate(seed.date),
+        time: seed.time,
+        status: seed.status,
+        ...(seed.cancellationReason ? { cancellationReason: seed.cancellationReason } : {})
+      };
+    })
   });
 
   const seededAppointments = await prisma.appointment.findMany();
@@ -356,8 +352,146 @@ async function main() {
     ]
   });
 
+  // Pipeline comercial de demonstração. Follow-up exige um AdminUser criador;
+  // sem credencial local no .env o bloco é ignorado sem quebrar o seed.
+  const seededAdmins = await prisma.adminUser.findMany({ select: { id: true, tenantId: true } });
+  const adminByTenant = Object.fromEntries(seededAdmins.map((admin) => [admin.tenantId, admin]));
+
+  const hoursFromNow = (hours) => new Date(Date.now() + hours * 60 * 60 * 1000);
+
+  const leadSeeds = [
+    {
+      tenantId: STUDIO_CUT,
+      phone: "27999996666",
+      source: "WAITLIST",
+      status: "NEW",
+      priority: "HIGH",
+      service: services[0],
+      professional: professionals[0],
+      interestSummary: "Encaixe para corte ainda hoje",
+      withOwner: false,
+      followUp: { type: "WAITLIST", dueAt: hoursFromNow(-26), note: "Retornar sobre encaixe do dia" }
+    },
+    {
+      tenantId: STUDIO_CUT,
+      phone: "27999995555",
+      source: "CONTACT",
+      status: "CONTACTED",
+      priority: "NORMAL",
+      service: services[1],
+      professional: professionals[1],
+      interestSummary: "Quer horário fixo aos sábados",
+      withOwner: true,
+      followUp: null
+    },
+    {
+      tenantId: STUDIO_CUT,
+      phone: "27999993333",
+      source: "BOOKING",
+      status: "CONVERTED",
+      priority: "NORMAL",
+      service: services[2],
+      professional: professionals[2],
+      interestSummary: "Corte e barba pelo site",
+      withOwner: true,
+      followUp: null
+    },
+    {
+      tenantId: LUMIERE,
+      phone: "27988887777",
+      source: "EVALUATION",
+      status: "NEW",
+      priority: "NORMAL",
+      service: lumiereServices[1],
+      professional: lumiereProfessionals[1],
+      interestSummary: "Avaliação inicial de harmonização",
+      withOwner: false,
+      followUp: { type: "EVALUATION", dueAt: hoursFromNow(3), note: "Confirmar avaliação agendada" }
+    },
+    {
+      tenantId: LUMIERE,
+      phone: "27988888888",
+      source: "CONTACT",
+      status: "QUALIFIED",
+      priority: "HIGH",
+      service: lumiereServices[2],
+      professional: lumiereProfessionals[2],
+      interestSummary: "Interesse em pacote de sessões",
+      withOwner: true,
+      followUp: { type: "CONTACT", dueAt: hoursFromNow(-50), note: "Enviar condições do pacote" }
+    },
+    {
+      tenantId: LUMIERE,
+      phone: "27988884444",
+      source: "BOOKING",
+      status: "CONTACTED",
+      priority: "LOW",
+      service: lumiereServices[0],
+      professional: lumiereProfessionals[0],
+      interestSummary: "Limpeza de pele periódica",
+      withOwner: true,
+      followUp: null
+    }
+  ];
+
+  for (const seed of leadSeeds) {
+    const admin = adminByTenant[seed.tenantId];
+    const client = clientByPhone[`${seed.tenantId}:${seed.phone}`];
+    const lead = await prisma.lead.create({
+      data: {
+        tenantId: seed.tenantId,
+        clientId: client.id,
+        source: seed.source,
+        status: seed.status,
+        priority: seed.priority,
+        serviceId: seed.service.id,
+        professionalId: seed.professional.id,
+        interestSummary: seed.interestSummary,
+        ownerUserId: seed.withOwner && admin ? admin.id : null,
+        dedupeKey: leadDedupeKey({
+          source: seed.source,
+          serviceId: seed.service.id,
+          professionalId: seed.professional.id,
+          interestSummary: seed.interestSummary
+        }),
+        ...(seed.status === "CONVERTED" ? { convertedAt: new Date() } : {})
+      }
+    });
+
+    await prisma.relationshipHistoryEvent.create({
+      data: {
+        tenantId: seed.tenantId,
+        clientId: client.id,
+        leadId: lead.id,
+        type: "LEAD_CREATED",
+        actorType: "SYSTEM",
+        metadata: { source: "SEED" }
+      }
+    });
+
+    if (seed.followUp && admin) {
+      await prisma.followUp.create({
+        data: {
+          tenantId: seed.tenantId,
+          clientId: client.id,
+          leadId: lead.id,
+          dueAt: seed.followUp.dueAt,
+          type: seed.followUp.type,
+          status: "OPEN",
+          note: seed.followUp.note,
+          createdByUserId: admin.id,
+          ownerUserId: seed.withOwner ? admin.id : null
+        }
+      });
+    } else if (seed.followUp && !admin) {
+      console.warn(`seed: follow-up de ${seed.tenantId} ignorado — nenhum admin local criado.`);
+    }
+  }
+
   await prisma.scheduleBlock.createMany({
     data: [
+      { tenantId: STUDIO_CUT, date: toDate(todayIso), startTime: "12:00", endTime: "13:00", reason: "Almoço da equipe" },
+      { tenantId: LUMIERE, date: toDate(todayIso), startTime: "13:00", endTime: "13:30", reason: "Higienização das salas" },
       { tenantId: STUDIO_CUT, date: toDate(studioBlockedIso), allDay: true, reason: "Treinamento interno" },
       { tenantId: LUMIERE, date: toDate(lumiereBlockedIso), allDay: true, reason: "Feriado interno" },
       { tenantId: STUDIO_CUT, date: toDate(studioPartialIso), startTime: "12:00", endTime: "12:30", reason: "Pausa geral" },

@@ -150,6 +150,23 @@ export async function createFollowUp(req, res, next) {
   }
 }
 
+export async function assignFollowUpOwner(req, res, next) {
+  try {
+    const id = sanitizeId(req.params.id);
+    if (!id) throw createHttpError(400, "ID inválido");
+    const result = await prisma.$transaction(async (tx) => {
+      const followUp = await tenantFollowUp(tx, id, req.auth.tenantId);
+      if (followUp.status !== "OPEN") throw createHttpError(409, "Follow-up encerrado não muda de responsável");
+      const ownerUserId = await validateActiveOwner(tx, req.auth.tenantId, req.body?.ownerUserId, { allowNull: true });
+      if (followUp.ownerUserId === ownerUserId) return followUp;
+      return tx.followUp.update({ where: { id }, data: { ownerUserId }, include: followUpInclude });
+    });
+    res.json(withOverdue(result));
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function closeFollowUp(req, res, next, status) {
   try {
     const id = sanitizeId(req.params.id);
