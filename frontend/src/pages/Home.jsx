@@ -96,7 +96,7 @@ function ServicesSection({ services, loading, error, selectedServiceId, onSelect
               <h3>{service.name}</h3>
               <p>{service.description}</p>
               <div className="service-card-footer">
-                <strong>{formatCurrency(service.price)}</strong>
+                <strong>{formatCurrency(service.price) || "Sob consulta"}</strong>
                 <span>{service.duration} min</span>
               </div>
             </button>

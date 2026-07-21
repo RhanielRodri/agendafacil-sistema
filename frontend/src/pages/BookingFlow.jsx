@@ -151,7 +151,10 @@ export default function BookingFlow({ services, professionals, initialServiceId,
                   >
                     <strong>{service.name}</strong>
                     <span>{service.description}</span>
-                    <small>{formatCurrency(service.price)} · {service.duration} min</small>
+                    <small>
+                      {formatCurrency(service.price) ? `${formatCurrency(service.price)} · ` : ""}
+                      {service.duration} min
+                    </small>
                   </button>
                 ))}
               </div>
@@ -309,7 +312,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
             <div className="summary-row">
               <span className="summary-label">{t.summary_total}</span>
               <span className="summary-price">
-                {selectedService ? formatCurrency(selectedService.price) : "—"}
+                {selectedService ? (formatCurrency(selectedService.price) || "Sob consulta") : "—"}
               </span>
             </div>
           </div>

@@ -41,6 +41,32 @@ export function PanelEmpty({ title, children, actionLabel, onAction }) {
   );
 }
 
+// Conflito com agendamento existente é um estado próprio: não é erro de
+// validação nem falha inesperada, e nada acontece sem decisão explícita.
+export function PanelConflict({ title, conflicts = [], onConfirm, onCancel, confirmLabel = "Aplicar mesmo assim" }) {
+  return (
+    <div className="panel-conflict" role="alertdialog" aria-label={title}>
+      <strong>{title}</strong>
+      <p>
+        Nenhum agendamento foi movido ou cancelado. Confira o impacto antes de decidir —
+        os horários abaixo continuam marcados.
+      </p>
+      <ul>
+        {conflicts.map((conflict) => (
+          <li key={conflict.appointmentId}>
+            <strong>{conflict.date.slice(8, 10)}/{conflict.date.slice(5, 7)} · {conflict.time}–{conflict.endTime}</strong>
+            <span>{conflict.clientName} · {conflict.serviceName} · {conflict.professionalName}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="panel-conflict-actions">
+        <button className="panel-btn-danger" type="button" onClick={onConfirm}>{confirmLabel}</button>
+        <button className="panel-btn" type="button" onClick={onCancel}>Manter como está</button>
+      </div>
+    </div>
+  );
+}
+
 export function PanelError({ title = "Não foi possível carregar", children, onRetry }) {
   return (
     <div className="panel-empty" role="alert">

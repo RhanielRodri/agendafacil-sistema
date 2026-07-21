@@ -7,20 +7,47 @@ import Agenda from "./admin/Agenda.jsx";
 import Leads from "./admin/Leads.jsx";
 import Clients from "./admin/Clients.jsx";
 import FollowUps from "./admin/FollowUps.jsx";
-import Schedules from "./admin/Schedules.jsx";
+import Services from "./admin/Services.jsx";
+import Professionals from "./admin/Professionals.jsx";
+import Availability from "./admin/Availability.jsx";
+import Blocks from "./admin/Blocks.jsx";
+import Metrics from "./admin/Metrics.jsx";
+import Settings from "./admin/Settings.jsx";
 
-const modules = [
-  { id: "visao-geral", label: "Visão geral" },
-  { id: "agenda", label: "Agenda" },
-  { id: "leads", label: "Leads" },
-  { id: "clientes", label: "Clientes" },
-  { id: "follow-ups", label: "Follow-ups" },
-  { id: "horarios", label: "Horários e bloqueios" }
+const moduleIds = [
+  "visao-geral",
+  "agenda",
+  "leads",
+  "clientes",
+  "follow-ups",
+  "servicos",
+  "profissionais",
+  "disponibilidade",
+  "bloqueios",
+  "indicadores",
+  "configuracoes"
 ];
+
+// O rótulo muda por vertical; o identificador na URL, não.
+function moduleLabels(vertical) {
+  return {
+    "visao-geral": "Visão geral",
+    agenda: "Agenda",
+    leads: "Leads",
+    clientes: "Clientes",
+    "follow-ups": "Follow-ups",
+    servicos: vertical.servicePlural,
+    profissionais: vertical.professionalPlural,
+    disponibilidade: "Disponibilidade",
+    bloqueios: "Bloqueios",
+    indicadores: "Indicadores",
+    configuracoes: "Configurações"
+  };
+}
 
 function initialModule() {
   const requested = new URLSearchParams(window.location.search).get("m");
-  return modules.some((module) => module.id === requested) ? requested : "visao-geral";
+  return moduleIds.includes(requested) ? requested : "visao-geral";
 }
 
 // ─── Telas de sessão (fundo escuro, card centralizado) ──────────────────────
@@ -179,14 +206,27 @@ export default function Admin({ services, professionals }) {
   const [status, setStatus] = useState("loading");
   const [session, setSession] = useState(null);
   const [users, setUsers] = useState([]);
+  const [catalog, setCatalog] = useState(null);
   const [foreignTenant, setForeignTenant] = useState(null);
   const [module, setModule] = useState(initialModule);
   const [params, setParams] = useState({});
   const [expiredNotice, setExpiredNotice] = useState("");
 
-  const safeServices = Array.isArray(services) ? services : [];
-  const safeProfessionals = Array.isArray(professionals) ? professionals : [];
   const vertical = verticalConfig(tenant.slug);
+  const labels = moduleLabels(vertical);
+
+  // O catálogo administrativo inclui inativos; as listas públicas recebidas por
+  // prop só têm ativos e servem de fallback até a primeira carga.
+  async function loadCatalog() {
+    const [servicePage, professionalPage] = await Promise.all([
+      api.getAdminServices({ limit: 50 }),
+      api.getAdminProfessionals({ limit: 50 })
+    ]);
+    setCatalog({ services: servicePage.items, professionals: professionalPage.items });
+  }
+
+  const safeServices = catalog?.services || (Array.isArray(services) ? services : []);
+  const safeProfessionals = catalog?.professionals || (Array.isArray(professionals) ? professionals : []);
 
   function bootstrap() {
     setStatus("loading");
@@ -200,6 +240,7 @@ export default function Admin({ services, professionals }) {
         }
         setSession(me);
         setUsers(await api.getAdminUsers());
+        await loadCatalog();
         setExpiredNotice("");
         setStatus("ready");
       })
@@ -245,7 +286,8 @@ export default function Admin({ services, professionals }) {
     users,
     params,
     onNavigate: navigate,
-    onSessionExpired: handleSessionExpired
+    onSessionExpired: handleSessionExpired,
+    onCatalogChange: () => loadCatalog().catch(() => {})
   };
 
   return (
@@ -262,14 +304,14 @@ export default function Admin({ services, professionals }) {
       </header>
 
       <nav className="panel-nav" aria-label="Módulos do painel">
-        {modules.map((item) => (
+        {moduleIds.map((id) => (
           <button
-            key={item.id}
+            key={id}
             type="button"
-            aria-current={module === item.id ? "page" : undefined}
-            onClick={() => navigate(item.id)}
+            aria-current={module === id ? "page" : undefined}
+            onClick={() => navigate(id)}
           >
-            {item.label}
+            {labels[id]}
           </button>
         ))}
       </nav>
@@ -280,7 +322,12 @@ export default function Admin({ services, professionals }) {
         {module === "leads" && <Leads {...moduleProps} />}
         {module === "clientes" && <Clients {...moduleProps} />}
         {module === "follow-ups" && <FollowUps {...moduleProps} />}
-        {module === "horarios" && <Schedules {...moduleProps} />}
+        {module === "servicos" && <Services {...moduleProps} />}
+        {module === "profissionais" && <Professionals {...moduleProps} />}
+        {module === "disponibilidade" && <Availability {...moduleProps} />}
+        {module === "bloqueios" && <Blocks {...moduleProps} />}
+        {module === "indicadores" && <Metrics {...moduleProps} />}
+        {module === "configuracoes" && <Settings {...moduleProps} />}
       </main>
     </div>
   );

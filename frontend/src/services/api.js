@@ -10,6 +10,14 @@ function getBusinessQuery() {
   return `demoId=${encodeURIComponent(tenant.slug)}`;
 }
 
+function queryString(filters = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== "" && value !== null && value !== undefined) params.set(key, String(value));
+  });
+  return params.size ? `?${params}` : "";
+}
+
 async function request(path, options = {}) {
   if (!API_URL) {
     throw new Error("Serviço temporariamente indisponível");
@@ -36,6 +44,7 @@ async function request(path, options = {}) {
     const error = new Error(message);
     error.status = response.status;
     error.code = data?.code;
+    if (Array.isArray(data?.conflicts)) error.conflicts = data.conflicts;
     throw error;
   }
 
@@ -121,6 +130,32 @@ export const api = {
     });
     return request(`/admin/agenda${params.size ? `?${params}` : ""}`);
   },
+  getAdminServices: (filters = {}) => request(`/admin/services${queryString(filters)}`),
+  createAdminService: (payload) => request("/admin/services", { method: "POST", body: JSON.stringify(payload) }),
+  updateAdminService: (id, payload) => request(`/admin/services/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  setAdminServiceActive: (id, active, confirm = false) =>
+    request(`/admin/services/${id}/active`, { method: "PATCH", body: JSON.stringify({ active, confirm }) }),
+  reorderAdminServices: (order) => request("/admin/services/order", { method: "PATCH", body: JSON.stringify({ order }) }),
+  getServiceDependencies: (id) => request(`/admin/services/${id}/dependencies`),
+  getAdminProfessionals: (filters = {}) => request(`/admin/professionals${queryString(filters)}`),
+  createAdminProfessional: (payload) => request("/admin/professionals", { method: "POST", body: JSON.stringify(payload) }),
+  updateAdminProfessional: (id, payload) =>
+    request(`/admin/professionals/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  setAdminProfessionalActive: (id, active, confirm = false) =>
+    request(`/admin/professionals/${id}/active`, { method: "PATCH", body: JSON.stringify({ active, confirm }) }),
+  setProfessionalServices: (id, serviceIds) =>
+    request(`/admin/professionals/${id}/services`, { method: "PUT", body: JSON.stringify({ serviceIds }) }),
+  reorderAdminProfessionals: (order) =>
+    request("/admin/professionals/order", { method: "PATCH", body: JSON.stringify({ order }) }),
+  getProfessionalDependencies: (id) => request(`/admin/professionals/${id}/dependencies`),
+  getAdminBusinessHours: () => request("/admin/business-hours"),
+  updateBusinessHours: (days, confirm = false) =>
+    request("/admin/business-hours", { method: "PUT", body: JSON.stringify({ days, confirm }) }),
+  copyProfessionalSchedules: (payload) =>
+    request("/admin/professional-schedules/copy", { method: "POST", body: JSON.stringify(payload) }),
+  getAdminSettings: () => request("/admin/settings"),
+  updateAdminSettings: (payload) => request("/admin/settings", { method: "PATCH", body: JSON.stringify(payload) }),
+  getMetrics: (filters = {}) => request(`/admin/metrics${queryString(filters)}`),
   getProfessionalSchedules: (professionalId) =>
     request(`/admin/professional-schedules${professionalId ? `?professionalId=${encodeURIComponent(professionalId)}` : ""}`),
   createProfessionalSchedule: (payload) =>
@@ -133,10 +168,9 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(payload)
     }),
-  deleteProfessionalSchedule: (id) =>
-    request(`/admin/professional-schedules/${id}`, { method: "DELETE" }),
-  getScheduleBlocks: (from, to) =>
-    request(`/admin/schedule-blocks?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
+  deleteProfessionalSchedule: (id, confirm = false) =>
+    request(`/admin/professional-schedules/${id}${confirm ? "?confirm=true" : ""}`, { method: "DELETE" }),
+  getScheduleBlocks: (filters = {}) => request(`/admin/schedule-blocks${queryString(filters)}`),
   createScheduleBlock: (payload) =>
     request("/admin/schedule-blocks", {
       method: "POST",

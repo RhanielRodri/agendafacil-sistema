@@ -1,4 +1,6 @@
+// Preço ausente não é zero: quem não informou preço não vira "R$ 0,00".
 export function formatCurrency(value) {
+  if (value === null || value === undefined || value === "") return null;
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL"
