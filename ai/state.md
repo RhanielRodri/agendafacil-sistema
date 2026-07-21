@@ -3,7 +3,7 @@ project: AgendaFácil
 updated_at: 2026-07-21
 review_at: 2026-07-24
 status: active
-current_phase: A5B_concluida
+current_phase: R1_local_concluida
 technical_baseline:
   commit: 194932c2f88110cc57d25fc1388c0db0cde5a682
   validation_status: partial
@@ -24,7 +24,7 @@ technical_baseline:
   evidence:
     - "node:test: 209/209 verdes contra o agendafacil_dev local"
     - "prisma migrate deploy aplicou 20260721120000_structural_management; 15 migrations em dia"
-    - "migrate diff pós-aplicação: somente as 3 linhas do drift legado A3A"
+    - "R1: 20260721160000_reconcile_a3a_drift zerou o migrate diff no clone do banco atual, em banco virgem e no banco local"
     - "Vite build: 66 módulos e três entradas geradas"
     - "navegador: serviços públicos ordenados por displayOrder, serviço inativo ausente, GET /api/settings sem campos internos"
     - "baseline A5B em 194932c: feat: add structural management backend and data model"
@@ -174,11 +174,49 @@ dois agendamentos intactos em data, hora e status.
 - paginação ainda é por offset, não cursor;
 - rate limit em memória não coordena múltiplas instâncias;
 - `booking.css` ainda aplica `input, select { width: 100% }` globalmente;
-- drift legado da A3A permanece: defaults de `updatedAt` em
-  `ProfessionalSchedule` e `ScheduleBlock` e nome do índice de
-  `ProfessionalSchedule`. Registrado de novo, não corrigido, e ainda exige plano
-  próprio antes de rollout remoto;
-- rollout de A0–A5B fora do Docker local continua não validado.
+- rollout de A0–A5B fora do Docker local continua não validado;
+- dez migrations de A1 a A5B, mais a de reconciliação, seguem acumuladas sem
+  publicação: `main` tem só as cinco primeiras;
+- `render.yaml` roda `prisma migrate deploy` dentro do `buildCommand`, então um
+  push para a branch de produção aplica todas elas de uma vez, sem gate.
+
+## R1 — reconciliação do drift legado A3A
+
+O drift eram três diferenças entre o banco e o schema: `DEFAULT CURRENT_TIMESTAMP`
+em `ProfessionalSchedule.updatedAt` e `ScheduleBlock.updatedAt`, e o nome do
+índice único de `ProfessionalSchedule`.
+
+Origem: `20260720210000_professional_schedules` foi escrita à mão. Ela declarou o
+default nas duas colunas, enquanto o schema usa `@updatedAt` sem
+`@default(now())`; e criou o índice único com 76 caracteres, que o PostgreSQL
+truncou em 63 de forma diferente da truncagem do Prisma. Colunas e unicidade do
+índice sempre foram equivalentes — só o nome divergia.
+
+`20260721160000_reconcile_a3a_drift` remove os dois defaults e renomeia o índice
+dentro de um bloco condicional, que só age quando o nome antigo existe e o novo
+não. Nenhuma migration antiga foi tocada, nenhum dado alterado, nenhum reset.
+
+Provado em três bancos, todos com `migrate diff` vazio ao final:
+
+- cópia do banco de desenvolvimento: só a migration nova foi aplicada, segunda
+  execução sem pendência, contagens idênticas antes e depois em `Service`,
+  `Professional`, `ProfessionalSchedule`, `ScheduleBlock`, `BusinessHours` e
+  `Appointment`, e nenhuma tabela recriada;
+- banco virgem com replay das 16 migrations desde o início, seed rodado duas
+  vezes com o mesmo resultado, domingo fechado em `00:00–00:00` nas duas
+  verticais, agendas, bloqueios e associações profissional-serviço presentes;
+- banco local de desenvolvimento, com 209/209 testes, build Vite e seed
+  idempotente depois da aplicação.
+
+Smoke curto pós-migration: dia fechado não gera slot e dia aberto gera 18;
+bloqueio temporário zerou a disponibilidade do profissional e a devolveu ao ser
+removido; `updatedAt` continua sendo preenchido pelas escritas do Prisma nas duas
+tabelas, agora sem default no banco; ID de outra vertical segue invisível nas
+duas direções. Dados temporários removidos.
+
+Produção **não** foi reconciliada nem tocada. O banco remoto tem apenas as cinco
+migrations presentes em `main` e nunca recebeu a A3A, então lá não existe drift a
+corrigir — existe um rollout inteiro pendente.
 
 ## Divergências documentais
 
@@ -195,7 +233,9 @@ agrupamento ou hierarquia, não um remendo no meio da A5B.
 
 ## Próxima ação registrada
 
-A5B está fechada e validada localmente. Definir e autorizar explicitamente a A6.
-A5B não autoriza redesign público, relatório comercial, deploy, merge ou push.
-O rollout remoto continua bloqueado pelo drift legado da A3A, que precisa de uma
-fase própria de reconciliação antes de qualquer migration fora do Docker local.
+A5B está fechada e validada localmente, e o drift legado da A3A está reconciliado
+no ambiente local. Definir e autorizar explicitamente a A6.
+Nada disso autoriza redesign público, relatório comercial, deploy, merge ou push.
+O rollout remoto continua bloqueado — não mais pelo drift, e sim pelas onze
+migrations acumuladas, que exigem fase própria com backup, janela e smoke de
+produção antes de qualquer aplicação fora do Docker local.
