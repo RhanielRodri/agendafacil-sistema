@@ -3,31 +3,33 @@ project: AgendaFácil
 updated_at: 2026-07-20
 review_at: 2026-07-23
 status: active
-current_phase: A3B_concluida
+current_phase: A4A_concluida
 technical_baseline:
-  commit: 4aca9a9
+  commit: b730b55
   validation_status: partial
   validated_at: 2026-07-20
   validated:
-    - "A0-A3A preservadas: tenant, autenticação, agenda individual, bloqueios e disponibilidade"
-    - "A3B: máquina PENDING, CONFIRMED, COMPLETED, CANCELLED e NO_SHOW"
-    - "A3B: histórico, tokens públicos por hash, confirmação, cancelamento e reagendamento"
-    - "A3B: painel com transições válidas, motivo, histórico e vínculos de reagendamento"
-    - "A3B: 84/84 testes backend, Prisma sem drift e builds backend/frontend verdes"
-    - "A3B: Studio Cut 30 min e Lumière 60 min exercitados em 375, 768 e 1440 px"
-    - "A3B: zero overflow, zero erro de console e isolamento entre tenants confirmado"
+    - "A0-A3B preservadas: tenant, autenticação, agenda individual, bloqueios e ciclo do agendamento"
+    - "A4A: Client deduplicado por tenant e telefone normalizado"
+    - "A4A: Appointment obrigatoriamente vinculado a Client após backfill"
+    - "A4A: Lead, FollowUp e RelationshipHistoryEvent separados do histórico de agendamento"
+    - "A4A: captura pública configurada para Studio Cut e Lumière"
+    - "A4A: APIs e interface administrativa mínimas com isolamento por tenant"
+    - "A4A: 114/114 testes backend, Prisma e builds backend/frontend verdes"
+    - "A4A: jornadas reais em 375, 768 e 1440 px sem overflow ou erro inesperado"
   not_validated:
-    - "saúde da API e do banco em produção"
-    - "aplicação das migrations A0-A3B fora do PostgreSQL Docker local"
-    - "entrega real do link por e-mail ou WhatsApp, fora do escopo A3B"
+    - "API, banco ou interface A4A em produção"
+    - "aplicação das migrations A0-A4A fora do PostgreSQL Docker local"
+    - "retenção definitiva, exclusão por solicitação e consentimentos especiais"
+    - "uso operacional com volume, paginação ou múltiplas instâncias"
   evidence:
-    - "migrations 20260720220000 e 20260720221000 aplicadas somente em agendafacil_dev: 12 migrations sem drift"
-    - "node:test: 84/84 verdes, sendo 54 legados e 30 casos A3B"
-    - "Vite build: 49 módulos e três entradas geradas"
-    - "Prisma validate, generate, migrate status e validação de sintaxe backend sem erro"
-    - "navegador local: criação, sucesso, confirmação, cancelamento, reuso do slot, reagendamento, histórico, no-show e token inválido nos dois tenants"
-    - "baseline A3B em 4aca9a9: feat: completa ciclo de vida do agendamento"
-source: A3B executada na branch de preservação em 2026-07-20, somente no banco Docker local
+    - "migration 20260720230000 aplicada somente em agendafacil_dev: 13 migrations em dia"
+    - "node:test: 114/114 verdes, sendo 84 preservados e 30 casos A4A"
+    - "Vite build: 51 módulos e três entradas geradas"
+    - "Prisma validate, generate, migrate status, sintaxe backend, diff e segredos sem erro"
+    - "navegador local: captura, qualificação, follow-up e histórico nos dois tenants"
+    - "baseline A4A em b730b55: feat: cria fundação de clientes e leads"
+source: A4A executada na branch de preservação em 2026-07-20, somente no banco Docker local
 source_of_truth: .
 ---
 
@@ -35,36 +37,41 @@ source_of_truth: .
 
 ## Último resultado confirmado
 
-A fase A3B foi concluída na branch
+A fase A4A foi concluída na branch
 `preserve/agendafacil-local-2026-07-20`, exclusivamente no PostgreSQL Docker
-local `agendafacil_dev`, porta 5433. Nada foi publicado ou alterado em serviços
-remotos.
+local `agendafacil_dev`, porta 5433. Nenhum serviço remoto foi alterado.
 
-O ciclo agora usa `PENDING`, `CONFIRMED`, `COMPLETED`, `CANCELLED` e `NO_SHOW`.
-Transições permitidas ficam centralizadas; estados terminais não reabrem e a
-repetição do mesmo estado é idempotente.
+`Client` agora representa a pessoa por tenant, com identidade principal em
+`tenantId + normalizedPhone`, limites explícitos e merge conservador. Novo
+agendamento localiza ou cria o cliente, atualiza o último contato e mantém a
+transação `Serializable`. `Appointment.clientId` é obrigatório depois do
+backfill; os campos legados permanecem por compatibilidade.
 
-`AppointmentHistoryEvent` mantém eventos por tenant e ator.
-`AppointmentAccessToken` guarda somente SHA-256 de token aleatório de 256 bits,
-com expiração, uso e revogação. O link público leva o token em fragmento
-`#agendamento=`, evitando envio ao servidor e access logs. Registros anteriores
-ao backfill não recebem link automaticamente.
+`Lead` guarda intenção declarada, origem e estado comercial. Lead ativo
+equivalente é reutilizado por uma chave de interesse protegida também por índice
+parcial. Conversão mantém o lead e aponta para o agendamento. Cancelamento
+posterior não apaga a conversão.
 
-Cancelamento libera e permite reutilizar o slot. Reagendamento preserva o
-original cancelado, cria novo registro pendente, mantém vínculo e eventos
-cruzados, revoga o token antigo e emite outro, tudo em transação `Serializable`
-com trava da linha original.
+`FollowUp` registra próxima ação manual, data, tipo, estado e atores. A API
+identifica vencidos, conclui ou cancela sem notificação automática.
+`RelationshipHistoryEvent` é separado de `AppointmentHistoryEvent` e append-only
+pela aplicação.
 
-O painel atual mostra somente ações válidas, motivo opcional, histórico e
-vínculos. A página pública permite visualizar, confirmar, cancelar e reagendar
-sem login. Não houve redesign, calendário novo, notificação, pagamento ou CRM.
+Studio Cut aceita `WAITLIST`/`CONTACT`; Lumière aceita
+`EVALUATION`/`CONTACT`. A captura pública exige contato, intenção, consentimento,
+payload válido, deduplicação, rate limit e honeypot. Navegação anônima não cria
+lead. Respostas públicas não expõem IDs, notas ou chave interna.
+
+O painel atual possui seção funcional de clientes, leads, follow-ups e histórico
+com loading, vazio, erro e sucesso. Não houve Kanban, métricas, gráficos,
+drag-and-drop, automação ou redesign.
 
 ## Baseline técnica
 
-`4aca9a9` — `feat: completa ciclo de vida do agendamento` — é a baseline A3B,
-com `validation_status: partial`. Código, migrations, backfill, suíte, builds e
-jornadas foram validados localmente. Permanece `partial`, não `validated`,
-porque produção não foi alterada nem exercitada.
+`b730b55` — `feat: cria fundação de clientes e leads` — é a baseline A4A, com
+`validation_status: partial`. Código, migration/backfill, suíte, builds, banco e
+jornadas foram validados localmente. Permanece `partial`, não `validated`, porque
+produção não foi alterada nem exercitada.
 
 `ad95e6d` continua como último commit em `main` e como código publicado. A
 branch de preservação não foi integrada nem enviada ao remoto.
@@ -72,12 +79,12 @@ branch de preservação não foi integrada nem enviada ao remoto.
 ## git_snapshot
 
 ```text
-observed_at: 2026-07-20 (após commit de código A3B)
+observed_at: 2026-07-20 (após commit de código A4A)
 branch: preserve/agendafacil-local-2026-07-20
-head_at_observation: 4aca9a9
-technical_baseline: 4aca9a9
-main: ad95e6d (intacta, sem merge)
-origin_preservation_branch: inalterada
+head_at_observation: b730b55267cdadca801dfd7b019745885986d459
+technical_baseline: b730b55267cdadca801dfd7b019745885986d459
+main: ad95e6d7083f188860f1026cd15f15715050dea0 (intacta, sem merge)
+origin_preservation_branch: ecae405b071cd96122217c20ffc586233995a805 (inalterada)
 production: inalterada
 ```
 
@@ -89,63 +96,61 @@ baseline técnica.
 - 2 tenants;
 - 6 profissionais;
 - 35 intervalos profissionais;
-- 6 `ScheduleBlock`;
-- 2 `BlockedDate` legados preservados;
-- 4 agendamentos fictícios do seed;
-- 4 snapshots de histórico;
-- 0 tokens para registros antigos;
-- 0 dado temporário de QA;
-- 0 histórico órfão, token cross-tenant ou duplicidade ativa de início.
+- 6 `ScheduleBlock` e 2 `BlockedDate` legados;
+- 4 agendamentos fictícios e 4 `Client` vinculados;
+- 4 eventos de histórico de agendamento;
+- 8 eventos comerciais de seed;
+- 0 lead, follow-up, token ou admin temporário de QA;
+- 0 agendamento órfão, vínculo cross-tenant ou lead ativo duplicado.
 
 ## Validações confirmadas
 
-- 84/84 testes backend: auth 20, A3A 27, A3B 30 e tenant 7.
-- Criação gera histórico e token com hash; token bruto não persiste.
-- Token inválido, expirado, revogado e usado recebe resposta segura.
-- Confirmação idempotente; cancelamento pendente/confirmado e reuso real do
-  horário.
-- Reagendamento preserva original, vínculos e tokens, respeita duração e
-  bloqueios e limita concorrência a uma substituição.
-- Transições administrativas válidas/inválidas, conclusão, no-show e histórico
-  ordenado.
-- Token e admin não atravessam Studio Cut/Lumière; nenhuma resposta expõe
-  `tokenHash`; logs HTTP não contêm token bruto.
-- Studio Cut com serviço de 30 minutos e Lumière com serviço de 60 minutos:
-  criação pela interface, sucesso, gestão, confirmação, cancelamento,
-  reagendamento, histórico/no-show e erro de token.
-- 375, 768 e 1440 px sem overflow; labels básicos presentes e zero erro de
-  aplicação no console.
-- Prisma schema válido; 12 migrations locais sem drift; Prisma Client e Vite
-  build gerados sem erro.
+- 114/114 testes: auth 20, A3A 27, A3B 30, A4A 30 e tenant 7.
+- Criação e reuso de `Client`, mesmo telefone entre tenants e concorrência.
+- Vínculo obrigatório com `Appointment`, reagendamento e backfill sem órfão.
+- Lead sem agendamento, deduplicação ativa, perda, vínculo e conversão.
+- Follow-up criado, vencido, concluído e isolado por tenant.
+- Histórico append-only pela aplicação, ordenado e sem nota interna pública.
+- Studio Cut: encaixe, WAITLIST, follow-up, qualificação, agendamento, conversão
+  e sequência comercial.
+- Lumière: avaliação, EVALUATION, interesse não clínico, follow-up,
+  qualificação, agendamento, conversão e sequência comercial.
+- Admin e IDs não atravessam Studio Cut/Lumière; respostas públicas não expõem
+  identificadores internos desnecessários.
+- 375, 768 e 1440 px sem overflow; zero erro de aplicação ou HTTP inesperado.
+- Prisma válido; 13 migrations locais em dia; builds backend/frontend e sintaxe
+  concluídos; diff limpo e varredura de segredos sem achado.
 
 ## Validações não executadas
 
-- Qualquer health check, migration ou smoke em Render/produção.
+- Health check, migration ou smoke no Render/produção.
 - Deploy ou Preview na Vercel.
-- Entrega de link por WhatsApp, e-mail ou SMS.
-- Recuperação de link perdido.
+- Retenção, exportação ou exclusão de dados pessoais por solicitação.
+- Notificação por WhatsApp, e-mail ou SMS.
+- Operação com múltiplas instâncias ou volume acima de 100 registros por lista.
 
-## Riscos para A4
+## Riscos para A4B
 
-- Rollout de A0-A3B em produção ainda precisa de backup, janela e validação na
-  ordem das migrations.
-- Sem mensageria e recuperação, o cliente precisa guardar o link recebido na
-  tela de sucesso.
-- O rate limit atual é em memória e não coordena múltiplas instâncias.
-- Retenção do histórico, privacidade e política de expiração/rotação ainda
-  precisam de decisão operacional.
-- Agendamentos anteriores continuam sem link público.
-- Conflitos por duração usam o motor serializável; não existe exclusion
-  constraint de intervalo para agendamentos no banco.
+- O rate limit é em memória e não coordena múltiplas instâncias.
+- Listas administrativas ainda não possuem paginação por cursor.
+- Notas usam um campo acumulado limitado; volume maior pode exigir entidade
+  própria.
+- Follow-up público depende de admin ativo para receber atribuição.
+- A deduplicação de interesse é textual e não une descrições semanticamente
+  equivalentes.
+- Retenção definitiva, exportação e exclusão ainda precisam de decisão antes do
+  deploy público.
+- O rollout de A0-A4A fora do Docker local continua não validado.
 
 ## Divergências documentais
 
-`README.md` ainda descreve partes do modelo antigo de rotas e status. O estado
-vigente desta branch está em `docs/a3a-agenda-profissional.md`,
-`docs/a3b-ciclo-agendamento.md` e neste arquivo.
+`README.md` ainda descreve partes do modelo antigo. O estado vigente desta
+branch está em `docs/a3a-agenda-profissional.md`,
+`docs/a3b-ciclo-agendamento.md`, `docs/a4a-relacionamento.md` e neste arquivo.
 
 ## Próxima ação registrada
 
-Definir e autorizar explicitamente a fase A4 antes de qualquer implementação.
-A A3B não autoriza CRM, `Lead`, `Client`, notificações, pagamento, recuperação
-de link, deploy, merge ou push.
+Definir e autorizar explicitamente A4B: operação diária simples para filas de
+leads/follow-ups, responsável, paginação/busca e UX própria de lista de espera e
+avaliação. A4A não autoriza Kanban avançado, métricas, automação, notificação,
+pagamento, dados clínicos, deploy, merge ou push.
