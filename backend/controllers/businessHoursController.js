@@ -54,7 +54,9 @@ function normalizeDays(payload) {
     if (!isValidTimeFormat(openTime) || !isValidTimeFormat(closeTime)) {
       throw createHttpError(400, "Horário inválido — use o formato HH:MM");
     }
-    if (timeToMinutes(openTime) >= timeToMinutes(closeTime)) {
+    // Dia fechado não gera slot, então a ordem dos horários é irrelevante — e
+    // exigi-la impediria salvar a semana inteira por causa de um 00:00–00:00.
+    if (isOpen && timeToMinutes(openTime) >= timeToMinutes(closeTime)) {
       throw createHttpError(400, "O horário de abertura deve ser menor que o de fechamento");
     }
     return { dayOfWeek, isOpen, openTime, closeTime };

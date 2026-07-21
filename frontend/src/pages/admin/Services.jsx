@@ -229,7 +229,7 @@ export default function Services({ vertical, onNavigate, onSessionExpired, onCat
         </section>
       )}
 
-      {state === "loading" && !data && <PanelLoading rows={4} label="Carregando serviços…" />}
+      {state === "loading" && !data && <PanelLoading rows={4} label={`Carregando ${vertical.servicePlural.toLowerCase()}…`} />}
       {state === "error" && <PanelError onRetry={reload}>{error}</PanelError>}
 
       {data && (items.length === 0 ? (
@@ -276,7 +276,7 @@ export default function Services({ vertical, onNavigate, onSessionExpired, onCat
                     type="button"
                     onClick={() => action.run(
                       (confirm) => api.setAdminServiceActive(service.id, !service.active, confirm),
-                      service.active ? "Serviço inativado." : "Serviço reativado."
+                      `${vertical.serviceNoun} ${service.active ? "inativado" : "reativado"}.`
                     )}
                   >
                     {service.active ? "Inativar" : "Reativar"}

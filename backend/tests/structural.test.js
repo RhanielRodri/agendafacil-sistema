@@ -387,6 +387,59 @@ test("A5B 10. horário geral inválido é recusado", async () => {
   assert.equal(badFormat.status, 400);
 });
 
+test("A5B 39. semana com dia fechado 00:00-00:00 é salva sem exigir ordem de horários", async () => {
+  const week = [0, 1, 2, 3, 4, 5, 6].map((dayOfWeek) => (dayOfWeek === 0
+    ? { dayOfWeek, isOpen: false, openTime: "00:00", closeTime: "00:00" }
+    : { dayOfWeek, isOpen: true, openTime: "08:00", closeTime: "20:00" }));
+
+  const saved = await api("/admin/business-hours", { method: "PUT", cookie: studioCookie, body: { days: week } });
+  const sunday = saved.data.days.find((day) => day.dayOfWeek === 0);
+
+  // O dia fechado nunca vira slot, mesmo com horários iguais gravados.
+  const sundayIso = [0, 1, 2, 3, 4, 5, 6]
+    .map((offset) => shiftIso(offset))
+    .find((iso) => new Date(`${iso}T00:00:00.000Z`).getUTCDay() === 0);
+  const slots = await api(
+    `/available-slots?date=${sundayIso}&professionalId=${fx.studioPro.id}&serviceId=${fx.studioService.id}&demoId=${STUDIO}`
+  );
+
+  assert.equal(saved.status, 200);
+  assert.equal(sunday.isOpen, false);
+  assert.equal(sunday.openTime, "00:00");
+  assert.equal(sunday.closeTime, "00:00");
+  assert.equal(saved.data.days.filter((day) => day.isOpen).length, 6);
+  assert.equal(slots.status, 200);
+  assert.deepEqual(slots.data, []);
+});
+
+test("A5B 40. dia aberto inválido continua recusado e não grava nada", async () => {
+  const before = await prisma.businessHours.findMany({ where: { tenantId: STUDIO }, orderBy: { dayOfWeek: "asc" } });
+
+  const equal = await api("/admin/business-hours", {
+    method: "PUT",
+    cookie: studioCookie,
+    body: { days: [{ dayOfWeek: 4, isOpen: true, openTime: "10:00", closeTime: "10:00" }] }
+  });
+  const mixed = await api("/admin/business-hours", {
+    method: "PUT",
+    cookie: studioCookie,
+    body: {
+      days: [
+        { dayOfWeek: 5, isOpen: false, openTime: "00:00", closeTime: "00:00" },
+        { dayOfWeek: 4, isOpen: true, openTime: "19:00", closeTime: "09:00" }
+      ]
+    }
+  });
+  const after = await prisma.businessHours.findMany({ where: { tenantId: STUDIO }, orderBy: { dayOfWeek: "asc" } });
+
+  assert.equal(equal.status, 400);
+  assert.equal(mixed.status, 400);
+  assert.deepEqual(
+    after.map((day) => `${day.dayOfWeek}|${day.isOpen}|${day.openTime}|${day.closeTime}`),
+    before.map((day) => `${day.dayOfWeek}|${day.isOpen}|${day.openTime}|${day.closeTime}`)
+  );
+});
+
 test("A5B 11. agenda individual aceita múltiplos intervalos e recusa sobreposição", async () => {
   await prisma.professionalSchedule.deleteMany({ where: { professionalId: fx.studioPro.id, dayOfWeek: 3 } });
 

@@ -71,7 +71,7 @@ export default function Professionals({ vertical, services, onNavigate, onSessio
   async function saveLinks() {
     const ok = await action.run(
       () => api.setProfessionalServices(linking.id, linking.serviceIds),
-      "Serviços associados atualizados."
+      `${vertical.servicePlural} associados atualizados.`
     );
     if (ok) setLinking(null);
   }
@@ -199,8 +199,8 @@ export default function Professionals({ vertical, services, onNavigate, onSessio
       {linking && (
         <section className="panel-block">
           <div className="panel-block-head">
-            <h2>Serviços de {linking.name}</h2>
-            <p>Só serviços deste negócio aparecem aqui</p>
+            <h2>{vertical.servicePlural} de {linking.name}</h2>
+            <p>Só {vertical.servicePlural.toLowerCase()} deste negócio aparecem aqui</p>
           </div>
           <div className="panel-checklist">
             {services.length === 0 && <p>Nenhum serviço cadastrado ainda.</p>}
@@ -255,7 +255,10 @@ export default function Professionals({ vertical, services, onNavigate, onSessio
                   <span>{professional.specialty || "Sem especialidade registrada"}</span>
                 </div>
                 <div className="panel-row-cell">
-                  <strong>{professional.serviceNames.length} serviço(s)</strong>
+                  <strong>
+                    {professional.serviceNames.length}{" "}
+                    {(professional.serviceNames.length === 1 ? vertical.serviceNoun : vertical.servicePlural).toLowerCase()}
+                  </strong>
                   <span>{professional.serviceNames.slice(0, 3).join(", ") || "Nenhum associado"}</span>
                 </div>
                 <div className="panel-row-cell">
@@ -278,7 +281,7 @@ export default function Professionals({ vertical, services, onNavigate, onSessio
                     type="button"
                     onClick={() => setLinking({ id: professional.id, name: professional.name, serviceIds: [...professional.serviceIds] })}
                   >
-                    Serviços
+                    {vertical.servicePlural}
                   </button>
                   <button
                     className="panel-btn"
@@ -335,7 +338,7 @@ export default function Professionals({ vertical, services, onNavigate, onSessio
                 <div><span>Agendamentos no histórico</span><strong>{dependencies.totalAppointments}</strong></div>
                 <div><span>Janelas de agenda</span><strong>{dependencies.schedules}</strong></div>
                 <div><span>Bloqueios</span><strong>{dependencies.blocks}</strong></div>
-                <div><span>Serviços associados</span><strong>{dependencies.linkedServices}</strong></div>
+                <div><span>{vertical.servicePlural} associados</span><strong>{dependencies.linkedServices}</strong></div>
                 <div><span>Leads ativos</span><strong>{dependencies.activeLeads}</strong></div>
               </div>
               <div className="panel-form-actions">

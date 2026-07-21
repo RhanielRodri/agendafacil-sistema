@@ -14,15 +14,15 @@ technical_baseline:
     - "A5B: autoridade exclusiva em req.auth.tenantId e ID de outro tenant respondendo 404"
     - "A5B: contrato CONFLICT_REQUIRES_CONFIRMATION com prévia que não grava e confirmação que recalcula o impacto no banco"
     - "A5B: nenhum agendamento é cancelado ou movido por alteração estrutural"
-    - "A5B: 207/207 testes backend, sendo 169 preservados e 38 novos"
+    - "A5B: 209/209 testes backend, sendo 169 preservados e 40 novos"
     - "A5B: booking público preservado nos dois tenants, sem overflow em 360, 768 e 1280 px e console limpo"
+    - "A5B: painel autenticado percorrido nas duas verticais, seis módulos cada, com dados temporários criados e removidos"
   not_validated:
-    - "painel autenticado A5B exercitado no navegador — bloqueado por exigir digitação de senha"
     - "API, banco ou painel em produção"
     - "aplicação das migrations fora do PostgreSQL Docker local"
     - "uso operacional com múltiplas instâncias ou alto volume"
   evidence:
-    - "node:test: 207/207 verdes contra o agendafacil_dev local"
+    - "node:test: 209/209 verdes contra o agendafacil_dev local"
     - "prisma migrate deploy aplicou 20260721120000_structural_management; 15 migrations em dia"
     - "migrate diff pós-aplicação: somente as 3 linhas do drift legado A3A"
     - "Vite build: 66 módulos e três entradas geradas"
@@ -99,9 +99,30 @@ a baseline técnica.
 - nenhuma migration antiga foi editada;
 - nenhum banco remoto recebeu migration.
 
+## Smoke autenticado
+
+Os dois painéis foram percorridos logados, em sessões sequenciais: o cookie
+`admin_session` é host-only em `localhost`, path `/`, HttpOnly e SameSite Lax no
+ambiente local, então existe **uma sessão por perfil de navegador** e o segundo
+login substitui o primeiro. Isso é da arquitetura, não defeito: as duas verticais
+compartilham origem e o tenant nunca vem da URL. Abrir o painel da outra vertical
+com a sessão errada mostra "Painel incorreto", sem vazar dado.
+
+Percorridos nas duas verticais: serviços/procedimentos, profissionais,
+disponibilidade, bloqueios, indicadores e configurações — seis módulos cada, em
+1280, 768 e 360 px, com `scrollWidth === clientWidth` em todos, console sem erro
+e rede só com 200/204. Dados temporários `SMOKE-A5B` criados e removidos ao final;
+o seed foi reexecutado e as duas demos voltaram ao estado original.
+
+Conflito validado em tela nas duas verticais: prévia lista os agendamentos,
+cancelar não grava nada, confirmar aplica e informa o impacto recalculado. No
+Studio Cut a corrida foi provada com uma reserva pública criada **entre** a
+prévia e a confirmação: a prévia mostrou 1 e a confirmação reportou 2, com os
+dois agendamentos intactos em data, hora e status.
+
 ## Validações confirmadas
 
-- 207/207 testes: 169 preservados e 38 A5B.
+- 209/209 testes: 169 preservados e 40 A5B.
 - Prévia de conflito não grava nada — horário e agendamento permanecem como estavam.
 - Impacto recalculado muda quando um agendamento entra entre prévia e confirmação.
 - Confirmação aplica a mudança, devolve o impacto recalculado e preserva status,
@@ -119,11 +140,19 @@ a baseline técnica.
   serviço inativo ausente, preço ausente exibido como "Sob consulta".
 - 360, 768 e 1280 px sem overflow horizontal e console sem erro.
 
+## Correções vindas do smoke
+
+- `normalizeDays` exigia `openTime < closeTime` mesmo em dia fechado. Como o seed
+  grava domingo — e, na Lumière, também segunda — em `00:00–00:00`, qualquer
+  salvamento de horário retornava 400 e o módulo ficava inutilizável. A ordem
+  passou a ser exigida só quando `isOpen === true`; o formato `HH:MM` continua
+  obrigatório sempre. Casos 39 e 40 cobrem dia fechado aceito, dia fechado sem
+  gerar slot, dia aberto inválido recusado e ausência de gravação parcial.
+- Quatro rótulos do painel ignoravam o vocabulário da vertical e diziam "Serviço"
+  na Lumière. Passaram a usar `vertical.serviceNoun` / `servicePlural`.
+
 ## Validações não executadas
 
-- Painel autenticado no navegador: bloqueado porque o acesso exige digitar senha,
-  ação que o assistente não executa. Os módulos foram validados por suíte de
-  testes contra a API real, não por jornada de tela.
 - Health check, migration ou smoke no Render/produção.
 - Deploy ou Preview na Vercel.
 - Receita, pagamento, notificação, automação ou relatório comercial.
@@ -158,8 +187,15 @@ está em `docs/a3a-agenda-profissional.md`, `docs/a3b-ciclo-agendamento.md`,
 `docs/a4a-relacionamento.md`, `docs/a4b-operacao-pipeline.md`,
 `docs/a5a-painel-operacional.md`, `docs/a5b-gestao-estrutural.md` e neste arquivo.
 
+## Melhoria registrada para a próxima fase
+
+A navegação do painel chegou a onze módulos numa lista única. Não foi alterado
+agora, de propósito: é assunto da fase de shell administrativo profissional, com
+agrupamento ou hierarquia, não um remendo no meio da A5B.
+
 ## Próxima ação registrada
 
-Percorrer o painel autenticado no navegador com o usuário logado, cobrindo os
-seis módulos novos, e só então definir e autorizar explicitamente a A6. A5B não
-autoriza redesign público, relatório comercial, deploy, merge ou push.
+A5B está fechada e validada localmente. Definir e autorizar explicitamente a A6.
+A5B não autoriza redesign público, relatório comercial, deploy, merge ou push.
+O rollout remoto continua bloqueado pelo drift legado da A3A, que precisa de uma
+fase própria de reconciliação antes de qualquer migration fora do Docker local.
