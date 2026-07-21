@@ -20,7 +20,7 @@ import { getFirstAvailability, listAvailableSlots } from "../controllers/availab
 import { listBusinessHours } from "../controllers/businessHoursController.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { resolveTenant } from "../middleware/tenant.js";
-import { login, logout, me } from "../controllers/authController.js";
+import { listAdminUsers, login, logout, me } from "../controllers/authController.js";
 import {
   createProfessionalSchedule,
   deleteProfessionalSchedule,
@@ -43,12 +43,16 @@ import {
   updateClient
 } from "../controllers/clientController.js";
 import {
+  addLeadNote,
+  assignLeadOwner,
   convertLead,
   createLead,
   getLead,
   linkLeadAppointment,
   listLeads,
   loseLead,
+  updateLeadPriority,
+  updateLeadQualification,
   updateLeadStatus
 } from "../controllers/leadController.js";
 import {
@@ -167,6 +171,7 @@ router.post(
 );
 router.delete("/admin/session", logout);
 router.get("/admin/me", requireAuth, me);
+router.get("/admin/users", requireAuth, listAdminUsers);
 
 // ─── Rotas administrativas (tenant derivado da sessão) ────────────────────────
 router.get("/appointments", requireAuth, listAppointments);
@@ -215,6 +220,10 @@ router.get("/admin/leads", requireAuth, listLeads);
 router.post("/admin/leads", requireAuth, createLead);
 router.get("/admin/leads/:id", requireAuth, getLead);
 router.patch("/admin/leads/:id/status", requireAuth, updateLeadStatus);
+router.patch("/admin/leads/:id/priority", requireAuth, updateLeadPriority);
+router.patch("/admin/leads/:id/owner", requireAuth, assignLeadOwner);
+router.patch("/admin/leads/:id/qualification", requireAuth, updateLeadQualification);
+router.post("/admin/leads/:id/notes", requireAuth, addLeadNote);
 router.post("/admin/leads/:id/lost", requireAuth, loseLead);
 router.post("/admin/leads/:id/convert", requireAuth, convertLead);
 router.post("/admin/leads/:id/appointment", requireAuth, linkLeadAppointment);

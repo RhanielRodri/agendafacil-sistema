@@ -21,6 +21,7 @@ function initialForm() {
     phone: "",
     email: "",
     serviceId: "",
+    urgency: tenant.slug === "studio-cut" ? "FLEXIBLE" : "",
     interestSummary: "",
     createFollowUp: true,
     consent: false,
@@ -40,7 +41,8 @@ export default function LeadCapture({ services }) {
     try {
       const response = await api.captureLead({
         ...form,
-        serviceId: form.serviceId ? Number(form.serviceId) : null
+        serviceId: form.serviceId ? Number(form.serviceId) : null,
+        ...(tenant.slug === "studio-cut" ? { urgency: form.urgency } : {})
       });
       setState("success");
       setMessage(response.message);
@@ -92,6 +94,16 @@ export default function LeadCapture({ services }) {
             {services.map((service) => <option key={service.id} value={service.id}>{service.name}</option>)}
           </select>
         </label>
+        {tenant.slug === "studio-cut" && form.source === "WAITLIST" && (
+          <label>
+            Quando precisa?
+            <select value={form.urgency} onChange={(event) => setForm({ ...form, urgency: event.target.value })}>
+              <option value="TODAY">Hoje</option>
+              <option value="THIS_WEEK">Nesta semana</option>
+              <option value="FLEXIBLE">Tenho flexibilidade</option>
+            </select>
+          </label>
+        )}
         <label className="relationship-capture-wide">
           Como podemos ajudar?
           <textarea value={form.interestSummary} onChange={(event) => setForm({ ...form, interestSummary: event.target.value })} maxLength={500} rows={3} required />

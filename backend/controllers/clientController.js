@@ -3,6 +3,9 @@ import {
   appendRelationshipEvent,
   normalizeEmail,
   normalizePhone,
+  paginationResult,
+  parsePagination,
+  sanitizeCommercialText,
   sanitizeText
 } from "../services/relationshipService.js";
 import { createHttpError, sanitizeId } from "./utils.js";
@@ -13,23 +16,40 @@ const clientSummaryInclude = {
 
 export async function listClients(req, res, next) {
   try {
+    const { page, limit, skip } = parsePagination(req.query);
     const search = sanitizeText(req.query.search, 120);
-    const clients = await prisma.client.findMany({
-      where: {
-        tenantId: req.auth.tenantId,
-        ...(search ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { phone: { contains: search } },
-            { email: { contains: search, mode: "insensitive" } }
-          ]
-        } : {})
-      },
-      include: clientSummaryInclude,
-      orderBy: [{ lastContactAt: "desc" }, { id: "desc" }],
-      take: 100
-    });
-    res.json(clients);
+    const createdFrom = req.query.createdFrom ? new Date(req.query.createdFrom) : null;
+    const createdTo = req.query.createdTo ? new Date(req.query.createdTo) : null;
+    if ((createdFrom && Number.isNaN(createdFrom.getTime())) || (createdTo && Number.isNaN(createdTo.getTime()))) {
+      throw createHttpError(400, "Período inválido");
+    }
+    if (createdTo && /^\d{4}-\d{2}-\d{2}$/.test(req.query.createdTo)) createdTo.setUTCHours(23, 59, 59, 999);
+    const where = {
+      tenantId: req.auth.tenantId,
+      ...(search ? {
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { phone: { contains: search } },
+          { email: { contains: search, mode: "insensitive" } }
+        ]
+      } : {}),
+      ...((createdFrom || createdTo) ? { createdAt: { ...(createdFrom ? { gte: createdFrom } : {}), ...(createdTo ? { lte: createdTo } : {}) } } : {})
+    };
+    const [total, clients] = await Promise.all([
+      prisma.client.count({ where }),
+      prisma.client.findMany({
+        where,
+        include: clientSummaryInclude,
+        orderBy: [{ lastContactAt: "desc" }, { id: "desc" }],
+        skip,
+        take: limit
+      })
+    ]);
+    if (req.query.page === undefined && req.query.limit === undefined) {
+      res.json(clients);
+      return;
+    }
+    res.json(paginationResult(clients, total, page, limit));
   } catch (error) {
     next(error);
   }
@@ -120,26 +140,30 @@ export async function updateClient(req, res, next) {
 export async function addClientNote(req, res, next) {
   try {
     const id = sanitizeId(req.params.id);
-    const note = sanitizeText(req.body?.note, 500);
+    const note = sanitizeCommercialText(req.body?.note, 500);
     if (!id) throw createHttpError(400, "ID inválido");
     if (!note) throw createHttpError(400, "Nota inválida");
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const leadId = req.body?.leadId ? sanitizeId(req.body.leadId) : null;
+    if (req.body?.leadId && !leadId) throw createHttpError(400, "leadId inválido");
+    const event = await prisma.$transaction(async (tx) => {
       const client = await tx.client.findFirst({ where: { id, tenantId: req.auth.tenantId } });
       if (!client) throw createHttpError(404, "Cliente não encontrado");
-      const notes = [client.notes, note].filter(Boolean).join("\n");
-      if (notes.length > 2000) throw createHttpError(400, "Limite de notas do cliente atingido");
-      const saved = await tx.client.update({ where: { id }, data: { notes } });
-      await appendRelationshipEvent(tx, {
+      if (leadId) {
+        const lead = await tx.lead.findFirst({ where: { id: leadId, clientId: id, tenantId: req.auth.tenantId } });
+        if (!lead) throw createHttpError(404, "Lead não encontrado");
+      }
+      return appendRelationshipEvent(tx, {
         tenantId: req.auth.tenantId,
         clientId: id,
+        leadId,
         type: "NOTE_ADDED",
         actorType: "ADMIN",
-        actorId: req.auth.userId
+        actorId: req.auth.userId,
+        metadata: { content: note }
       });
-      return saved;
     });
-    res.json(updated);
+    res.status(201).json(event);
   } catch (error) {
     next(error);
   }

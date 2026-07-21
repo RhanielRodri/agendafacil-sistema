@@ -79,3 +79,16 @@ export async function me(req, res, next) {
     next(error);
   }
 }
+
+export async function listAdminUsers(req, res, next) {
+  try {
+    const users = await prisma.adminUser.findMany({
+      where: { tenantId: req.auth.tenantId },
+      select: { id: true, name: true, email: true, active: true },
+      orderBy: [{ active: "desc" }, { name: "asc" }, { id: "asc" }]
+    });
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+}

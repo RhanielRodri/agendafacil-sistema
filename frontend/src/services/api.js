@@ -110,6 +110,7 @@ export const api = {
     });
   },
   adminMe: () => request("/admin/me"),
+  getAdminUsers: () => request("/admin/users"),
   adminLogout: () => request("/admin/session", { method: "DELETE" }),
   getAppointments: () => request("/appointments"),
   getProfessionalSchedules: (professionalId) =>
@@ -146,31 +147,44 @@ export const api = {
       body: JSON.stringify({ status, reason })
     }),
   getAppointmentHistory: (id) => request(`/appointments/${id}/history`),
-  getClients: (search = "") => request(`/admin/clients${search ? `?search=${encodeURIComponent(search)}` : ""}`),
+  getClients: (filters = {}) => {
+    if (typeof filters === "string") filters = { search: filters };
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== "" && value !== false && value !== null && value !== undefined) params.set(key, String(value));
+    });
+    return request(`/admin/clients${params.size ? `?${params}` : ""}`);
+  },
   getClient: (id) => request(`/admin/clients/${id}`),
   updateClient: (id, payload) => request(`/admin/clients/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   addClientNote: (id, note) => request(`/admin/clients/${id}/notes`, { method: "POST", body: JSON.stringify({ note }) }),
   getClientHistory: (id) => request(`/admin/clients/${id}/history`),
-  getLeads: ({ status = "", source = "" } = {}) => {
+  getLeads: (filters = {}) => {
     const params = new URLSearchParams();
-    if (status) params.set("status", status);
-    if (source) params.set("source", source);
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== "" && value !== false && value !== null && value !== undefined) params.set(key, String(value));
+    });
     return request(`/admin/leads${params.size ? `?${params}` : ""}`);
   },
+  getLead: (id) => request(`/admin/leads/${id}`),
   createLead: (payload) => request("/admin/leads", { method: "POST", body: JSON.stringify(payload) }),
-  updateLeadStatus: (id, status) => request(`/admin/leads/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
-  loseLead: (id, reason) => request(`/admin/leads/${id}/lost`, { method: "POST", body: JSON.stringify({ reason }) }),
+  updateLeadStatus: (id, status, nextFollowUp) => request(`/admin/leads/${id}/status`, { method: "PATCH", body: JSON.stringify({ status, ...(nextFollowUp ? { nextFollowUp } : {}) }) }),
+  updateLeadPriority: (id, priority) => request(`/admin/leads/${id}/priority`, { method: "PATCH", body: JSON.stringify({ priority }) }),
+  assignLeadOwner: (id, ownerUserId) => request(`/admin/leads/${id}/owner`, { method: "PATCH", body: JSON.stringify({ ownerUserId }) }),
+  updateLeadQualification: (id, qualification) => request(`/admin/leads/${id}/qualification`, { method: "PATCH", body: JSON.stringify({ qualification }) }),
+  addLeadNote: (id, content) => request(`/admin/leads/${id}/notes`, { method: "POST", body: JSON.stringify({ content }) }),
+  loseLead: (id, lostReason, lostReasonNote = "") => request(`/admin/leads/${id}/lost`, { method: "POST", body: JSON.stringify({ lostReason, lostReasonNote }) }),
   linkLeadAppointment: (id, appointmentId) => request(`/admin/leads/${id}/appointment`, { method: "POST", body: JSON.stringify({ appointmentId }) }),
-  convertLead: (id, appointmentId) => request(`/admin/leads/${id}/convert`, { method: "POST", body: JSON.stringify({ appointmentId }) }),
-  getFollowUps: ({ from = "", to = "", overdue = false } = {}) => {
+  convertLead: (id, payload) => request(`/admin/leads/${id}/convert`, { method: "POST", body: JSON.stringify(typeof payload === "number" ? { appointmentId: payload } : payload) }),
+  getFollowUps: (filters = {}) => {
     const params = new URLSearchParams();
-    if (from) params.set("from", from);
-    if (to) params.set("to", to);
-    if (overdue) params.set("overdue", "true");
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== "" && value !== false && value !== null && value !== undefined) params.set(key, String(value));
+    });
     return request(`/admin/follow-ups${params.size ? `?${params}` : ""}`);
   },
   createFollowUp: (payload) => request("/admin/follow-ups", { method: "POST", body: JSON.stringify(payload) }),
-  completeFollowUp: (id) => request(`/admin/follow-ups/${id}/complete`, { method: "POST", body: JSON.stringify({}) }),
+  completeFollowUp: (id, nextFollowUp) => request(`/admin/follow-ups/${id}/complete`, { method: "POST", body: JSON.stringify(nextFollowUp ? { nextFollowUp } : {}) }),
   cancelFollowUp: (id) => request(`/admin/follow-ups/${id}/cancel`, { method: "POST", body: JSON.stringify({}) }),
   getExportUrl: () => `${API_URL}/appointments/export.csv`
 };

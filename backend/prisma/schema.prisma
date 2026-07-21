@@ -53,6 +53,12 @@ enum LeadSource {
   MANUAL
 }
 
+enum LeadPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
 enum FollowUpStatus {
   OPEN
   COMPLETED
@@ -74,8 +80,12 @@ enum RelationshipHistoryType {
   LEAD_STATUS_CHANGED
   LEAD_CONVERTED
   LEAD_LOST
+  LEAD_PRIORITY_CHANGED
+  LEAD_OWNER_CHANGED
+  LEAD_QUALIFICATION_UPDATED
   FOLLOW_UP_CREATED
   FOLLOW_UP_COMPLETED
+  FOLLOW_UP_CANCELLED
   APPOINTMENT_LINKED
   NOTE_ADDED
 }
@@ -122,8 +132,12 @@ model AdminUser {
   sessions           AdminSession[]
   createdFollowUps   FollowUp[]     @relation("FollowUpCreator")
   completedFollowUps FollowUp[]     @relation("FollowUpCompleter")
+  ownedFollowUps     FollowUp[]     @relation("FollowUpOwner")
+  ownedLeads         Lead[]         @relation("LeadOwner")
+  lostLeads          Lead[]         @relation("LeadLostBy")
 
   @@unique([tenantId, email])
+  @@unique([id, tenantId])
   @@index([tenantId, active])
 }
 
@@ -249,11 +263,18 @@ model Lead {
   clientId               Int
   source                 LeadSource
   status                 LeadStatus                 @default(NEW)
+  priority               LeadPriority               @default(NORMAL)
+  ownerUserId            Int?
   serviceId              Int?
   professionalId         Int?
   interestSummary        String?                    @db.VarChar(500)
+  qualification          Json?
+  qualificationVersion   Int?
   dedupeKey              String                     @db.Char(64)
   lostReason             String?                    @db.VarChar(300)
+  lostReasonNote         String?                    @db.VarChar(300)
+  lostAt                 DateTime?
+  lostByUserId           Int?
   convertedAt            DateTime?
   convertedAppointmentId Int?
   createdAt              DateTime                   @default(now())
@@ -262,6 +283,8 @@ model Lead {
   client                 Client                     @relation(fields: [clientId, tenantId], references: [id, tenantId])
   service                Service?                   @relation(fields: [serviceId, tenantId], references: [id, tenantId], onDelete: Restrict)
   professional           Professional?              @relation(fields: [professionalId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  owner                  AdminUser?                  @relation("LeadOwner", fields: [ownerUserId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  lostBy                 AdminUser?                  @relation("LeadLostBy", fields: [lostByUserId, tenantId], references: [id, tenantId], onDelete: Restrict)
   sourceAppointments     Appointment[]              @relation("AppointmentOriginLead")
   convertedAppointment   Appointment?               @relation("LeadConversion", fields: [convertedAppointmentId, tenantId], references: [id, tenantId], onDelete: Restrict)
   followUps              FollowUp[]
@@ -271,6 +294,8 @@ model Lead {
   @@unique([convertedAppointmentId, tenantId])
   @@index([tenantId, status, createdAt])
   @@index([tenantId, source, createdAt])
+  @@index([tenantId, priority, status, createdAt])
+  @@index([tenantId, ownerUserId, status, createdAt])
   @@index([tenantId, clientId, createdAt])
 }
 
@@ -286,6 +311,7 @@ model FollowUp {
   completedAt       DateTime?
   createdByUserId   Int
   completedByUserId Int?
+  ownerUserId       Int?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   tenant            Tenant         @relation(fields: [tenantId], references: [slug])
@@ -293,11 +319,13 @@ model FollowUp {
   lead              Lead?          @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Restrict)
   createdBy         AdminUser      @relation("FollowUpCreator", fields: [createdByUserId], references: [id])
   completedBy       AdminUser?     @relation("FollowUpCompleter", fields: [completedByUserId], references: [id])
+  owner             AdminUser?     @relation("FollowUpOwner", fields: [ownerUserId, tenantId], references: [id, tenantId], onDelete: Restrict)
 
   @@unique([id, tenantId])
   @@index([tenantId, status, dueAt])
   @@index([tenantId, clientId, createdAt])
   @@index([tenantId, leadId])
+  @@index([tenantId, ownerUserId, status, dueAt])
 }
 
 model RelationshipHistoryEvent {

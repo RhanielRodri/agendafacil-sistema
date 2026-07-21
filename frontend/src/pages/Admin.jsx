@@ -497,7 +497,7 @@ export default function Admin({ services, professionals }) {
           </article>
         </div>
 
-        <RelationshipPanel appointments={safeAppointments} />
+        <RelationshipPanel appointments={safeAppointments} services={safeServices} professionals={safeProfessionals} />
 
         <div className="admin-grid">
           <section className="panel">

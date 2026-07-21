@@ -43,6 +43,11 @@ export async function capturePublicLead(req, res, next) {
     const person = validatePerson(req.body);
     const interestSummary = sanitizeText(req.body?.interestSummary, 500);
     if (!interestSummary || interestSummary.length < 3) throw createHttpError(400, "Descreva brevemente seu interesse");
+    const urgency = req.body?.urgency || null;
+    if (urgency && tenantId !== "studio-cut") throw createHttpError(400, "Urgência não se aplica a esta vertical");
+    if (urgency && !["TODAY", "THIS_WEEK", "FLEXIBLE"].includes(urgency)) {
+      throw createHttpError(400, "Urgência inválida");
+    }
 
     const result = await runSerializable(prisma, async (tx) => {
       const refs = await validateLeadReferences(tx, tenantId, req.body);
@@ -58,6 +63,9 @@ export async function capturePublicLead(req, res, next) {
         source,
         ...refs,
         interestSummary,
+        priority: tenantId === "studio-cut" && urgency === "TODAY" ? "HIGH" : "NORMAL",
+        qualification: urgency ? { urgency, wantsImmediateOpening: source === "WAITLIST" } : null,
+        qualificationVersion: urgency ? 1 : null,
         actorType: "CUSTOMER"
       });
 
@@ -76,6 +84,7 @@ export async function capturePublicLead(req, res, next) {
               leadId: leadResult.lead.id,
               dueAt,
               type: followUpTypeBySource[source],
+              ownerUserId: null,
               createdByUserId: owner.id
             }
           });
