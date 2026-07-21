@@ -75,10 +75,14 @@ async function replaceSchedule(professionalId, intervals, tenantId = STUDIO) {
 
 before(async () => {
   await prisma.adminSession.deleteMany();
-  await prisma.adminUser.deleteMany();
   await prisma.appointmentAccessToken.deleteMany();
   await prisma.appointmentHistoryEvent.deleteMany();
+  await prisma.relationshipHistoryEvent.deleteMany();
+  await prisma.followUp.deleteMany();
   await prisma.appointment.deleteMany();
+  await prisma.lead.deleteMany();
+  await prisma.client.deleteMany();
+  await prisma.adminUser.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.professionalSchedule.deleteMany();
   await prisma.blockedDate.deleteMany();
@@ -123,6 +127,9 @@ before(async () => {
   fx.lumierePro = await prisma.professional.create({
     data: { tenantId: LUMIERE, name: "Profissional A3A Lumiere", specialty: "x", photo: "x" }
   });
+  fx.studioClient = await prisma.client.create({
+    data: { tenantId: STUDIO, name: "Cliente direto A3A", phone: "27999990001", normalizedPhone: "27999990001" }
+  });
 
   await prisma.businessHours.createMany({
     data: [
@@ -141,7 +148,10 @@ before(async () => {
 beforeEach(async () => {
   await prisma.appointmentAccessToken.deleteMany();
   await prisma.appointmentHistoryEvent.deleteMany();
+  await prisma.relationshipHistoryEvent.deleteMany();
+  await prisma.followUp.deleteMany();
   await prisma.appointment.deleteMany();
+  await prisma.lead.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.professionalSchedule.deleteMany();
   await prisma.blockedDate.deleteMany();
@@ -297,6 +307,7 @@ test("A3A 16. agendamento existente remove slots sobrepostos", async () => {
       tenantId: STUDIO,
       serviceId: fx.studio60.id,
       professionalId: fx.studioProA.id,
+      clientId: fx.studioClient.id,
       clientName: "Ocupado",
       clientPhone: "27999990001",
       date: appointmentDate,
@@ -357,6 +368,7 @@ test("A3A 20. operações de agenda preservam agendamento existente", async () =
       tenantId: STUDIO,
       serviceId: fx.studio30.id,
       professionalId: fx.studioProA.id,
+      clientId: fx.studioClient.id,
       clientName: "Preservado",
       clientPhone: "27999990002",
       date: appointmentDate,

@@ -1,0 +1,229 @@
+.relationship-capture {
+  max-width: 920px;
+}
+
+.relationship-capture-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: clamp(20px, 4vw, 36px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  background: var(--bg-light-surface);
+}
+
+.relationship-capture-form label,
+.relationship-followup-form {
+  display: grid;
+  gap: 7px;
+}
+
+.relationship-capture-form label {
+  color: var(--text-on-light-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.relationship-capture-form input,
+.relationship-capture-form select,
+.relationship-capture-form textarea,
+.relationship-followup-form input,
+.relationship-followup-form select,
+.relationship-convert select,
+.relationship-note-form input {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-light-surface);
+  color: var(--text-on-light);
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.relationship-capture-form textarea {
+  resize: vertical;
+}
+
+.relationship-capture-wide {
+  grid-column: 1 / -1;
+}
+
+.relationship-consent {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 10px !important;
+  text-transform: none !important;
+}
+
+.relationship-consent input {
+  width: 18px;
+  min-height: 18px;
+  flex: 0 0 auto;
+}
+
+.relationship-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.relationship-panel {
+  margin-bottom: 28px;
+}
+
+.relationship-panel-header,
+.relationship-actions,
+.relationship-convert,
+.relationship-note-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.relationship-panel-header {
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.relationship-panel-header h2 {
+  margin: 4px 0 0;
+}
+
+.relationship-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.relationship-admin-grid h3,
+.relationship-client-detail h3 {
+  margin: 0 0 12px;
+  color: var(--text-on-light);
+  font-size: 0.95rem;
+}
+
+.relationship-list {
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.relationship-list > button,
+.relationship-card {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-on-light);
+  text-align: left;
+}
+
+.relationship-list > button {
+  cursor: pointer;
+}
+
+.relationship-list span,
+.relationship-card p,
+.relationship-client-detail span,
+.relationship-history span {
+  margin: 0;
+  color: var(--text-on-light-muted);
+  font-size: 0.78rem;
+}
+
+.relationship-card button,
+.relationship-note-form button,
+.relationship-convert button {
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-on-light-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.relationship-convert {
+  align-items: stretch;
+}
+
+.relationship-convert select {
+  min-width: 0;
+}
+
+.relationship-overdue {
+  color: #a14242;
+  font-size: 0.72rem;
+}
+
+.relationship-followup-form {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+}
+
+.relationship-followup-form h4 {
+  margin: 0;
+}
+
+.relationship-client-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-light);
+}
+
+.relationship-internal-note {
+  white-space: pre-line;
+}
+
+.relationship-history {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.relationship-history li strong,
+.relationship-history li span {
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .relationship-admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .relationship-capture-form,
+  .relationship-client-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .relationship-capture-wide {
+    grid-column: auto;
+  }
+
+  .relationship-panel-header,
+  .relationship-convert,
+  .relationship-note-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

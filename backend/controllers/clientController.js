@@ -1,0 +1,162 @@
+import prisma from "../prismaClient.js";
+import {
+  appendRelationshipEvent,
+  normalizeEmail,
+  normalizePhone,
+  sanitizeText
+} from "../services/relationshipService.js";
+import { createHttpError, sanitizeId } from "./utils.js";
+
+const clientSummaryInclude = {
+  _count: { select: { appointments: true, leads: true, followUps: true } }
+};
+
+export async function listClients(req, res, next) {
+  try {
+    const search = sanitizeText(req.query.search, 120);
+    const clients = await prisma.client.findMany({
+      where: {
+        tenantId: req.auth.tenantId,
+        ...(search ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { phone: { contains: search } },
+            { email: { contains: search, mode: "insensitive" } }
+          ]
+        } : {})
+      },
+      include: clientSummaryInclude,
+      orderBy: [{ lastContactAt: "desc" }, { id: "desc" }],
+      take: 100
+    });
+    res.json(clients);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getClient(req, res, next) {
+  try {
+    const id = sanitizeId(req.params.id);
+    if (!id) throw createHttpError(400, "ID inválido");
+    const client = await prisma.client.findFirst({
+      where: { id, tenantId: req.auth.tenantId },
+      include: {
+        appointments: {
+          include: { service: true, professional: true },
+          orderBy: [{ date: "desc" }, { time: "desc" }],
+          take: 20
+        },
+        leads: {
+          include: { service: true, professional: true },
+          orderBy: { createdAt: "desc" },
+          take: 20
+        },
+        followUps: { orderBy: { dueAt: "desc" }, take: 20 }
+      }
+    });
+    if (!client) throw createHttpError(404, "Cliente não encontrado");
+    res.json({
+      ...client,
+      leads: client.leads.map(({ dedupeKey, ...lead }) => lead)
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateClient(req, res, next) {
+  try {
+    const id = sanitizeId(req.params.id);
+    if (!id) throw createHttpError(400, "ID inválido");
+    const current = await prisma.client.findFirst({ where: { id, tenantId: req.auth.tenantId } });
+    if (!current) throw createHttpError(404, "Cliente não encontrado");
+
+    const data = {};
+    const fields = [];
+    if (Object.hasOwn(req.body, "name")) {
+      const name = sanitizeText(req.body.name, 120);
+      if (!name || name.length < 2) throw createHttpError(400, "Nome inválido");
+      data.name = name;
+      fields.push("name");
+    }
+    if (Object.hasOwn(req.body, "phone")) {
+      const phone = sanitizeText(req.body.phone, 30);
+      const normalizedPhone = normalizePhone(phone);
+      const duplicate = await prisma.client.findFirst({
+        where: { tenantId: req.auth.tenantId, normalizedPhone, id: { not: id } }
+      });
+      if (duplicate) throw createHttpError(409, "Telefone já pertence a outro cliente");
+      data.phone = phone;
+      data.normalizedPhone = normalizedPhone;
+      fields.push("phone");
+    }
+    if (Object.hasOwn(req.body, "email")) {
+      const email = sanitizeText(req.body.email, 254);
+      data.email = email;
+      data.normalizedEmail = normalizeEmail(email);
+      fields.push("email");
+    }
+    if (!fields.length) throw createHttpError(400, "Nenhum campo válido para atualizar");
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const saved = await tx.client.update({ where: { id }, data });
+      await appendRelationshipEvent(tx, {
+        tenantId: req.auth.tenantId,
+        clientId: id,
+        type: "CLIENT_UPDATED",
+        actorType: "ADMIN",
+        actorId: req.auth.userId,
+        metadata: { fields: fields.join(",") }
+      });
+      return saved;
+    });
+    res.json(updated);
+  } catch (error) {
+    next(error?.code === "P2002" ? createHttpError(409, "Telefone já pertence a outro cliente") : error);
+  }
+}
+
+export async function addClientNote(req, res, next) {
+  try {
+    const id = sanitizeId(req.params.id);
+    const note = sanitizeText(req.body?.note, 500);
+    if (!id) throw createHttpError(400, "ID inválido");
+    if (!note) throw createHttpError(400, "Nota inválida");
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const client = await tx.client.findFirst({ where: { id, tenantId: req.auth.tenantId } });
+      if (!client) throw createHttpError(404, "Cliente não encontrado");
+      const notes = [client.notes, note].filter(Boolean).join("\n");
+      if (notes.length > 2000) throw createHttpError(400, "Limite de notas do cliente atingido");
+      const saved = await tx.client.update({ where: { id }, data: { notes } });
+      await appendRelationshipEvent(tx, {
+        tenantId: req.auth.tenantId,
+        clientId: id,
+        type: "NOTE_ADDED",
+        actorType: "ADMIN",
+        actorId: req.auth.userId
+      });
+      return saved;
+    });
+    res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function listClientHistory(req, res, next) {
+  try {
+    const id = sanitizeId(req.params.id);
+    if (!id) throw createHttpError(400, "ID inválido");
+    const client = await prisma.client.findFirst({ where: { id, tenantId: req.auth.tenantId }, select: { id: true } });
+    if (!client) throw createHttpError(404, "Cliente não encontrado");
+    const history = await prisma.relationshipHistoryEvent.findMany({
+      where: { tenantId: req.auth.tenantId, clientId: id },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }]
+    });
+    res.json(history);
+  } catch (error) {
+    next(error);
+  }
+}

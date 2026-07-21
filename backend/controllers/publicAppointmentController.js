@@ -14,6 +14,7 @@ import {
   resolveManageToken,
   revokeAppointmentTokens
 } from "../services/appointmentTokenService.js";
+import { appendRelationshipEvent } from "../services/relationshipService.js";
 import {
   createHttpError,
   isDateInPast,
@@ -190,6 +191,8 @@ export async function reschedulePublicAppointment(req, res, next) {
             tenantId,
             serviceId: original.serviceId,
             professionalId,
+            clientId: original.clientId,
+            leadId: original.leadId,
             clientName: original.clientName,
             clientPhone: original.clientPhone,
             clientEmail: original.clientEmail,
@@ -242,6 +245,15 @@ export async function reschedulePublicAppointment(req, res, next) {
           toStatus: "PENDING",
           metadata,
           actorType: "CUSTOMER"
+        });
+        await appendRelationshipEvent(tx, {
+          tenantId,
+          clientId: original.clientId,
+          leadId: original.leadId,
+          appointmentId: replacement.id,
+          type: "APPOINTMENT_LINKED",
+          actorType: "CUSTOMER",
+          metadata: { source: "RESCHEDULE", appointmentId: replacement.id }
         });
 
         const newRawToken = await createManageToken(tx, replacement);

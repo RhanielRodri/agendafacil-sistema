@@ -36,7 +36,13 @@ async function api(path, { method = "GET", body } = {}) {
 before(async () => {
   await prisma.appointmentAccessToken.deleteMany();
   await prisma.appointmentHistoryEvent.deleteMany();
+  await prisma.relationshipHistoryEvent.deleteMany();
+  await prisma.followUp.deleteMany();
+  await prisma.appointment.updateMany({ data: { leadId: null } });
+  await prisma.lead.updateMany({ data: { convertedAppointmentId: null } });
   await prisma.appointment.deleteMany();
+  await prisma.lead.deleteMany();
+  await prisma.client.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.professionalSchedule.deleteMany();
   await prisma.blockedDate.deleteMany();

@@ -91,7 +91,11 @@ function actionPath(action, tenantId = STUDIO) {
 before(async () => {
   await prisma.appointmentAccessToken.deleteMany();
   await prisma.appointmentHistoryEvent.deleteMany();
+  await prisma.relationshipHistoryEvent.deleteMany();
+  await prisma.followUp.deleteMany();
   await prisma.appointment.deleteMany();
+  await prisma.lead.deleteMany();
+  await prisma.client.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.professionalSchedule.deleteMany();
   await prisma.blockedDate.deleteMany();
@@ -159,7 +163,11 @@ beforeEach(async () => {
   clearRateLimitStore();
   await prisma.appointmentAccessToken.deleteMany();
   await prisma.appointmentHistoryEvent.deleteMany();
+  await prisma.relationshipHistoryEvent.deleteMany();
+  await prisma.followUp.deleteMany();
   await prisma.appointment.deleteMany();
+  await prisma.lead.deleteMany();
+  await prisma.client.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.blockedDate.deleteMany();
   await prisma.professionalSchedule.deleteMany();

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import BookingFlow from "./BookingFlow.jsx";
 import StateMessage from "../components/StateMessage.jsx";
+import LeadCapture from "../components/LeadCapture.jsx";
 import { formatCurrency } from "../utils/format.js";
 import tenant from "../config/tenant.js";
 
@@ -294,12 +295,13 @@ export default function Home({ services, professionals, loading, error, onSucces
         onSuccess={onSuccess}
         onRetry={onRetry}
       />
-    )
+    ),
+    contact: <LeadCapture key="contact" services={services} />
   };
 
   const order = tenant.slug === "lumiere"
-    ? ["hero", "details", "space", "services", "process", "professionals", "booking"]
-    : ["hero", "services", "professionals", "details", "booking", "process", "space"];
+    ? ["hero", "details", "space", "services", "process", "professionals", "contact", "booking"]
+    : ["hero", "services", "professionals", "details", "booking", "contact", "process", "space"];
 
   return (
     <main className={`business-site ${tenant.slug}-site`}>

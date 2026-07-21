@@ -17,7 +17,13 @@ async function main() {
 
   await prisma.appointmentAccessToken.deleteMany();
   await prisma.appointmentHistoryEvent.deleteMany();
+  await prisma.relationshipHistoryEvent.deleteMany();
+  await prisma.followUp.deleteMany();
+  await prisma.appointment.updateMany({ data: { leadId: null } });
+  await prisma.lead.updateMany({ data: { convertedAppointmentId: null } });
   await prisma.appointment.deleteMany();
+  await prisma.lead.deleteMany();
+  await prisma.client.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.professionalSchedule.deleteMany();
   await prisma.blockedDate.deleteMany();
@@ -252,12 +258,27 @@ async function main() {
   lumierePartial.setDate(today.getDate() + 17);
   const lumierePartialIso = lumierePartial.toISOString().slice(0, 10);
 
+  await prisma.client.createMany({
+    data: [
+      { tenantId: STUDIO_CUT, name: "Marcos Silva", phone: "(27) 99999-1111", normalizedPhone: "27999991111", email: "marcos@email.com", normalizedEmail: "marcos@email.com" },
+      { tenantId: STUDIO_CUT, name: "Pedro Lima", phone: "(27) 99999-2222", normalizedPhone: "27999992222", email: "pedro@email.com", normalizedEmail: "pedro@email.com" },
+      { tenantId: STUDIO_CUT, name: "André Souza", phone: "(27) 99999-3333", normalizedPhone: "27999993333", email: "andre@email.com", normalizedEmail: "andre@email.com" },
+      { tenantId: LUMIERE, name: "Juliana Prado", phone: "(27) 98888-4444", normalizedPhone: "27988884444", email: "juliana@email.com", normalizedEmail: "juliana@email.com" }
+    ]
+  });
+  const seededClients = await prisma.client.findMany();
+  const clientByPhone = Object.fromEntries(seededClients.map((client) => [
+    `${client.tenantId}:${client.normalizedPhone}`,
+    client
+  ]));
+
   await prisma.appointment.createMany({
     data: [
       {
         tenantId: STUDIO_CUT,
         serviceId: services[0].id,
         professionalId: professionals[0].id,
+        clientId: clientByPhone[`${STUDIO_CUT}:27999991111`].id,
         clientName: "Marcos Silva",
         clientPhone: "(27) 99999-1111",
         clientEmail: "marcos@email.com",
@@ -269,6 +290,7 @@ async function main() {
         tenantId: STUDIO_CUT,
         serviceId: services[2].id,
         professionalId: professionals[1].id,
+        clientId: clientByPhone[`${STUDIO_CUT}:27999992222`].id,
         clientName: "Pedro Lima",
         clientPhone: "(27) 99999-2222",
         clientEmail: "pedro@email.com",
@@ -280,6 +302,7 @@ async function main() {
         tenantId: STUDIO_CUT,
         serviceId: services[1].id,
         professionalId: professionals[2].id,
+        clientId: clientByPhone[`${STUDIO_CUT}:27999993333`].id,
         clientName: "André Souza",
         clientPhone: "(27) 99999-3333",
         clientEmail: "andre@email.com",
@@ -291,6 +314,7 @@ async function main() {
         tenantId: LUMIERE,
         serviceId: lumiereServices[0].id,
         professionalId: lumiereProfessionals[0].id,
+        clientId: clientByPhone[`${LUMIERE}:27988884444`].id,
         clientName: "Juliana Prado",
         clientPhone: "(27) 98888-4444",
         clientEmail: "juliana@email.com",
@@ -311,6 +335,25 @@ async function main() {
       metadata: { source: "SEED" },
       actorType: "SYSTEM"
     }))
+  });
+  await prisma.relationshipHistoryEvent.createMany({
+    data: [
+      ...seededClients.map((client) => ({
+        tenantId: client.tenantId,
+        clientId: client.id,
+        type: "CLIENT_CREATED",
+        actorType: "SYSTEM",
+        metadata: { source: "SEED" }
+      })),
+      ...seededAppointments.map((appointment) => ({
+        tenantId: appointment.tenantId,
+        clientId: appointment.clientId,
+        appointmentId: appointment.id,
+        type: "APPOINTMENT_LINKED",
+        actorType: "SYSTEM",
+        metadata: { source: "SEED" }
+      }))
+    ]
   });
 
   await prisma.scheduleBlock.createMany({

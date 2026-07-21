@@ -8,6 +8,12 @@ import {
 } from "../services/appointmentLifecycleService.js";
 import { createManageToken, managementPath } from "../services/appointmentTokenService.js";
 import {
+  appendRelationshipEvent,
+  findOrCreateClient,
+  runSerializable,
+  validatePerson
+} from "../services/relationshipService.js";
+import {
   createHttpError,
   isDateInPast,
   isValidDateInput,
@@ -17,25 +23,11 @@ import {
 const appointmentInclude = {
   service: true,
   professional: true,
+  client: { select: { id: true, name: true, phone: true, email: true } },
+  originLead: { select: { id: true, source: true, status: true, interestSummary: true } },
   rescheduledFrom: { select: { id: true, date: true, time: true } },
   rescheduledTo: { select: { id: true, date: true, time: true } }
 };
-
-function validateClientFields(payload) {
-  const name = typeof payload.clientName === "string" ? payload.clientName.trim() : "";
-  const phone = typeof payload.clientPhone === "string" ? payload.clientPhone.trim() : "";
-
-  if (name.length < 2) {
-    throw createHttpError(400, "Nome do cliente inválido (mínimo 2 caracteres)");
-  }
-  if (phone.length < 7) throw createHttpError(400, "Telefone do cliente inválido");
-
-  const email = typeof payload.clientEmail === "string" ? payload.clientEmail.trim() : null;
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw createHttpError(400, "E-mail inválido");
-  }
-  return { name, phone, email: email || null };
-}
 
 async function validateAppointmentPayload(tx, tenantId, payload) {
   const required = ["serviceId", "professionalId", "clientName", "clientPhone", "date", "time"];
@@ -53,7 +45,7 @@ async function validateAppointmentPayload(tx, tenantId, payload) {
     throw createHttpError(400, "Não é possível agendar para uma data passada");
   }
 
-  const clientFields = validateClientFields(payload);
+  const clientFields = validatePerson(payload);
   const availability = await assertAvailableSlot({
     client: tx,
     tenantId,
@@ -106,14 +98,21 @@ export async function createAppointment(req, res, next) {
     const tenantId = req.tenant.slug;
     let result;
     try {
-      result = await prisma.$transaction(async (tx) => {
+      result = await runSerializable(prisma, async (tx) => {
         const { appointmentDate, serviceId, professionalId, clientFields } =
           await validateAppointmentPayload(tx, tenantId, req.body);
+        const clientResult = await findOrCreateClient(tx, {
+          tenantId,
+          person: clientFields,
+          actorType: "CUSTOMER",
+          source: "BOOKING"
+        });
         const appointment = await tx.appointment.create({
           data: {
             tenantId,
             serviceId,
             professionalId,
+            clientId: clientResult.client.id,
             clientName: clientFields.name,
             clientPhone: clientFields.phone,
             clientEmail: clientFields.email,
@@ -130,9 +129,17 @@ export async function createAppointment(req, res, next) {
           toStatus: "PENDING",
           actorType: "CUSTOMER"
         });
+        await appendRelationshipEvent(tx, {
+          tenantId,
+          clientId: clientResult.client.id,
+          appointmentId: appointment.id,
+          type: "APPOINTMENT_LINKED",
+          actorType: "CUSTOMER",
+          metadata: { source: "BOOKING", appointmentId: appointment.id }
+        });
         const rawToken = await createManageToken(tx, appointment);
         return { appointment, rawToken };
-      }, { isolationLevel: "Serializable" });
+      });
     } catch (txError) {
       throw mapTransactionError(txError);
     }

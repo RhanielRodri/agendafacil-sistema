@@ -4,6 +4,7 @@ import AppointmentCard from "../components/AppointmentCard.jsx";
 import StateMessage from "../components/StateMessage.jsx";
 import { formatCurrency, todayInputValue } from "../utils/format.js";
 import tenant from "../config/tenant.js";
+import RelationshipPanel from "../components/RelationshipPanel.jsx";
 
 const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
@@ -495,6 +496,8 @@ export default function Admin({ services, professionals }) {
             <strong className="metric-value neutral">{metrics.weekTotal}</strong>
           </article>
         </div>
+
+        <RelationshipPanel appointments={safeAppointments} />
 
         <div className="admin-grid">
           <section className="panel">

@@ -36,13 +36,63 @@ enum AppointmentTokenPurpose {
   MANAGE
 }
 
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum LeadSource {
+  BOOKING
+  WAITLIST
+  EVALUATION
+  CONTACT
+  ABANDONED_BOOKING
+  MANUAL
+}
+
+enum FollowUpStatus {
+  OPEN
+  COMPLETED
+  CANCELLED
+}
+
+enum FollowUpType {
+  CONTACT
+  RETURN
+  EVALUATION
+  WAITLIST
+  OTHER
+}
+
+enum RelationshipHistoryType {
+  CLIENT_CREATED
+  CLIENT_UPDATED
+  LEAD_CREATED
+  LEAD_STATUS_CHANGED
+  LEAD_CONVERTED
+  LEAD_LOST
+  FOLLOW_UP_CREATED
+  FOLLOW_UP_COMPLETED
+  APPOINTMENT_LINKED
+  NOTE_ADDED
+}
+
+enum RelationshipActorType {
+  ADMIN
+  CUSTOMER
+  SYSTEM
+}
+
 model Tenant {
-  id                    Int                    @id @default(autoincrement())
-  slug                  String                 @unique
+  id                    Int                        @id @default(autoincrement())
+  slug                  String                     @unique
   name                  String
-  active                Boolean                @default(true)
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
+  active                Boolean                    @default(true)
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
   services              Service[]
   professionals         Professional[]
   appointments          Appointment[]
@@ -53,19 +103,25 @@ model Tenant {
   adminUsers            AdminUser[]
   appointmentHistory    AppointmentHistoryEvent[]
   appointmentTokens     AppointmentAccessToken[]
+  clients               Client[]
+  leads                 Lead[]
+  followUps             FollowUp[]
+  relationshipHistory   RelationshipHistoryEvent[]
 }
 
 model AdminUser {
-  id           Int            @id @default(autoincrement())
-  tenantId     String
-  email        String
-  name         String
-  passwordHash String
-  active       Boolean        @default(true)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  tenant       Tenant         @relation(fields: [tenantId], references: [slug])
-  sessions     AdminSession[]
+  id                 Int            @id @default(autoincrement())
+  tenantId           String
+  email              String
+  name               String
+  passwordHash       String
+  active             Boolean        @default(true)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  tenant             Tenant         @relation(fields: [tenantId], references: [slug])
+  sessions           AdminSession[]
+  createdFollowUps   FollowUp[]     @relation("FollowUpCreator")
+  completedFollowUps FollowUp[]     @relation("FollowUpCompleter")
 
   @@unique([tenantId, email])
   @@index([tenantId, active])
@@ -97,8 +153,10 @@ model Service {
   updatedAt    DateTime      @updatedAt
   tenant       Tenant        @relation(fields: [tenantId], references: [slug])
   appointments Appointment[]
+  leads        Lead[]
 
   @@unique([tenantId, name])
+  @@unique([id, tenantId])
   @@index([tenantId, active])
 }
 
@@ -113,6 +171,7 @@ model Professional {
   updatedAt      DateTime               @updatedAt
   tenant         Tenant                 @relation(fields: [tenantId], references: [slug])
   appointments   Appointment[]
+  leads          Lead[]
   schedules      ProfessionalSchedule[]
   scheduleBlocks ScheduleBlock[]
 
@@ -122,33 +181,144 @@ model Professional {
 }
 
 model Appointment {
-  id                  Int                       @id @default(autoincrement())
-  tenantId            String                    @map("demoId")
+  id                  Int                        @id @default(autoincrement())
+  tenantId            String                     @map("demoId")
   serviceId           Int
   professionalId      Int
+  clientId            Int
+  leadId              Int?
   clientName          String
   clientPhone         String
   clientEmail         String?
-  date                DateTime                  @db.Date
+  date                DateTime                   @db.Date
   time                String
-  status              AppointmentStatus         @default(PENDING)
-  cancellationReason  String?                   @db.VarChar(300)
-  rescheduledFromId   Int?                      @unique
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
-  tenant              Tenant                    @relation(fields: [tenantId], references: [slug])
-  service             Service                   @relation(fields: [serviceId], references: [id])
-  professional        Professional              @relation(fields: [professionalId], references: [id])
-  rescheduledFrom     Appointment?              @relation("AppointmentReschedule", fields: [rescheduledFromId], references: [id])
-  rescheduledTo       Appointment?              @relation("AppointmentReschedule")
+  status              AppointmentStatus          @default(PENDING)
+  cancellationReason  String?                    @db.VarChar(300)
+  rescheduledFromId   Int?                       @unique
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+  tenant              Tenant                     @relation(fields: [tenantId], references: [slug])
+  service             Service                    @relation(fields: [serviceId], references: [id])
+  professional        Professional               @relation(fields: [professionalId], references: [id])
+  client              Client                     @relation(fields: [clientId, tenantId], references: [id, tenantId])
+  originLead          Lead?                      @relation("AppointmentOriginLead", fields: [leadId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  convertedLead       Lead?                      @relation("LeadConversion")
+  rescheduledFrom     Appointment?               @relation("AppointmentReschedule", fields: [rescheduledFromId], references: [id])
+  rescheduledTo       Appointment?               @relation("AppointmentReschedule")
   historyEvents       AppointmentHistoryEvent[]
   accessTokens        AppointmentAccessToken[]
+  relationshipHistory RelationshipHistoryEvent[]
 
   @@unique([id, tenantId])
   @@index([tenantId, date])
   @@index([date, professionalId])
   @@index([professionalId, date, time])
   @@index([tenantId, status, date])
+  @@index([tenantId, clientId, date])
+  @@index([tenantId, leadId])
+}
+
+model Client {
+  id                  Int                        @id @default(autoincrement())
+  tenantId            String
+  name                String                     @db.VarChar(120)
+  phone               String                     @db.VarChar(30)
+  normalizedPhone     String                     @db.VarChar(15)
+  email               String?                    @db.VarChar(254)
+  normalizedEmail     String?                    @db.VarChar(254)
+  notes               String?                    @db.VarChar(2000)
+  firstContactAt      DateTime                   @default(now())
+  lastContactAt       DateTime                   @default(now())
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+  tenant              Tenant                     @relation(fields: [tenantId], references: [slug])
+  appointments        Appointment[]
+  leads               Lead[]
+  followUps           FollowUp[]
+  relationshipHistory RelationshipHistoryEvent[]
+
+  @@unique([tenantId, normalizedPhone])
+  @@unique([id, tenantId])
+  @@index([tenantId, normalizedEmail])
+  @@index([tenantId, lastContactAt])
+}
+
+model Lead {
+  id                     Int                        @id @default(autoincrement())
+  tenantId               String
+  clientId               Int
+  source                 LeadSource
+  status                 LeadStatus                 @default(NEW)
+  serviceId              Int?
+  professionalId         Int?
+  interestSummary        String?                    @db.VarChar(500)
+  dedupeKey              String                     @db.Char(64)
+  lostReason             String?                    @db.VarChar(300)
+  convertedAt            DateTime?
+  convertedAppointmentId Int?
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+  tenant                 Tenant                     @relation(fields: [tenantId], references: [slug])
+  client                 Client                     @relation(fields: [clientId, tenantId], references: [id, tenantId])
+  service                Service?                   @relation(fields: [serviceId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  professional           Professional?              @relation(fields: [professionalId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  sourceAppointments     Appointment[]              @relation("AppointmentOriginLead")
+  convertedAppointment   Appointment?               @relation("LeadConversion", fields: [convertedAppointmentId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  followUps              FollowUp[]
+  relationshipHistory    RelationshipHistoryEvent[]
+
+  @@unique([id, tenantId])
+  @@unique([convertedAppointmentId, tenantId])
+  @@index([tenantId, status, createdAt])
+  @@index([tenantId, source, createdAt])
+  @@index([tenantId, clientId, createdAt])
+}
+
+model FollowUp {
+  id                Int            @id @default(autoincrement())
+  tenantId          String
+  clientId          Int
+  leadId            Int?
+  dueAt             DateTime
+  type              FollowUpType
+  status            FollowUpStatus @default(OPEN)
+  note              String?        @db.VarChar(500)
+  completedAt       DateTime?
+  createdByUserId   Int
+  completedByUserId Int?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  tenant            Tenant         @relation(fields: [tenantId], references: [slug])
+  client            Client         @relation(fields: [clientId, tenantId], references: [id, tenantId])
+  lead              Lead?          @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  createdBy         AdminUser      @relation("FollowUpCreator", fields: [createdByUserId], references: [id])
+  completedBy       AdminUser?     @relation("FollowUpCompleter", fields: [completedByUserId], references: [id])
+
+  @@unique([id, tenantId])
+  @@index([tenantId, status, dueAt])
+  @@index([tenantId, clientId, createdAt])
+  @@index([tenantId, leadId])
+}
+
+model RelationshipHistoryEvent {
+  id            Int                     @id @default(autoincrement())
+  tenantId      String
+  clientId      Int
+  leadId        Int?
+  appointmentId Int?
+  type          RelationshipHistoryType
+  actorType     RelationshipActorType
+  actorId       Int?
+  metadata      Json?
+  createdAt     DateTime                @default(now())
+  tenant        Tenant                  @relation(fields: [tenantId], references: [slug])
+  client        Client                  @relation(fields: [clientId, tenantId], references: [id, tenantId])
+  lead          Lead?                   @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  appointment   Appointment?            @relation(fields: [appointmentId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  @@index([tenantId, clientId, createdAt, id])
+  @@index([tenantId, leadId, createdAt])
+  @@index([tenantId, appointmentId])
 }
 
 model AppointmentHistoryEvent {

@@ -54,10 +54,14 @@ async function api(path, { method = "GET", cookie, body } = {}) {
 
 before(async () => {
   await prisma.adminSession.deleteMany();
-  await prisma.adminUser.deleteMany();
   await prisma.appointmentAccessToken.deleteMany();
   await prisma.appointmentHistoryEvent.deleteMany();
+  await prisma.relationshipHistoryEvent.deleteMany();
+  await prisma.followUp.deleteMany();
   await prisma.appointment.deleteMany();
+  await prisma.lead.deleteMany();
+  await prisma.client.deleteMany();
+  await prisma.adminUser.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.professionalSchedule.deleteMany();
   await prisma.blockedDate.deleteMany();
@@ -79,9 +83,11 @@ before(async () => {
   const studioPro = await prisma.professional.create({ data: { tenantId: STUDIO, name: "Pro S", specialty: "x", photo: "x" } });
   const lumiereSvc = await prisma.service.create({ data: { tenantId: LUMIERE, name: "Limpeza auth", description: "x", duration: 60, price: 150 } });
   const lumierePro = await prisma.professional.create({ data: { tenantId: LUMIERE, name: "Pro L", specialty: "x", photo: "x" } });
+  const studioClient = await prisma.client.create({ data: { tenantId: STUDIO, name: "Cliente Studio", phone: "27900000001", normalizedPhone: "27900000001" } });
+  const lumiereClient = await prisma.client.create({ data: { tenantId: LUMIERE, name: "Cliente Lumiere", phone: "27900000002", normalizedPhone: "27900000002" } });
 
-  fx.studioAppt = await prisma.appointment.create({ data: { tenantId: STUDIO, serviceId: studioSvc.id, professionalId: studioPro.id, clientName: "Cliente Studio", clientPhone: "27900000001", date: new Date("2026-09-02T00:00:00.000Z"), time: "10:00" } });
-  fx.lumiereAppt = await prisma.appointment.create({ data: { tenantId: LUMIERE, serviceId: lumiereSvc.id, professionalId: lumierePro.id, clientName: "Cliente Lumiere", clientPhone: "27900000002", date: new Date("2026-09-02T00:00:00.000Z"), time: "11:00" } });
+  fx.studioAppt = await prisma.appointment.create({ data: { tenantId: STUDIO, serviceId: studioSvc.id, professionalId: studioPro.id, clientId: studioClient.id, clientName: "Cliente Studio", clientPhone: "27900000001", date: new Date("2026-09-02T00:00:00.000Z"), time: "10:00" } });
+  fx.lumiereAppt = await prisma.appointment.create({ data: { tenantId: LUMIERE, serviceId: lumiereSvc.id, professionalId: lumierePro.id, clientId: lumiereClient.id, clientName: "Cliente Lumiere", clientPhone: "27900000002", date: new Date("2026-09-02T00:00:00.000Z"), time: "11:00" } });
 
   server = app.listen(0);
   await new Promise((r) => server.once("listening", r));

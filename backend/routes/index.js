@@ -34,6 +34,29 @@ import {
   updateScheduleBlock
 } from "../controllers/scheduleBlockController.js";
 import prisma from "../prismaClient.js";
+import { capturePublicLead } from "../controllers/publicLeadController.js";
+import {
+  addClientNote,
+  getClient,
+  listClientHistory,
+  listClients,
+  updateClient
+} from "../controllers/clientController.js";
+import {
+  convertLead,
+  createLead,
+  getLead,
+  linkLeadAppointment,
+  listLeads,
+  loseLead,
+  updateLeadStatus
+} from "../controllers/leadController.js";
+import {
+  cancelFollowUp,
+  completeFollowUp,
+  createFollowUp,
+  listFollowUps
+} from "../controllers/followUpController.js";
 
 const router = Router();
 
@@ -97,6 +120,12 @@ router.post(
   rateLimit({ windowMs: 60_000, max: 10, message: "Muitas tentativas. Aguarde um momento." }),
   resolveTenant("body"),
   createAppointment
+);
+router.post(
+  "/public/leads",
+  rateLimit({ windowMs: 60_000, max: 5, message: "Muitas tentativas. Aguarde um momento." }),
+  resolveTenant("body"),
+  capturePublicLead
 );
 router.get(
   "/public/appointment",
@@ -177,6 +206,22 @@ router.get("/appointments/export.csv", requireAuth, async (req, res, next) => {
 router.get("/appointments/:id", requireAuth, getAppointment);
 router.patch("/appointments/:id/status", requireAuth, updateAppointmentStatus);
 router.get("/appointments/:id/history", requireAuth, listAppointmentHistory);
+router.get("/admin/clients", requireAuth, listClients);
+router.get("/admin/clients/:id", requireAuth, getClient);
+router.patch("/admin/clients/:id", requireAuth, updateClient);
+router.post("/admin/clients/:id/notes", requireAuth, addClientNote);
+router.get("/admin/clients/:id/history", requireAuth, listClientHistory);
+router.get("/admin/leads", requireAuth, listLeads);
+router.post("/admin/leads", requireAuth, createLead);
+router.get("/admin/leads/:id", requireAuth, getLead);
+router.patch("/admin/leads/:id/status", requireAuth, updateLeadStatus);
+router.post("/admin/leads/:id/lost", requireAuth, loseLead);
+router.post("/admin/leads/:id/convert", requireAuth, convertLead);
+router.post("/admin/leads/:id/appointment", requireAuth, linkLeadAppointment);
+router.get("/admin/follow-ups", requireAuth, listFollowUps);
+router.post("/admin/follow-ups", requireAuth, createFollowUp);
+router.post("/admin/follow-ups/:id/complete", requireAuth, completeFollowUp);
+router.post("/admin/follow-ups/:id/cancel", requireAuth, cancelFollowUp);
 router.get("/admin/professional-schedules", requireAuth, listProfessionalSchedules);
 router.post("/admin/professional-schedules", requireAuth, createProfessionalSchedule);
 router.patch("/admin/professional-schedules/:id", requireAuth, updateProfessionalSchedule);

@@ -61,6 +61,14 @@ export const api = {
       body: JSON.stringify({ ...payload, demoId })
     });
   },
+  captureLead: (payload) => {
+    const demoId = tenant?.slug;
+    if (!demoId) throw new Error("Experiência indisponível");
+    return request("/public/leads", {
+      method: "POST",
+      body: JSON.stringify({ ...payload, demoId })
+    });
+  },
   getManagedAppointment: (token) =>
     request(`/public/appointment?${getBusinessQuery()}`, {
       headers: { "X-Appointment-Token": token }
@@ -138,5 +146,31 @@ export const api = {
       body: JSON.stringify({ status, reason })
     }),
   getAppointmentHistory: (id) => request(`/appointments/${id}/history`),
+  getClients: (search = "") => request(`/admin/clients${search ? `?search=${encodeURIComponent(search)}` : ""}`),
+  getClient: (id) => request(`/admin/clients/${id}`),
+  updateClient: (id, payload) => request(`/admin/clients/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  addClientNote: (id, note) => request(`/admin/clients/${id}/notes`, { method: "POST", body: JSON.stringify({ note }) }),
+  getClientHistory: (id) => request(`/admin/clients/${id}/history`),
+  getLeads: ({ status = "", source = "" } = {}) => {
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (source) params.set("source", source);
+    return request(`/admin/leads${params.size ? `?${params}` : ""}`);
+  },
+  createLead: (payload) => request("/admin/leads", { method: "POST", body: JSON.stringify(payload) }),
+  updateLeadStatus: (id, status) => request(`/admin/leads/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+  loseLead: (id, reason) => request(`/admin/leads/${id}/lost`, { method: "POST", body: JSON.stringify({ reason }) }),
+  linkLeadAppointment: (id, appointmentId) => request(`/admin/leads/${id}/appointment`, { method: "POST", body: JSON.stringify({ appointmentId }) }),
+  convertLead: (id, appointmentId) => request(`/admin/leads/${id}/convert`, { method: "POST", body: JSON.stringify({ appointmentId }) }),
+  getFollowUps: ({ from = "", to = "", overdue = false } = {}) => {
+    const params = new URLSearchParams();
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    if (overdue) params.set("overdue", "true");
+    return request(`/admin/follow-ups${params.size ? `?${params}` : ""}`);
+  },
+  createFollowUp: (payload) => request("/admin/follow-ups", { method: "POST", body: JSON.stringify(payload) }),
+  completeFollowUp: (id) => request(`/admin/follow-ups/${id}/complete`, { method: "POST", body: JSON.stringify({}) }),
+  cancelFollowUp: (id) => request(`/admin/follow-ups/${id}/cancel`, { method: "POST", body: JSON.stringify({}) }),
   getExportUrl: () => `${API_URL}/appointments/export.csv`
 };
