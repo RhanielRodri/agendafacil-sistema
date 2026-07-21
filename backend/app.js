@@ -44,6 +44,9 @@ app.use((error, req, res, next) => {
     message: status === 500 ? "Erro interno do servidor" : error.message,
     ...(typeof error.code === "string" && error.code.startsWith("TOKEN_")
       ? { code: error.code }
+      : {}),
+    ...(status !== 500 && Array.isArray(error.conflicts)
+      ? { code: "CONFLICT_REQUIRES_CONFIRMATION", conflicts: error.conflicts }
       : {})
   });
 });

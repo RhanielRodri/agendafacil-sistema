@@ -37,7 +37,23 @@ async function loadAvailability(client, { tenantId, date, serviceId, professiona
   });
   if (!professional) throw createHttpError(404, "Profissional não encontrado ou inativo");
 
+  // Configurações operacionais só passam a valer quando o tenant realmente as
+  // define. Sem registro, a disponibilidade se comporta exatamente como antes.
+  const settings = await client.tenantSettings.findUnique({ where: { tenantId } });
+  if (settings && !settings.bookingEnabled) {
+    throw createHttpError(409, "Este negócio está com o agendamento on-line desativado");
+  }
+
   const appointmentDate = normalizeDate(date);
+  if (settings) {
+    const today = new Date();
+    const horizon = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+    horizon.setUTCDate(horizon.getUTCDate() + settings.maxFutureDays);
+    if (appointmentDate > horizon) {
+      throw createHttpError(400, `Agendamentos são aceitos com até ${settings.maxFutureDays} dias de antecedência`);
+    }
+  }
+
   const dayOfWeek = appointmentDate.getUTCDay();
   const [businessHours, schedules, legacyBlock, blocks, appointments] = await Promise.all([
     client.businessHours.findUnique({
@@ -86,8 +102,19 @@ async function loadAvailability(client, { tenantId, date, serviceId, professiona
     occupiedIntervals,
     professional,
     schedules,
-    service
+    service,
+    settings
   };
+}
+
+// Minutos a partir da meia-noite UTC do dia consultado antes dos quais o
+// agendamento já não respeita a antecedência mínima configurada.
+function earliestAllowedMinute(context) {
+  if (!context.settings?.minAdvanceMinutes) return null;
+  const limit = new Date(Date.now() + context.settings.minAdvanceMinutes * 60_000);
+  const dayStart = context.appointmentDate.getTime();
+  const diff = Math.ceil((limit.getTime() - dayStart) / 60_000);
+  return diff > 0 ? diff : null;
 }
 
 function buildSlots(context) {
@@ -95,13 +122,16 @@ function buildSlots(context) {
 
   const businessStart = timeToMinutes(context.businessHours.openTime);
   const businessEnd = timeToMinutes(context.businessHours.closeTime);
+  const step = context.settings?.slotDurationMinutes || 30;
+  const earliest = earliestAllowedMinute(context);
   const slots = new Set();
 
   for (const schedule of context.schedules) {
     const intervalStart = Math.max(businessStart, timeToMinutes(schedule.startTime));
     const intervalEnd = Math.min(businessEnd, timeToMinutes(schedule.endTime));
 
-    for (let start = intervalStart; start + context.service.duration <= intervalEnd; start += 30) {
+    for (let start = intervalStart; start + context.service.duration <= intervalEnd; start += step) {
+      if (earliest !== null && start < earliest) continue;
       const end = start + context.service.duration;
       const blocked = context.blockedIntervals.some((interval) =>
         intervalsOverlap(start, end, interval.start, interval.end)

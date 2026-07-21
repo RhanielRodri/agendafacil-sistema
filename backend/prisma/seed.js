@@ -25,6 +25,7 @@ async function main() {
   await prisma.appointment.deleteMany();
   await prisma.lead.deleteMany();
   await prisma.client.deleteMany();
+  await prisma.professionalService.deleteMany();
   await prisma.scheduleBlock.deleteMany();
   await prisma.professionalSchedule.deleteMany();
   await prisma.blockedDate.deleteMany();
@@ -186,6 +187,93 @@ async function main() {
       }
     })
   ]);
+
+  // A5B: ordem de exibição, um serviço inativo por vertical, avaliação prévia e
+  // associação profissional↔serviço. Tudo fictício e recriado a cada seed.
+  await Promise.all([
+    ...services.map((service, index) => prisma.service.update({ where: { id: service.id }, data: { displayOrder: index } })),
+    ...lumiereServices.map((service, index) => prisma.service.update({ where: { id: service.id }, data: { displayOrder: index } })),
+    ...professionals.map((professional, index) => prisma.professional.update({ where: { id: professional.id }, data: { displayOrder: index } })),
+    ...lumiereProfessionals.map((professional, index) => prisma.professional.update({ where: { id: professional.id }, data: { displayOrder: index } })),
+    prisma.service.update({ where: { id: lumiereServices[1].id }, data: { requiresEvaluation: true } })
+  ]);
+
+  await prisma.service.createMany({
+    data: [
+      {
+        tenantId: STUDIO_CUT,
+        name: "Pezinho",
+        description: "Acabamento rápido entre um corte e outro.",
+        duration: 15,
+        price: null,
+        active: false,
+        displayOrder: services.length
+      },
+      {
+        tenantId: LUMIERE,
+        name: "Peeling de diamante",
+        description: "Renovação superficial da pele, fora de agenda no momento.",
+        duration: 60,
+        price: null,
+        active: false,
+        displayOrder: lumiereServices.length
+      }
+    ]
+  });
+
+  await prisma.professionalService.createMany({
+    data: [
+      { tenantId: STUDIO_CUT, professionalId: professionals[0].id, serviceId: services[0].id },
+      { tenantId: STUDIO_CUT, professionalId: professionals[0].id, serviceId: services[2].id },
+      { tenantId: STUDIO_CUT, professionalId: professionals[0].id, serviceId: services[3].id },
+      { tenantId: STUDIO_CUT, professionalId: professionals[1].id, serviceId: services[1].id },
+      { tenantId: STUDIO_CUT, professionalId: professionals[1].id, serviceId: services[2].id },
+      { tenantId: STUDIO_CUT, professionalId: professionals[2].id, serviceId: services[0].id },
+      { tenantId: STUDIO_CUT, professionalId: professionals[2].id, serviceId: services[1].id },
+      { tenantId: LUMIERE, professionalId: lumiereProfessionals[0].id, serviceId: lumiereServices[0].id },
+      { tenantId: LUMIERE, professionalId: lumiereProfessionals[1].id, serviceId: lumiereServices[1].id },
+      { tenantId: LUMIERE, professionalId: lumiereProfessionals[2].id, serviceId: lumiereServices[2].id }
+    ]
+  });
+
+  const settingsSeeds = [
+    {
+      tenantId: STUDIO_CUT,
+      publicName: "Studio Cut",
+      publicPhone: "(27) 3200-0001",
+      publicWhatsapp: "(27) 99000-0001",
+      addressLine: "Rua da Demonstração, 100 — Vila Velha/ES",
+      timezone: "America/Sao_Paulo",
+      slotDurationMinutes: 30,
+      minAdvanceMinutes: 60,
+      maxFutureDays: 60,
+      cancellationPolicy: "Cancelamentos até 2 horas antes do horário marcado.",
+      confirmationMessage: "Chegue 5 minutos antes. Qualquer imprevisto, avise pelo WhatsApp.",
+      bookingEnabled: true
+    },
+    {
+      tenantId: LUMIERE,
+      publicName: "Lumière Estética",
+      publicPhone: "(27) 3200-0002",
+      publicWhatsapp: "(27) 99000-0002",
+      addressLine: "Avenida da Demonstração, 250 — Vitória/ES",
+      timezone: "America/Sao_Paulo",
+      slotDurationMinutes: 30,
+      minAdvanceMinutes: 180,
+      maxFutureDays: 90,
+      cancellationPolicy: "Reagendamentos com no mínimo 24 horas de antecedência.",
+      confirmationMessage: "Procedimentos com avaliação prévia passam por confirmação da equipe.",
+      bookingEnabled: true
+    }
+  ];
+  for (const settings of settingsSeeds) {
+    const { tenantId, ...values } = settings;
+    await prisma.tenantSettings.upsert({
+      where: { tenantId },
+      update: values,
+      create: { tenantId, ...values }
+    });
+  }
 
   // Horários independentes por tenant.
   await prisma.businessHours.createMany({

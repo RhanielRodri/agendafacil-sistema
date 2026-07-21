@@ -117,6 +117,8 @@ model Tenant {
   leads                 Lead[]
   followUps             FollowUp[]
   relationshipHistory   RelationshipHistoryEvent[]
+  professionalServices  ProfessionalService[]
+  settings              TenantSettings?
 }
 
 model AdminUser {
@@ -156,42 +158,83 @@ model AdminSession {
 }
 
 model Service {
-  id           Int           @id @default(autoincrement())
-  tenantId     String        @default("studio-cut") @map("demoId")
-  name         String
-  description  String
-  duration     Int
-  price        Decimal       @db.Decimal(10, 2)
-  active       Boolean       @default(true)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  tenant       Tenant        @relation(fields: [tenantId], references: [slug])
-  appointments Appointment[]
-  leads        Lead[]
+  id                 Int                   @id @default(autoincrement())
+  tenantId           String                @default("studio-cut") @map("demoId")
+  name               String
+  description        String
+  duration           Int
+  price              Decimal?              @db.Decimal(10, 2)
+  active             Boolean               @default(true)
+  displayOrder       Int                   @default(0)
+  requiresEvaluation Boolean               @default(false)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  tenant             Tenant                @relation(fields: [tenantId], references: [slug])
+  appointments       Appointment[]
+  leads              Lead[]
+  professionals      ProfessionalService[]
 
   @@unique([tenantId, name])
   @@unique([id, tenantId])
   @@index([tenantId, active])
+  @@index([tenantId, active, displayOrder, name])
 }
 
 model Professional {
-  id             Int                    @id @default(autoincrement())
-  tenantId       String                 @default("studio-cut") @map("demoId")
-  name           String
-  specialty      String
-  photo          String
-  active         Boolean                @default(true)
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
-  tenant         Tenant                 @relation(fields: [tenantId], references: [slug])
-  appointments   Appointment[]
-  leads          Lead[]
-  schedules      ProfessionalSchedule[]
-  scheduleBlocks ScheduleBlock[]
+  id              Int                    @id @default(autoincrement())
+  tenantId        String                 @default("studio-cut") @map("demoId")
+  name            String
+  specialty       String
+  photo           String
+  active          Boolean                @default(true)
+  displayOrder    Int                    @default(0)
+  internalContact String?                @db.VarChar(60)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  tenant          Tenant                 @relation(fields: [tenantId], references: [slug])
+  appointments    Appointment[]
+  leads           Lead[]
+  schedules       ProfessionalSchedule[]
+  scheduleBlocks  ScheduleBlock[]
+  services        ProfessionalService[]
 
   @@unique([tenantId, name])
   @@unique([id, tenantId])
   @@index([tenantId, active])
+  @@index([tenantId, active, displayOrder, name])
+}
+
+model ProfessionalService {
+  id             Int          @id @default(autoincrement())
+  tenantId       String
+  professionalId Int
+  serviceId      Int
+  createdAt      DateTime     @default(now())
+  tenant         Tenant       @relation(fields: [tenantId], references: [slug])
+  professional   Professional @relation(fields: [professionalId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  service        Service      @relation(fields: [serviceId, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  @@unique([tenantId, professionalId, serviceId])
+  @@index([tenantId, serviceId])
+}
+
+model TenantSettings {
+  id                  Int      @id @default(autoincrement())
+  tenantId            String   @unique
+  publicName          String?  @db.VarChar(120)
+  publicPhone         String?  @db.VarChar(30)
+  publicWhatsapp      String?  @db.VarChar(30)
+  addressLine         String?  @db.VarChar(160)
+  timezone            String   @default("America/Sao_Paulo") @db.VarChar(60)
+  slotDurationMinutes Int      @default(30)
+  minAdvanceMinutes   Int      @default(0)
+  maxFutureDays       Int      @default(90)
+  cancellationPolicy  String?  @db.VarChar(500)
+  confirmationMessage String?  @db.VarChar(300)
+  bookingEnabled      Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  tenant              Tenant   @relation(fields: [tenantId], references: [slug])
 }
 
 model Appointment {

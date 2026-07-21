@@ -1,7 +1,30 @@
 import { Router } from "express";
 import { createHash } from "node:crypto";
-import { listServices } from "../controllers/serviceController.js";
-import { listProfessionals } from "../controllers/professionalController.js";
+import {
+  createService,
+  getServiceDependencies,
+  listAdminServices,
+  listServices,
+  reorderServices,
+  setServiceActive,
+  updateService
+} from "../controllers/serviceController.js";
+import {
+  createProfessional,
+  getProfessionalDependencies,
+  listAdminProfessionals,
+  listProfessionals,
+  reorderProfessionals,
+  setProfessionalActive,
+  setProfessionalServices,
+  updateProfessional
+} from "../controllers/professionalController.js";
+import {
+  getPublicSettings,
+  getSettings,
+  updateSettings
+} from "../controllers/settingsController.js";
+import { getMetrics } from "../controllers/metricsController.js";
 import {
   createAppointment,
   getAppointment,
@@ -17,11 +40,16 @@ import {
   reschedulePublicAppointment
 } from "../controllers/publicAppointmentController.js";
 import { getFirstAvailability, listAvailableSlots } from "../controllers/availabilityController.js";
-import { listBusinessHours } from "../controllers/businessHoursController.js";
+import {
+  listAdminBusinessHours,
+  listBusinessHours,
+  updateBusinessHours
+} from "../controllers/businessHoursController.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { resolveTenant } from "../middleware/tenant.js";
 import { listAdminUsers, login, logout, me } from "../controllers/authController.js";
 import {
+  copyProfessionalSchedules,
   createProfessionalSchedule,
   deleteProfessionalSchedule,
   listProfessionalSchedules,
@@ -120,6 +148,7 @@ router.get("/professionals", resolveTenant("query"), listProfessionals);
 router.get("/available-slots", resolveTenant("query"), listAvailableSlots);
 router.get("/first-availability", resolveTenant("query"), getFirstAvailability);
 router.get("/business-hours", resolveTenant("query"), listBusinessHours);
+router.get("/settings", resolveTenant("query"), getPublicSettings);
 
 router.post(
   "/appointments",
@@ -236,6 +265,25 @@ router.post("/admin/follow-ups", requireAuth, createFollowUp);
 router.post("/admin/follow-ups/:id/complete", requireAuth, completeFollowUp);
 router.post("/admin/follow-ups/:id/cancel", requireAuth, cancelFollowUp);
 router.patch("/admin/follow-ups/:id/owner", requireAuth, assignFollowUpOwner);
+router.get("/admin/services", requireAuth, listAdminServices);
+router.post("/admin/services", requireAuth, createService);
+router.patch("/admin/services/order", requireAuth, reorderServices);
+router.get("/admin/services/:id/dependencies", requireAuth, getServiceDependencies);
+router.patch("/admin/services/:id/active", requireAuth, setServiceActive);
+router.patch("/admin/services/:id", requireAuth, updateService);
+router.get("/admin/professionals", requireAuth, listAdminProfessionals);
+router.post("/admin/professionals", requireAuth, createProfessional);
+router.patch("/admin/professionals/order", requireAuth, reorderProfessionals);
+router.get("/admin/professionals/:id/dependencies", requireAuth, getProfessionalDependencies);
+router.put("/admin/professionals/:id/services", requireAuth, setProfessionalServices);
+router.patch("/admin/professionals/:id/active", requireAuth, setProfessionalActive);
+router.patch("/admin/professionals/:id", requireAuth, updateProfessional);
+router.get("/admin/business-hours", requireAuth, listAdminBusinessHours);
+router.put("/admin/business-hours", requireAuth, updateBusinessHours);
+router.get("/admin/settings", requireAuth, getSettings);
+router.patch("/admin/settings", requireAuth, updateSettings);
+router.get("/admin/metrics", requireAuth, getMetrics);
+router.post("/admin/professional-schedules/copy", requireAuth, copyProfessionalSchedules);
 router.get("/admin/professional-schedules", requireAuth, listProfessionalSchedules);
 router.post("/admin/professional-schedules", requireAuth, createProfessionalSchedule);
 router.patch("/admin/professional-schedules/:id", requireAuth, updateProfessionalSchedule);

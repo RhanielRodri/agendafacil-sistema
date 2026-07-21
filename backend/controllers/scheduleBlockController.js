@@ -1,4 +1,5 @@
 import prisma from "../prismaClient.js";
+import { appointmentsInsideBlock, assertConfirmed, isoDay, shiftDays, todayUtc } from "../services/structuralService.js";
 import {
   createHttpError,
   isValidDateInput,
@@ -6,6 +7,21 @@ import {
   normalizeDate,
   sanitizeId
 } from "./utils.js";
+
+// Períodos nomeados evitam que o painel precise calcular datas para as visões
+// mais usadas — futuro e passado.
+function resolvePeriod({ from, to, scope }) {
+  if (from !== undefined || to !== undefined) {
+    if (!isValidDateInput(from) || !isValidDateInput(to) || from > to) {
+      throw createHttpError(400, "Período inválido");
+    }
+    return { from, to };
+  }
+  const today = todayUtc();
+  if (scope === "past") return { from: isoDay(shiftDays(today, -180)), to: isoDay(shiftDays(today, -1)) };
+  if (scope === "all") return { from: isoDay(shiftDays(today, -180)), to: isoDay(shiftDays(today, 180)) };
+  return { from: isoDay(today), to: isoDay(shiftDays(today, 180)) };
+}
 
 async function requireProfessional(tenantId, value) {
   const id = sanitizeId(value);
@@ -54,11 +70,8 @@ async function normalizeBlock(tenantId, payload, current = {}) {
 
 export async function listScheduleBlocks(req, res, next) {
   try {
-    const { from, to } = req.query;
-    if (!isValidDateInput(from) || !isValidDateInput(to) || from > to) {
-      throw createHttpError(400, "Período inválido");
-    }
-    const professionalId = req.query.professionalId === undefined
+    const { from, to } = resolvePeriod(req.query);
+    const professionalId = req.query.professionalId === undefined || req.query.professionalId === ""
       ? undefined
       : (await requireProfessional(req.auth.tenantId, req.query.professionalId)).id;
     const blocks = await prisma.scheduleBlock.findMany({
@@ -80,11 +93,13 @@ export async function createScheduleBlock(req, res, next) {
   try {
     const tenantId = req.auth.tenantId;
     const data = await normalizeBlock(tenantId, req.body);
+    const affected = await appointmentsInsideBlock(tenantId, data);
+    const appliedImpact = assertConfirmed(affected, req.body?.confirm, "O bloqueio cobre agendamentos futuros já marcados");
     const block = await prisma.scheduleBlock.create({
       data: { tenantId, ...data },
       include: { professional: { select: { id: true, name: true } } }
     });
-    res.status(201).json(block);
+    res.status(201).json({ ...block, appliedImpact });
   } catch (error) {
     next(error);
   }
@@ -98,12 +113,14 @@ export async function updateScheduleBlock(req, res, next) {
     const current = await prisma.scheduleBlock.findFirst({ where: { id, tenantId } });
     if (!current) throw createHttpError(404, "Bloqueio não encontrado");
     const data = await normalizeBlock(tenantId, req.body, current);
+    const affected = await appointmentsInsideBlock(tenantId, data, current.id);
+    const appliedImpact = assertConfirmed(affected, req.body?.confirm, "O bloqueio cobre agendamentos futuros já marcados");
     const block = await prisma.scheduleBlock.update({
       where: { id },
       data,
       include: { professional: { select: { id: true, name: true } } }
     });
-    res.json(block);
+    res.json({ ...block, appliedImpact });
   } catch (error) {
     next(error);
   }
