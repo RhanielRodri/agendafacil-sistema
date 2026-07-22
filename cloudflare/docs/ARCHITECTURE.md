@@ -151,7 +151,27 @@ Agendamentos afetados permanecem ativos e não são movidos automaticamente.
 
 ## Static Assets
 
-O Public Worker encaminha caminhos não API ao binding `ASSETS`. CF1A mantém somente a pasta e a configuração do binding; o frontend original não é copiado nem alterado. O Admin Worker não publica assets nesta fase.
+Os dois Workers rodam com `run_worker_first: true`: toda requisição passa pelo Worker, que resolve `/api/*` primeiro e só então encaminha ao binding `ASSETS`. Isso garante que nenhuma rota de API caia no fallback de SPA e permite decidir a política de cache no código (`shared/src/assets.ts`).
+
+- Public Worker: landing das duas verticais, booking e fallback de SPA público.
+- Admin Worker: painel das duas verticais e fallback de SPA administrativo.
+- Assets versionados pelo Vite (`/assets/<nome>-<hash>.<ext>`): `public, max-age=31536000, immutable`.
+- HTML público: `public, max-age=0, must-revalidate`, para que uma publicação nova não continue servindo bundle antigo.
+- Qualquer resposta do painel, HTML ou API: `no-store`, mais `X-Robots-Tag: noindex, nofollow`.
+
+## Frontend nos dois destinos
+
+A aplicação Vite é uma só. O destino é decidido no build, em `vite.config.js`, e não por arquivo `.env`:
+
+- `npm run build` (frontend): destino atual Vercel/Render, com as três entradas estáticas e o cliente Express.
+- `npm run build:cf:public`: entrada única em `cloudflare/public-worker/assets`, cliente do Public Worker.
+- `npm run build:cf:admin`: entrada única em `cloudflare/admin-worker/assets`, cliente do Admin Worker.
+
+`apiMode` e `surface` são constantes de build, então cada bundle carrega apenas o cliente da sua superfície: o público não contém rota administrativa nem asserção do Access, e o administrativo não contém rota pública, senha, `admin_session` ou `demoId`. `npm run check:bundles` (em `cloudflare/`) falha o build se algum desses limites for rompido.
+
+No painel não existe login: a identidade chega verificada pelo Access e o Worker só confirma a membership do slug pedido na rota. `401` vira “sessão expirada” com recarga que preserva o deep link; `403` e `404` viram “painel incorreto”, listando os painéis que a identidade pode abrir.
+
+Para exercitar o painel localmente sem Access definitivo existe `admin-worker/src/dev.ts`, usado apenas por `wrangler.admin.dev.jsonc`. Ele assina uma asserção efêmera para a identidade de smoke. O Worker publicado continua sendo `admin-worker/src/index.ts`, que não contém nenhuma dessas linhas.
 
 ## Configuração e segredos
 
@@ -161,5 +181,5 @@ Os arquivos versionados usam nomes e IDs locais sintéticos. Valores reais de `A
 
 - Nenhum Worker é publicado.
 - Nenhum D1 remoto é criado.
-- CF1B porta somente o ciclo público documentado em `PUBLIC_API.md`; captura de lead e rotas administrativas permanecem fora.
 - Nenhuma configuração de Render, Vercel ou produção é alterada.
+- Após CF1D a aplicação está completa e integrada localmente; o que falta é ato remoto: publicar os Workers, criar o D1 remoto, aplicar as migrations e configurar o Access definitivo.

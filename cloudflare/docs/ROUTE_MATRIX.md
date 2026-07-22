@@ -155,11 +155,29 @@ Login e logout locais foram removidos por decisão de arquitetura: identidade é
 
 Incompatibilidades conhecidas que permanecem: `A/appointments/export.csv` e os Static Assets seguem reservados para CF1D; `P/first-availability` e `P/leads` continuam não portados; conflitos estruturais respondem `409` com `code: "CONFLICT_REQUIRES_CONFIRMATION"` e a lista `conflicts`, como no backend atual — a coluna “Resposta esperada” desta matriz ainda diz `422` e está desatualizada em relação ao código.
 
+### Estado após CF1D
+
+A superfície local está fechada. Além do que CF1A–CF1C já cobriam:
+
+| Método | Caminho no Worker | Superfície | Autoridade de tenant | Observação |
+|---|---|---|---|---|
+| POST | `/api/tenants/:slug/leads` | pública | slug da rota | captura pública com dedupe, honeypot e limite de 5/min |
+| GET | `/api/admin/context` | administrativa | nenhuma (só identidade) | identidade do Access e memberships ativas; 401 sem asserção, 403 sem identidade |
+| GET | `/api/admin/tenants/:slug/appointments/export.csv` | administrativa | slug da rota | CSV do próprio tenant, `no-store` |
+
+`A/context` do painel passou a devolver também `memberships`, o que permite à mesma identidade operar as duas verticais e ao painel dizer com precisão quando o tenant não é dela.
+
+Static Assets: os dois Workers passaram a `run_worker_first: true` e servem os arquivos pelo binding `ASSETS` com `not_found_handling: single-page-application`. `/api/*` é resolvido antes de qualquer asset e nunca cai no fallback. Assets versionados recebem `public, max-age=31536000, immutable`; o HTML público recebe `public, max-age=0, must-revalidate`; tudo do painel recebe `no-store` e `X-Robots-Tag: noindex, nofollow`.
+
+Correção da matriz: a coluna “Resposta esperada” dizia `422` para conflito estrutural. O código sempre respondeu `409` com `code: "CONFLICT_REQUIRES_CONFIRMATION"` e a lista `conflicts`. Vale o código.
+
+Continua fora do escopo local: `P/first-availability`.
+
 ## Destino por fase
 
 - CF1A: somente `/api/live`, resolução segura de tenant, contexto público mínimo e contexto administrativo autorizado.
 - CF1B: rotas públicas e lifecycle público.
 - CF1C: identidade, agenda, relacionamento, pipeline, catálogo, horários, configuração e indicadores administrativos.
-- CF1D: CSV, Static Assets e adaptação final do frontend.
+- CF1D: captura pública de lead, CSV, contexto de identidade, Static Assets e adaptação final do frontend.
 
-Fora do que está listado como portado em CF1A, CF1B e CF1C, nenhuma linha desta matriz representa endpoint já implementado no Worker.
+Fora do que está listado como portado em CF1A a CF1D, nenhuma linha desta matriz representa endpoint já implementado no Worker.

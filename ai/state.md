@@ -1,9 +1,9 @@
 ---
 project: AgendaFácil
-updated_at: 2026-07-21
-review_at: 2026-07-24
+updated_at: 2026-07-22
+review_at: 2026-07-25
 status: active
-current_phase: CF1C_local_concluida
+current_phase: CF1D_local_concluida
 technical_baseline:
   commit: 194932c2f88110cc57d25fc1388c0db0cde5a682
   validation_status: partial
@@ -274,9 +274,27 @@ Validação local confirmada:
 - `git diff --check` limpo e árvore de trabalho limpa;
 - nenhuma migration D1 nova e nenhum artefato local versionado.
 
-Não validado nesta fase: a suíte do backend original não pôde ser executada porque o PostgreSQL local depende do Docker Desktop, que está parado; `DATABASE_URL` aponta para a porta 5433 e só a 5432 está escutando. CF1C não alterou nenhum arquivo de `backend/`, mas o gate permanece pendente e o número 209 do baseline segue não reconciliado com os 217 testes que a suíte coleta hoje.
+Não validado nesta fase: a suíte do backend original não pôde ser executada porque o PostgreSQL local depende do Docker Desktop, que estava parado. O gate foi executado na CF1D e o resultado está registrado abaixo.
 
-Permanecem para a CF1D: `A/appointments/export.csv`, Static Assets e adaptação do frontend.
+Correção: a nota de CF1C afirmava que a suíte coletava 217 testes. Isso nunca foi observado — foi estimativa registrada como fato. O número real, medido na CF1D, é 209. Não havia nada a reconciliar.
+
+## CF1D — Finalização local (2026-07-22)
+
+Aplicação completa e integrada localmente nos dois Workers, com o frontend adaptado sem duplicar a aplicação por vertical.
+
+Público (Public Worker + D1): landings Studio Cut e Lumière, catálogo, profissionais, disponibilidade, criação, token, cancelamento, conflito, rate limit, reutilização de horário, captura pública de lead e fallback de SPA.
+
+Administrativo (Admin Worker + D1): painéis das duas verticais, identidade e memberships exclusivamente pelo Cloudflare Access, overview, agenda, agendamentos, clientes, leads, follow-ups, catálogo, profissionais, associações, horários, agendas, cópia, bloqueios, configurações, indicadores, CSV e fallback de SPA administrativo.
+
+Gate do backend original, executado em PostgreSQL isolado na porta 5433 (contêiner `postgres:16-alpine`, 16 migrations aplicadas com `prisma migrate deploy`): **209 testes coletados, 208 passando**. As falhas não são de regra de negócio: são sempre os primeiros testes de `pipeline.test.js`, sempre com `Transaction API error: Unable to start a transaction in the given time`. A causa foi medida — a primeira transação de um processo frio contra o Docker Desktop no Windows leva ~2071 ms, acima do `maxWait` de 2000 ms do Prisma, enquanto as seguintes levam 2 ms. `node --test` usa um processo por arquivo, então cada arquivo paga esse custo. Nenhum arquivo de `backend/` foi alterado em CF1A–CF1D.
+
+Defeito real encontrado no smoke e corrigido: na superfície administrativa o `App.jsx` ainda pré-carregava o catálogo público (`/api/tenants/:slug/services` e `/professionals`), que responde 404 no Admin Worker. A correção veio com guarda permanente: `cloudflare/scripts/check-bundles.mjs` falha se o bundle público contiver rota administrativa ou asserção do Access, ou se o administrativo contiver rota pública, `admin_session`, campo de senha ou `demoId`.
+
+Validado: 144 testes Cloudflare (125 anteriores + 19 de CF1D), TypeScript, dry-run dos dois Workers com `ASSETS` ligado, três builds Vite (Vercel, cf-public, cf-admin), guarda de bundles, `git diff --check` limpo, `npm audit --omit=dev` sem vulnerabilidades em `cloudflare/` e `frontend/`, e smoke em navegador nos dois Workers a 1280, 768 e 360 px com console limpo.
+
+Não corrigido por estar fora do escopo: `npm audit --omit=dev` em `backend/` aponta 1 vulnerabilidade baixa em `body-parser`, transitiva do Express. Alterar dependências do backend não é permitido nesta fase.
+
+Permanece para CF2, tudo ato remoto: publicar os dois Workers, criar o D1 remoto e aplicar as migrations, configurar o Access definitivo e apontar os domínios. O repositório não tem runner de teste de frontend; a validação do frontend em CF1D foi por build e smoke em navegador.
 
 O rollout remoto continua bloqueado — não mais pelo drift, e sim pelas onze
 migrations acumuladas, que exigem fase própria com backup, janela e smoke de

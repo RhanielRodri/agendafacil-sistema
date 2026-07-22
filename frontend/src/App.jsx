@@ -6,7 +6,7 @@ import Success from "./pages/Success.jsx";
 import PlatformLanding from "./pages/PlatformLanding.jsx";
 import ManageAppointment from "./pages/ManageAppointment.jsx";
 import { api } from "./services/api.js";
-import tenant, { adminPath, currentRoute, homePath, isNeutralRoute } from "./config/tenant.js";
+import tenant, { adminPath, currentRoute, homePath, isNeutralRoute, surface } from "./config/tenant.js";
 import { applyMetadata, rootMetadata } from "./utils/metadata.js";
 
 export default function App() {
@@ -15,12 +15,14 @@ export default function App() {
   const [page, setPage] = useState(managementToken ? "manage" : currentRoute.page);
   const [services, setServices] = useState([]);
   const [professionals, setProfessionals] = useState([]);
-  const [loading, setLoading] = useState(!isNeutralRoute);
+  const [loading, setLoading] = useState(!isNeutralRoute && surface !== "admin");
   const [error, setError] = useState("");
   const [successAppointment, setSuccessAppointment] = useState(null);
 
+  // No Worker administrativo não existe catálogo público: o painel carrega o
+  // seu próprio catálogo, que também inclui inativos.
   function loadData() {
-    if (!tenant) return;
+    if (!tenant || surface === "admin") return;
 
     setLoading(true);
     setError("");

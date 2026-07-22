@@ -9,9 +9,11 @@ export const businesses = {
 // `full` mantém o comportamento único do build atual (Vercel). Em Cloudflare a
 // mesma aplicação é publicada duas vezes: o Public Worker só expõe as rotas
 // públicas e o Admin Worker só expõe os painéis.
-export const surface = ["public", "admin"].includes(import.meta.env.VITE_CF_SURFACE)
-  ? import.meta.env.VITE_CF_SURFACE
-  : "full";
+// Comparação direta com literais para que o valor seja dobrado no build e as
+// duas superfícies possam ser separadas por eliminação de código morto.
+export const surface = import.meta.env.VITE_CF_SURFACE === "admin"
+  ? "admin"
+  : import.meta.env.VITE_CF_SURFACE === "public" ? "public" : "full";
 
 const routes = {
   "/studio-cut": { page: "home", businessId: "studio-cut" },
