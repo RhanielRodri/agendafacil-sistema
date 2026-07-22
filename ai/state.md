@@ -3,7 +3,7 @@ project: AgendaFácil
 updated_at: 2026-07-21
 review_at: 2026-07-24
 status: active
-current_phase: R1_local_concluida
+current_phase: CF1B_local_concluida
 technical_baseline:
   commit: 194932c2f88110cc57d25fc1388c0db0cde5a682
   validation_status: partial
@@ -236,6 +236,27 @@ agrupamento ou hierarquia, não um remendo no meio da A5B.
 A5B está fechada e validada localmente, e o drift legado da A3A está reconciliado
 no ambiente local. Definir e autorizar explicitamente a A6.
 Nada disso autoriza redesign público, relatório comercial, deploy, merge ou push.
+
+## CF1B — Worker público e ciclo D1 local
+
+CF1B foi implementada e validada somente na branch `codex/cf1-cloudflare-migration`, sem deploy, push, D1 remoto ou alteração de Render/Vercel. O Worker público resolve o tenant exclusivamente pelo slug da rota e porta contexto, catálogo, profissionais compatíveis, horários, settings públicos, disponibilidade, criação, consulta por token, confirmação, cancelamento e reagendamento.
+
+A reserva usa `DB.batch` para cliente, agendamento, históricos, token hash e `appointment_slots`. A chave composta dos slots manteve a corrida em 201/409 sem cliente ou histórico órfão. Cancelamento preserva o agendamento, registra evento, revoga o token e libera somente os slots desse agendamento. O token bruto aparece apenas no `managementPath`; D1 armazena SHA-256.
+
+O rate limit público usa buckets persistentes no D1, janela de 60 segundos e chave SHA-256 derivada de sinais minimizados. Não usa memória do isolate e não persiste IP bruto ou dados pessoais.
+
+Validação local confirmada:
+
+- 58/58 testes Cloudflare, 30 novos na CF1B;
+- 209/209 testes do backend original;
+- TypeScript e dry-run dos Workers público e administrativo verdes;
+- Vite original com 66 módulos;
+- D1 local novo com migrations `0001` e `0002`, seed, ciclo completo nas duas verticais, cancelamento/rebooking, isolamento 404 e concorrência 201/409;
+- D1 temporário, processo local e porta de desenvolvimento removidos ao final;
+- 0 vulnerabilidades de produção no pacote Cloudflare e no frontend;
+- o backend original mantém 1 vulnerabilidade baixa preexistente em `body-parser` e não foi alterado.
+
+Permanecem para as fases seguintes: rotas administrativas e Cloudflare Access na CF1C; adaptação do frontend para slug na rota, IDs string, envelope de erro, Static Assets e regressão E2E na CF1D. `/api/public/leads` e `/api/first-availability` não foram portadas na CF1B pelas razões registradas em `cloudflare/docs/PUBLIC_API.md`.
 O rollout remoto continua bloqueado — não mais pelo drift, e sim pelas onze
 migrations acumuladas, que exigem fase própria com backup, janela e smoke de
 produção antes de qualquer aplicação fora do Docker local.

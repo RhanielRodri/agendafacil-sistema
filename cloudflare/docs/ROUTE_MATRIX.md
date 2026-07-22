@@ -30,6 +30,12 @@
 | GET | `/studio-cut`, `/lumiere` | página pública | slug do caminho | nenhuma | assets; APIs públicas subsequentes | nenhum | SPA/HTML da vertical | navegador | Public Worker Static Assets |
 | GET | assets e demais páginas públicas | página/asset | contexto da página, quando houver | nenhuma | assets | nenhum | arquivo estático ou fallback SPA permitido | navegador | Public Worker Static Assets |
 
+### Estado após CF1B
+
+Portadas e provadas no D1 local: `P/context`, `P/services`, `P/professionals`, `P/business-hours`, `P/settings`, `P/available-slots`, `P/appointments`, `P/appointment`, `P/appointment/confirm`, `P/appointment/cancel`, `P/appointment/reschedule-availability` e `P/appointment/reschedule`.
+
+Não portadas por decisão de escopo: `P/first-availability`, sem consumidor encontrado; `P/leads`, fluxo comercial separado do ciclo de agendamento; todas as rotas administrativas, reservadas para CF1C. Contratos completos da seleção estão em `PUBLIC_API.md`.
+
 ## Autenticação e identidade administrativa
 
 | Método | Caminho atual | Classe | Tenant atual | Autenticação | Tabelas lidas/escritas | Efeito de escrita | Resposta esperada | Consumidor atual | Destino |

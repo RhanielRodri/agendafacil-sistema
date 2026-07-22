@@ -47,17 +47,24 @@ describe("catálogo público CF1B", () => {
       env.DB.prepare(`
         INSERT INTO services (id, tenant_id, name, description, duration_minutes, price_cents, active, display_order)
         VALUES (?, 'studio-cut', ?, 'Sintético', 30, 1000, 0, 91)
-      `).bind(inactiveId, `Inativo ${inactiveId}`)
+      `).bind(inactiveId, `Inativo ${inactiveId}`),
+      env.DB.prepare(`
+        INSERT INTO professional_services (tenant_id, professional_id, service_id)
+        VALUES ('studio-cut', 'professional-studio-1', ?)
+      `).bind(inactiveId)
     ]);
     cleanupStatements.push(env.DB.prepare("DELETE FROM services WHERE id IN (?, ?)").bind(nullableId, inactiveId));
 
     const response = await SELF.fetch(`${ORIGIN}/api/tenants/studio-cut/services`);
     const services = await response.json() as Array<{ id: string; price: number | null; priceLabel: string | null }>;
+    const professionalsResponse = await SELF.fetch(`${ORIGIN}/api/tenants/studio-cut/professionals`);
+    const professionals = await professionalsResponse.json() as Array<{ id: string; serviceIds: string[] }>;
 
     expect(response.status).toBe(200);
     expect(services.find((service) => service.id === nullableId)).toMatchObject({ price: null, priceLabel: "Sob consulta" });
     expect(services.some((service) => service.id === inactiveId)).toBe(false);
     expect(services.some((service) => service.id === "service-lumiere-skin")).toBe(false);
+    expect(professionals.find((professional) => professional.id === "professional-studio-1")?.serviceIds).not.toContain(inactiveId);
   });
 
   it("lista profissionais compatíveis sem campos internos", async () => {
@@ -188,6 +195,7 @@ describe("disponibilidade pública CF1B", () => {
       startTime: "09:00"
     });
     cleanupStatements.push(
+      env.DB.prepare("DELETE FROM relationship_history_events WHERE appointment_id = ? OR client_id = ?").bind(created.id, clientId),
       env.DB.prepare("DELETE FROM appointments WHERE id = ?").bind(created.id),
       env.DB.prepare("DELETE FROM clients WHERE id = ?").bind(clientId)
     );

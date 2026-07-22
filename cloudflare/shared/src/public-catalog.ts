@@ -73,10 +73,12 @@ export async function listPublicServices(db: D1Database, tenantId: string) {
 export async function listPublicProfessionals(db: D1Database, tenantId: string) {
   const rows = await db.prepare(`
     SELECT p.id, p.name, p.specialty, p.photo,
-      group_concat(ps.service_id) AS service_ids
+      group_concat(services.id) AS service_ids
     FROM professionals p
     LEFT JOIN professional_services ps
       ON ps.tenant_id = p.tenant_id AND ps.professional_id = p.id
+    LEFT JOIN services
+      ON services.tenant_id = ps.tenant_id AND services.id = ps.service_id AND services.active = 1
     WHERE p.tenant_id = ? AND p.active = 1
     GROUP BY p.id, p.name, p.specialty, p.photo, p.display_order
     ORDER BY p.display_order, p.name

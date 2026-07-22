@@ -4,6 +4,11 @@ export type ErrorCode =
   | "FORBIDDEN"
   | "NOT_FOUND"
   | "CONFLICT"
+  | "RATE_LIMITED"
+  | "TOKEN_INVALID"
+  | "TOKEN_EXPIRED"
+  | "TOKEN_REVOKED"
+  | "TOKEN_USED"
   | "INTERNAL_ERROR";
 
 export class HttpError extends Error {
@@ -40,4 +45,22 @@ export function errorResponse(error: unknown): Response {
 
 export function notFound(): never {
   throw new HttpError(404, "NOT_FOUND", "Recurso não encontrado");
+}
+
+export async function readJsonObject(request: Request, maxBytes = 8192): Promise<Record<string, unknown>> {
+  const declaredLength = Number(request.headers.get("Content-Length") ?? "0");
+  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
+    throw new HttpError(400, "INVALID_REQUEST", "Payload excede o limite permitido");
+  }
+  const text = await request.text();
+  if (new TextEncoder().encode(text).byteLength > maxBytes) {
+    throw new HttpError(400, "INVALID_REQUEST", "Payload excede o limite permitido");
+  }
+  try {
+    const value = JSON.parse(text);
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid");
+    return value as Record<string, unknown>;
+  } catch {
+    throw new HttpError(400, "INVALID_REQUEST", "JSON inválido");
+  }
 }

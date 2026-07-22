@@ -21,6 +21,7 @@
 | `leads` | `Lead` | referências e owners isolados por tenant |
 | `follow_ups` | `FollowUp` | atores administrativos via membership |
 | `relationship_history_events` | `RelationshipHistoryEvent` | trilha por cliente/lead/agendamento |
+| `public_rate_limits` | novo, somente Cloudflare | buckets D1 com chave SHA-256 e expiração |
 | `admin_identities` | substitui parte de `AdminUser` | email global normalizado; sem senha |
 | `admin_memberships` | substitui vínculo de `AdminUser` com tenant | role inicial `ADMIN`; sem sessão |
 
@@ -90,6 +91,7 @@ Operações com múltiplas escritas usam `DB.batch`. Nenhum fluxo atômico é im
 - agendas: `(tenant_id, professional_id, day_of_week, active, start_time)`;
 - bloqueios: `(tenant_id, date)` e `(tenant_id, professional_id, date)`;
 - agendamentos: `(tenant_id, date, status)`, `(tenant_id, professional_id, date, start_time)` e `(tenant_id, client_id, date)`;
+- rate limit público: `(key_hash, action)` como chave e índice por `expires_at` para limpeza;
 - clientes: `(tenant_id, normalized_email)` e `(tenant_id, last_contact_at)`;
 - leads: por status, source, priority, owner e client;
 - follow-ups: por status/due, client, lead e owner;

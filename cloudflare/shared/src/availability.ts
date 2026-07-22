@@ -185,7 +185,8 @@ export async function calculateD1Availability(
   db: D1Database,
   tenantId: string,
   query: URLSearchParams,
-  now = new Date()
+  now = new Date(),
+  excludeAppointmentId?: string
 ): Promise<D1AvailabilityResult> {
   const date = requireDate(query.get("date"));
   const serviceId = requirePublicId(query.get("serviceId"), "serviceId");
@@ -265,7 +266,14 @@ export async function calculateD1Availability(
         ON appointments.tenant_id = slots.tenant_id AND appointments.id = slots.appointment_id
       WHERE slots.tenant_id = ? AND slots.professional_id = ?
         AND slots.appointment_date = ? AND appointments.status <> 'CANCELLED'
-    `).bind(tenantId, professionalId, date).all<OccupiedSlotRow>()
+        AND (? IS NULL OR slots.appointment_id <> ?)
+    `).bind(
+      tenantId,
+      professionalId,
+      date,
+      excludeAppointmentId ?? null,
+      excludeAppointmentId ?? null
+    ).all<OccupiedSlotRow>()
   ]);
 
   const slotMinutes = settings?.slot_duration_minutes ?? 30;

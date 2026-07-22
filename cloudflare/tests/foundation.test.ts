@@ -53,6 +53,7 @@ describe("schema e seed D1", () => {
       "follow_ups",
       "appointment_history_events",
       "relationship_history_events",
+      "public_rate_limits",
       "tenant_settings",
       "admin_identities",
       "admin_memberships"

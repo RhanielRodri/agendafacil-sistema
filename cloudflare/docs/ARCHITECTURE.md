@@ -47,7 +47,7 @@ cloudflare/
 └── wrangler.public.jsonc
 ```
 
-`shared` contém apenas tipos, validação, respostas HTTP, resolução de tenant, regras de disponibilidade/conflito e utilitários D1 pequenos. SQL de produto continuará visível nos handlers; não haverá ORM, container, repository genérico, framework interno ou pacote publicado.
+`shared` contém apenas tipos, validação, respostas HTTP, resolução de tenant, catálogo público, regras de disponibilidade/conflito, lifecycle público e utilitários D1 pequenos. Não há ORM, container, repository genérico, framework interno ou pacote publicado.
 
 ## Resolução de tenant
 
@@ -140,6 +140,8 @@ Um agendamento ativo ocupa uma linha por unidade de slot em `appointment_slots`.
 
 A disponibilidade faz interseção entre horário do negócio e janelas do profissional, remove pausas entre janelas, `blocked_dates`, `schedule_blocks` e `appointment_slots`, e testa a duração inteira do serviço.
 
+O rate limit público usa `public_rate_limits` no mesmo D1. A chave persistida é SHA-256 de sinais minimizados fornecidos pelo runtime; nenhum IP bruto ou dado do cliente é gravado. O contador não depende da memória do isolate e retorna 429 ao ultrapassar a janela documentada em `PUBLIC_API.md`.
+
 Operações estruturais seguem duas fases:
 
 1. prévia calcula `currentImpact` sem escrita;
@@ -159,5 +161,5 @@ Os arquivos versionados usam nomes e IDs locais sintéticos. Valores reais de `A
 
 - Nenhum Worker é publicado.
 - Nenhum D1 remoto é criado.
-- Nenhum endpoint funcional além da fundação e live/context é considerado migrado.
+- CF1B porta somente o ciclo público documentado em `PUBLIC_API.md`; captura de lead e rotas administrativas permanecem fora.
 - Nenhuma configuração de Render, Vercel ou produção é alterada.

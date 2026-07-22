@@ -72,12 +72,11 @@ O bootstrap remoto, quando autorizado em fase posterior, é manual e separado do
 
 Reset destrutivo é permitido apenas em D1 local descartável. Nunca executar `DROP`, reset ou seed destrutivo em produção ocupada.
 
-## Incompatibilidades abertas para CF1B–CF1D
+## Incompatibilidades abertas após CF1B
 
-- O frontend atual envia `demoId`; precisa migrar para slugs na rota.
+- O frontend atual ainda envia `demoId`, converte IDs para número e lê erro no formato Express; CF1D precisa usar slug na rota, IDs string e o envelope Cloudflare.
 - Login/logout local do frontend precisa ser removido e substituído pelo fluxo Access.
-- Token público de gestão de agendamento ainda precisa ser portado e mantido hash-only.
-- Rate limiting em memória do Express precisa de estratégia Cloudflare apropriada.
+- A captura pública de leads não foi portada porque não pertence ao ciclo de booking da CF1B.
 - Export CSV precisa decidir streaming/limites no Worker.
 - Queries agregadas de overview/metrics precisam ser reescritas em SQL SQLite e comparadas com fixtures.
 - Semântica de transações longas do Prisma precisa ser decomposta em `DB.batch` e operações idempotentes.
@@ -91,12 +90,11 @@ Estimativa técnica após o inventário, em dias líquidos de implementação e 
 
 | Fase | Escopo | Estimativa |
 |---|---|---:|
-| CF1B | leitura pública, serviços/profissionais/settings/horários, disponibilidade completa e criação/gestão pública de agendamento | 4–6 dias |
 | CF1C | Admin Access, overview/agenda/agendamentos, clientes, leads, follow-ups e indicadores | 6–9 dias |
 | CF1D | gestão estrutural, settings, assets/frontend, regressão E2E e preparação de deploy sem produção | 5–8 dias |
 
-Total atualizado: 15–23 dias líquidos. O intervalo maior vem de métricas SQL, lifecycle público e confirmação estrutural, não da fundação.
+Restante atualizado: 11–17 dias líquidos. CF1C continua sendo o maior bloco por causa das consultas administrativas e indicadores; CF1D concentra adaptação do frontend, assets e regressão E2E.
 
 ## Gate para CF1B
 
-CF1B só pode iniciar quando migrations, seed, testes de isolamento/conflito/Access, typecheck, build dos dois Workers, 209 testes originais e build original estiverem verdes; os dois commits CF1A devem estar limpos e sem arquivos originais alterados.
+CF1C só pode iniciar após CF1B manter verdes migrations/seed locais, todos os testes Cloudflare, 209 testes originais, TypeScript, dry-run dos dois Workers, build Vite e integração pública local completa, sem D1 remoto, deploy ou alteração dos arquivos originais.
