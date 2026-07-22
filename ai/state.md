@@ -3,7 +3,7 @@ project: AgendaFácil
 updated_at: 2026-07-22
 review_at: 2026-07-25
 status: active
-current_phase: CF2_staging_publicado
+current_phase: CF2_staging_separado_por_vertical
 technical_baseline:
   commit: 194932c2f88110cc57d25fc1388c0db0cde5a682
   validation_status: partial
@@ -339,3 +339,49 @@ domínio próprio e a autorização do corte de produção.
 Alerta de latência: D1 não tem região na América do Sul. Com o primário em ENAM,
 o TTFB a partir do Brasil fica em ~0,34 s nas rotas que tocam o banco contra
 ~0,11 s nas puramente estáticas. Avaliar Smart Placement antes do corte.
+
+## CF2 — Staging separado por vertical (2026-07-22)
+
+Quatro superfícies independentes publicadas em `workers.dev`, sobre o mesmo
+código, o mesmo D1 `agendafacil-staging-db` e o mesmo schema:
+
+| Worker | Tenant fixo | Bundle |
+| --- | --- | --- |
+| `agendafacil-staging-studio-cut-public` | `studio-cut` | público |
+| `agendafacil-staging-studio-cut-admin` | `studio-cut` | administrativo |
+| `agendafacil-staging-lumiere-public` | `lumiere` | público |
+| `agendafacil-staging-lumiere-admin` | `lumiere` | administrativo |
+
+O tenant efetivo vem de `TENANT_SLUG`. Provado nos Workers reais: a rota da outra
+vertical responde 404 em todas as rotas públicas e administrativas, e no painel
+o 404 precede a autorização. `/api/admin/context` lista apenas a membership do
+tenant do ambiente.
+
+A separação também é de bundle: o pacote de cada demo não contém a configuração
+da outra, verificado por `check:bundles --tenant`. Continua compartilhado o mapa
+de terminologia por vertical, que são rótulos de interface, não identidade.
+
+Smoke público completo nas duas verticais contra o D1 remoto: landing na raiz,
+catálogo, profissionais, disponibilidade, booking 201, conflito 409, slot
+removido, consulta por token 200, token na outra vertical 404, cancelamento 200,
+slot devolvido, consulta após cancelar 410 `TOKEN_USED`, rota da outra vertical
+404, `/api/*` sempre JSON, fallback de SPA 200. Nenhuma chamada ao Render em
+nenhuma das quatro superfícies.
+
+Os dois painéis falham fechados: 401 sem Access configurado, sem formulário de
+senha, `no-store` e `X-Robots-Tag` em toda resposta.
+
+Bloqueio real: criar a aplicação do Access exige interação humana. O token OAuth
+do Wrangler não tem escopo de Zero Trust — o caminho é o botão **Enable
+Cloudflare Access** em Settings → Domains & Routes de cada Worker administrativo,
+que dispensa domínio próprio. Faltam a AUD de cada painel e os e-mails
+autorizados; sem eles não existe smoke administrativo com JWT real nem
+identidade no D1 (`admin_identities` = 0).
+
+Latência estabilizada nos novos Workers: API 0,30–0,42 s, HTML 0,08–0,10 s. Sem
+alteração frente aos Workers compartilhados, então o piso continua sendo a ida e
+volta ao D1 em ENAM. Smart Placement não foi ativado: não há ganho medido que o
+justifique nesta etapa.
+
+Os dois Workers compartilhados de CF2, o Render e o Vercel continuam publicados
+e intactos.

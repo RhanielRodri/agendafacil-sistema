@@ -13,8 +13,11 @@ CF_STAGING_D1_NAME=agendafacil-staging-db
 CF_STAGING_D1_ID=<id devolvido por wrangler d1 create>
 CF_STAGING_PUBLIC_NAME=agendafacil-staging-public
 CF_STAGING_ADMIN_NAME=agendafacil-staging-admin
+CF_STAGING_STUDIO_CUT_PREFIX=agendafacil-staging-studio-cut
+CF_STAGING_LUMIERE_PREFIX=agendafacil-staging-lumiere
 ACCESS_TEAM_DOMAIN=
-ACCESS_POLICY_AUD=
+STUDIO_CUT_ACCESS_POLICY_AUD=
+LUMIERE_ACCESS_POLICY_AUD=
 ```
 
 `ACCESS_TEAM_DOMAIN` e `ACCESS_POLICY_AUD` vazios são deliberados: sem eles o
@@ -37,6 +40,23 @@ npm run staging:deploy:admin
 de novo sempre que mudar qualquer valor do `.env.staging` — inclusive ao
 preencher o Access.
 
+## Deployments por vertical
+
+Quatro Workers, um por combinação de demo e superfície, sobre o mesmo D1:
+
+```bash
+npm run staging:config
+cd ../frontend && npm run build:cf:verticals && cd ../cloudflare
+npm run check:bundles:verticals
+npm run staging:dryrun:verticals
+npm run staging:deploy:studio-cut
+npm run staging:deploy:lumiere
+```
+
+O build por vertical remove a configuração da outra demo do pacote; o
+`check:bundles:verticals` falha se ela reaparecer. `TENANT_SLUG` fixa o tenant em
+tempo de execução, e o slug do caminho passa a ser conferido contra ele.
+
 ## Identidades administrativas
 
 O seed não cria nenhuma identidade: um e-mail administrativo é dado de ambiente,
@@ -54,17 +74,26 @@ follow-ups ou histórico que já apontem para ela.
 
 ## Cloudflare Access
 
-Feito no painel Zero Trust, não por Wrangler:
+Feito no painel, não por Wrangler: o token OAuth do Wrangler não tem escopo de
+Zero Trust, então criar a aplicação exige interação humana.
 
-1. Zero Trust → Settings → Custom Pages: anote o domínio de equipe
-   (`<time>.cloudflareaccess.com`).
-2. Access → Applications → Add → Self-hosted, apontando para o hostname do
-   Worker administrativo. **Somente ele.** O Worker público nunca entra.
-3. Policy: Allow, por e-mail ou domínio, com os endereços que vão administrar.
-4. Copie o **Application Audience (AUD) Tag**.
-5. Preencha `ACCESS_TEAM_DOMAIN` e `ACCESS_POLICY_AUD` no `.env.staging`, rode
-   `npm run staging:config` e publique o Worker administrativo de novo.
-6. Rode o bootstrap acima com os mesmos e-mails da policy.
+Em `workers.dev` o caminho é o atalho do próprio Worker, que dispensa domínio
+próprio:
+
+1. Dashboard → **Workers & Pages** → Overview → selecione o Worker
+   **administrativo**. Nunca o público.
+2. **Settings** → **Domains & Routes** → na linha `workers.dev`, clique em
+   **Enable Cloudflare Access**.
+3. **Manage Cloudflare Access** → policy **Allow** por e-mail individual. Não
+   autorize domínio inteiro: qualquer identidade fora da lista é negada.
+4. Copie o **Application Audience (AUD) Tag** da aplicação criada e o domínio de
+   equipe em Zero Trust → Settings → Custom Pages (`<time>.cloudflareaccess.com`).
+5. Preencha `ACCESS_TEAM_DOMAIN` e a AUD daquela vertical no `.env.staging`, rode
+   `npm run staging:config` e republique aquele Worker administrativo.
+6. Rode o bootstrap com os mesmos e-mails da policy.
+
+Repita para cada painel. As aplicações são independentes e cada uma tem AUD
+própria — é o que impede um token emitido para uma vertical de valer na outra.
 
 A policy do Access decide quem entra no painel. A membership no D1 decide qual
 tenant essa pessoa enxerga. As duas camadas são independentes de propósito: passar

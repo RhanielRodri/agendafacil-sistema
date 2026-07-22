@@ -42,6 +42,15 @@ function assets(directory) {
   return { directory, binding: "ASSETS", not_found_handling: "single-page-application", run_worker_first: true };
 }
 
+// Sem Access configurado estes valores não casam com nenhum emissor real e
+// toda requisição administrativa termina em 401. O padrão é falhar fechado.
+function accessVars(prefix) {
+  return {
+    ACCESS_TEAM_DOMAIN: env.ACCESS_TEAM_DOMAIN || "nao-configurado.cloudflareaccess.com",
+    ACCESS_POLICY_AUD: env[`${prefix}_ACCESS_POLICY_AUD`] || "nao-configurado"
+  };
+}
+
 const targets = {
   "wrangler.staging.public.jsonc": {
     name: env.CF_STAGING_PUBLIC_NAME || "agendafacil-staging-public",
@@ -55,21 +64,52 @@ const targets = {
     main: "admin-worker/src/index.ts",
     compatibility_date: compatibilityDate,
     d1_databases: database(),
-    // Sem Access configurado estes valores não casam com nenhum emissor real e
-    // toda requisição administrativa termina em 401. O padrão é falhar fechado.
-    vars: {
-      ACCESS_TEAM_DOMAIN: env.ACCESS_TEAM_DOMAIN || "nao-configurado.cloudflareaccess.com",
-      ACCESS_POLICY_AUD: env.ACCESS_POLICY_AUD || "nao-configurado"
-    },
+    vars: accessVars("SHARED"),
     assets: assets("./admin-worker/assets")
   }
 };
+
+// Um deployment por vertical. Mesmo código, mesmo D1, mesmo schema: o que muda
+// é `TENANT_SLUG`, os assets já construídos para aquela demo e — no painel — a
+// aplicação do Access, que tem AUD própria para cada uma.
+const verticals = [
+  { slug: "studio-cut", prefix: "STUDIO_CUT", name: "Studio Cut" },
+  { slug: "lumiere", prefix: "LUMIERE", name: "Lumière" }
+];
+
+for (const vertical of verticals) {
+  const base = env[`CF_STAGING_${vertical.prefix}_PREFIX`] || `agendafacil-staging-${vertical.slug}`;
+
+  targets[`wrangler.staging.${vertical.slug}.public.jsonc`] = {
+    name: `${base}-public`,
+    main: "public-worker/src/index.ts",
+    compatibility_date: compatibilityDate,
+    d1_databases: database(),
+    vars: { TENANT_SLUG: vertical.slug },
+    assets: assets(`./dist/${vertical.slug}/public`)
+  };
+
+  targets[`wrangler.staging.${vertical.slug}.admin.jsonc`] = {
+    name: `${base}-admin`,
+    main: "admin-worker/src/index.ts",
+    compatibility_date: compatibilityDate,
+    d1_databases: database(),
+    vars: { TENANT_SLUG: vertical.slug, ...accessVars(vertical.prefix) },
+    assets: assets(`./dist/${vertical.slug}/admin`)
+  };
+}
 
 for (const [file, config] of Object.entries(targets)) {
   writeFileSync(join(root, file), `${JSON.stringify(config, null, 2)}\n`);
   console.log(`gerado ${file} (${config.name})`);
 }
 
-if (!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_POLICY_AUD) {
-  console.log("aviso: Access não configurado; o Worker administrativo responderá 401 em todas as rotas.");
+const semAccess = [
+  !env.ACCESS_TEAM_DOMAIN && "ACCESS_TEAM_DOMAIN",
+  !env.STUDIO_CUT_ACCESS_POLICY_AUD && "STUDIO_CUT_ACCESS_POLICY_AUD",
+  !env.LUMIERE_ACCESS_POLICY_AUD && "LUMIERE_ACCESS_POLICY_AUD"
+].filter(Boolean);
+
+if (semAccess.length) {
+  console.log(`aviso: falta ${semAccess.join(", ")}; os Workers administrativos correspondentes responderão 401 em todas as rotas.`);
 }

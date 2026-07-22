@@ -197,6 +197,37 @@ O seed não cria identidades administrativas de propósito: e-mail é dado de
 ambiente. `scripts/bootstrap-admin.mjs` recebe os endereços por argumento, aplica
 o SQL a partir de um arquivo temporário fora da árvore do projeto e o apaga.
 
+## Deployment por vertical
+
+Cada demo tem quatro coisas próprias — nome de Worker, hostname, assets e
+aplicação do Access — e nada mais. O código é um só, o D1 é o mesmo, o schema é
+o mesmo. O que separa é `TENANT_SLUG`, uma variável do ambiente:
+
+- presente, o tenant efetivo vem dela e o slug do caminho deixa de ser
+  autoridade: divergir dele responde 404, antes de qualquer autorização;
+- ausente, o Worker continua atendendo todos os tenants ativos, que é como os
+  dois Workers compartilhados de CF2 seguem funcionando.
+
+No painel, a filtragem também vale para `/api/admin/context`: a membership da
+outra vertical existe no D1, mas não é listada por um Worker que não a serve.
+
+A separação é reforçada no build. `--mode cf-<superfície>-<slug>` troca a
+configuração da outra demo por um módulo vazio, então o pacote do Studio Cut não
+contém o nome, os textos, as cores nem as rotas da Lumière. `npm run
+check:bundles -- --tenant <slug>` falha se contiver. Permanece compartilhado
+apenas o mapa de terminologia por vertical (`config/verticals.js`), que são
+rótulos de interface e não identidade de marca.
+
+Nos deployments por vertical a raiz é a própria demo: `/` abre a landing no
+Worker público e o painel no administrativo. Os caminhos antigos com slug
+continuam abrindo a mesma tela por redirecionamento de pathname, então `?m=` e
+`#agendamento=` sobrevivem.
+
+Cada painel tem sua própria aplicação do Access, com AUD própria. A policy do
+Access decide quem entra; `TENANT_SLUG` decide o que aquele Worker enxerga; a
+membership no D1 decide se a pessoa opera aquele tenant. As três camadas são
+independentes de propósito.
+
 ## Limites desta fase
 
 - Produção continua no Render e no Vercel, intacta, até o corte ser autorizado.

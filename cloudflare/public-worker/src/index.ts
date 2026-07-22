@@ -20,7 +20,7 @@ import {
 } from "../../shared/src/public-catalog";
 import { capturePublicLead } from "../../shared/src/public-leads";
 import { enforceRateLimit } from "../../shared/src/rate-limit";
-import { findActiveTenant, tenantSlugFromPath } from "../../shared/src/tenant";
+import { enforceFixedTenant, findActiveTenant, tenantSlugFromPath } from "../../shared/src/tenant";
 import type { PublicEnv } from "../../shared/src/types";
 
 const TENANT_ROUTE = /^\/api\/tenants\/([^/]+)\/(context|services|professionals|business-hours|settings|available-slots|appointments|leads|appointment(?:\/(?:confirm|cancel|reschedule-availability|reschedule))?)$/;
@@ -34,6 +34,7 @@ async function handleApi(request: Request, env: PublicEnv): Promise<Response> {
 
   const tenantSlug = tenantSlugFromPath(url.pathname, TENANT_ROUTE);
   if (tenantSlug) {
+    enforceFixedTenant(env, tenantSlug);
     const tenant = await findActiveTenant(env.DB, tenantSlug);
     const resource = url.pathname.split(`/api/tenants/${tenantSlug}/`)[1];
     if (request.method === "GET" && resource === "context") return json(await publicContext(env.DB, tenant));

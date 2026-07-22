@@ -11,6 +11,20 @@ export function normalizeTenantSlug(value: string): string {
   return slug;
 }
 
+// Deployment fixado em uma vertical. O slug da rota continua existindo por
+// compatibilidade, mas deixa de ser autoridade: divergir do tenant do ambiente
+// é indistinguível de pedir um tenant inexistente, então responde 404.
+export function fixedTenantSlug(env: { TENANT_SLUG?: string }): string | null {
+  const value = (env.TENANT_SLUG || "").trim().toLowerCase();
+  return value ? value : null;
+}
+
+export function enforceFixedTenant(env: { TENANT_SLUG?: string }, slug: string): string {
+  const fixed = fixedTenantSlug(env);
+  if (fixed && fixed !== slug) throw new HttpError(404, "NOT_FOUND", "Recurso não encontrado");
+  return fixed || slug;
+}
+
 export function tenantSlugFromPath(pathname: string, pattern: RegExp): string | null {
   const match = pathname.match(pattern);
   return match ? normalizeTenantSlug(match[1]) : null;

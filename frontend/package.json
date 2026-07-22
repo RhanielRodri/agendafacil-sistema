@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "build:cf:public": "vite build --mode cf-public",
     "build:cf:admin": "vite build --mode cf-admin",
-    "build:cf": "npm run build:cf:public && npm run build:cf:admin"
+    "build:cf": "npm run build:cf:public && npm run build:cf:admin",
+    "build:cf:studio-cut": "vite build --mode cf-public-studio-cut && vite build --mode cf-admin-studio-cut",
+    "build:cf:lumiere": "vite build --mode cf-public-lumiere && vite build --mode cf-admin-lumiere",
+    "build:cf:verticals": "npm run build:cf:studio-cut && npm run build:cf:lumiere"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.5.1",

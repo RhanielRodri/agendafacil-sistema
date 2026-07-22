@@ -1,7 +1,7 @@
 import type { JWTVerifyGetKey } from "jose";
 import { serveAsset } from "../../shared/src/assets";
 import { errorResponse, json, notFound } from "../../shared/src/http";
-import { normalizeTenantSlug } from "../../shared/src/tenant";
+import { enforceFixedTenant, fixedTenantSlug, normalizeTenantSlug } from "../../shared/src/tenant";
 import type { AdminEnv } from "../../shared/src/types";
 import { listMemberships, resolveAdminContext, resolveIdentity } from "./access";
 import { agendaRoutes } from "./agenda";
@@ -49,13 +49,20 @@ export function createAdminHandler(options: AdminHandlerOptions = {}): ExportedH
         // membership autoriza, antes de qualquer escopo de negócio.
         if (request.method === "GET" && url.pathname === "/api/admin/context") {
           const identity = await resolveIdentity(request, env, options.jwtKey);
-          return json({ identity, memberships: await listMemberships(env.DB, identity.id) });
+          const memberships = await listMemberships(env.DB, identity.id);
+          // Num deployment fixado, o painel não pode sequer sugerir a outra
+          // vertical: a membership existe no D1, mas não pertence a este Worker.
+          const fixed = fixedTenantSlug(env);
+          return json({
+            identity,
+            memberships: fixed ? memberships.filter((item) => item.tenantId === fixed) : memberships
+          });
         }
 
         const scope = url.pathname.match(ADMIN_SCOPE);
         if (!scope) return notFound();
 
-        const tenantSlug = normalizeTenantSlug(scope[1]);
+        const tenantSlug = enforceFixedTenant(env, normalizeTenantSlug(scope[1]));
         const matched = matchRoute(routes, request.method, scope[2]);
         if (!matched) return notFound();
 

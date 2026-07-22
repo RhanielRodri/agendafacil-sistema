@@ -43,6 +43,8 @@ export interface AdminCallOptions {
   body?: unknown;
   email?: string | null;
   headers?: Record<string, string>;
+  // Um deployment fixado em uma vertical difere apenas no ambiente.
+  envOverride?: Record<string, unknown>;
 }
 
 export async function adminCall(path: string, options: AdminCallOptions = {}): Promise<Response> {
@@ -56,7 +58,8 @@ export async function adminCall(path: string, options: AdminCallOptions = {}): P
     headers,
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) })
   });
-  return createAdminHandler({ jwtKey: publicKey }).fetch!(request as never, env, {} as ExecutionContext);
+  const callEnv = options.envOverride ? { ...env, ...options.envOverride } : env;
+  return createAdminHandler({ jwtKey: publicKey }).fetch!(request as never, callEnv as never, {} as ExecutionContext);
 }
 
 export async function adminJson<T>(path: string, options: AdminCallOptions = {}): Promise<T> {

@@ -16,7 +16,11 @@
     "staging:migrate": "wrangler d1 migrations apply agendafacil-staging-db --remote --config wrangler.staging.public.jsonc",
     "staging:seed": "wrangler d1 execute agendafacil-staging-db --remote --config wrangler.staging.public.jsonc --file seed/0001_demo.sql",
     "staging:deploy:public": "wrangler deploy --config wrangler.staging.public.jsonc",
-    "staging:deploy:admin": "wrangler deploy --config wrangler.staging.admin.jsonc"
+    "staging:deploy:admin": "wrangler deploy --config wrangler.staging.admin.jsonc",
+    "check:bundles:verticals": "node scripts/check-bundles.mjs --tenant studio-cut && node scripts/check-bundles.mjs --tenant lumiere",
+    "staging:dryrun:verticals": "wrangler deploy --dry-run --config wrangler.staging.studio-cut.public.jsonc --outdir dist/dryrun/studio-cut-public && wrangler deploy --dry-run --config wrangler.staging.studio-cut.admin.jsonc --outdir dist/dryrun/studio-cut-admin && wrangler deploy --dry-run --config wrangler.staging.lumiere.public.jsonc --outdir dist/dryrun/lumiere-public && wrangler deploy --dry-run --config wrangler.staging.lumiere.admin.jsonc --outdir dist/dryrun/lumiere-admin",
+    "staging:deploy:studio-cut": "wrangler deploy --config wrangler.staging.studio-cut.public.jsonc && wrangler deploy --config wrangler.staging.studio-cut.admin.jsonc",
+    "staging:deploy:lumiere": "wrangler deploy --config wrangler.staging.lumiere.public.jsonc && wrangler deploy --config wrangler.staging.lumiere.admin.jsonc"
   },
   "dependencies": {
     "jose": "6.2.4"
