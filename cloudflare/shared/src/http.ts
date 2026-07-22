@@ -4,6 +4,7 @@ export type ErrorCode =
   | "FORBIDDEN"
   | "NOT_FOUND"
   | "CONFLICT"
+  | "CONFLICT_REQUIRES_CONFIRMATION"
   | "RATE_LIMITED"
   | "TOKEN_INVALID"
   | "TOKEN_EXPIRED"
@@ -30,8 +31,15 @@ export function json(data: unknown, init: ResponseInit = {}): Response {
 
 export function errorResponse(error: unknown): Response {
   if (error instanceof HttpError) {
+    const conflicts = (error as HttpError & { conflicts?: unknown }).conflicts;
     return json(
-      { error: { code: error.code, message: error.message } },
+      {
+        error: {
+          code: Array.isArray(conflicts) ? "CONFLICT_REQUIRES_CONFIRMATION" : error.code,
+          message: error.message,
+          ...(Array.isArray(conflicts) ? { conflicts } : {})
+        }
+      },
       { status: error.status }
     );
   }

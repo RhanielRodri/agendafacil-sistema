@@ -3,8 +3,13 @@ import { errorResponse, json, notFound } from "../../shared/src/http";
 import { normalizeTenantSlug } from "../../shared/src/tenant";
 import type { AdminEnv } from "../../shared/src/types";
 import { resolveAdminContext } from "./access";
+import { agendaRoutes } from "./agenda";
+import { identityRoutes } from "./identity";
+import { matchRoute, type AdminRoute } from "./router";
 
-const ADMIN_CONTEXT = /^\/api\/admin\/tenants\/([^/]+)\/context$/;
+const ADMIN_SCOPE = /^\/api\/admin\/tenants\/([^/]+)\/(.+)$/;
+
+const routes: AdminRoute[] = [...identityRoutes, ...agendaRoutes];
 
 interface AdminHandlerOptions {
   jwtKey?: CryptoKey | JWTVerifyGetKey;
@@ -20,18 +25,23 @@ export function createAdminHandler(options: AdminHandlerOptions = {}): ExportedH
           return json({ ok: result?.ok === 1 });
         }
 
-        const match = url.pathname.match(ADMIN_CONTEXT);
-        if (request.method === "GET" && match) {
-          const tenantSlug = normalizeTenantSlug(match[1]);
-          const context = await resolveAdminContext(request, env, tenantSlug, options.jwtKey);
-          return json({
-            identity: context.identity,
-            tenant: context.tenant,
-            role: context.role
-          });
-        }
+        const scope = url.pathname.match(ADMIN_SCOPE);
+        if (!scope) return notFound();
 
-        return notFound();
+        const tenantSlug = normalizeTenantSlug(scope[1]);
+        const matched = matchRoute(routes, request.method, scope[2]);
+        if (!matched) return notFound();
+
+        const admin = await resolveAdminContext(request, env, tenantSlug, options.jwtKey);
+        return await matched.route.handler({
+          request,
+          env,
+          db: env.DB,
+          url,
+          tenantId: admin.tenant.slug,
+          admin,
+          params: matched.params
+        });
       } catch (error) {
         return errorResponse(error);
       }
