@@ -103,9 +103,11 @@
   --accent: #b89265;
   --accent-hover: #a17c52;
   --accent-muted: rgba(184, 146, 101, 0.14);
-  --accent-text: #ffffff;
+  /* Texto sobre o dourado: escuro, como o próprio logo da Lumière. Branco sobre
+     #b89265 dava 2.86:1 (falha AA) nos botões primários e no login do painel. */
+  --accent-text: #302722;
   --panel-accent: #b89265;
-  --panel-accent-contrast: #ffffff;
+  --panel-accent-contrast: #302722;
   --panel-ring-strong: rgba(184, 146, 101, 0.34);
   --radius-sm: 12px;
   --radius-md: 22px;
