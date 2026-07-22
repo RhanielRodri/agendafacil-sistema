@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { api } from "../services/api.js";
+import { api, apiMode } from "../services/api.js";
+
+// Constante de build: no destino Cloudflare os ramos de senha e sessão própria
+// viram código morto e saem do bundle administrativo.
+const isCloudflare = apiMode === "cloudflare";
 import tenant, { adminPath } from "../config/tenant.js";
 import { verticalConfig } from "../config/verticals.js";
 import Overview from "./admin/Overview.jsx";
@@ -173,6 +177,51 @@ function ForeignTenantScreen({ tenantId, onLogout }) {
   );
 }
 
+// ─── Telas do Cloudflare Access ─────────────────────────────────────────────
+// Não há login, senha nem sessão própria: a identidade chega verificada pelo
+// Access e o Worker só confirma a membership do slug pedido na rota.
+
+function AccessExpiredScreen() {
+  return (
+    <AdminScreen>
+      <AdminScreenHeader />
+      <div className="admin-screen-divider" />
+      <h2 className="admin-screen-title">Sessão expirada</h2>
+      <p className="admin-screen-message">
+        Sua sessão do Cloudflare Access terminou.<br />
+        Recarregue para autenticar de novo — você volta para esta mesma tela.
+      </p>
+      <button className="admin-screen-btn" type="button" onClick={() => window.location.reload()}>
+        Entrar novamente
+      </button>
+    </AdminScreen>
+  );
+}
+
+function NoMembershipScreen({ memberships }) {
+  const others = memberships.filter((membership) => membership.tenantId !== tenant.slug);
+
+  return (
+    <AdminScreen>
+      <AdminScreenHeader />
+      <div className="admin-screen-divider" />
+      <h2 className="admin-screen-title">
+        {others.length ? "Painel incorreto" : "Sem acesso a este painel"}
+      </h2>
+      <p className="admin-screen-message">
+        {others.length
+          ? "Sua identidade não opera este negócio, mas tem acesso aos painéis abaixo."
+          : "Sua identidade está autenticada, mas nenhum painel está autorizado para ela. Peça liberação a quem administra o Access."}
+      </p>
+      {others.map((membership) => (
+        <a key={membership.tenantId} className="admin-screen-btn" href={`/${membership.tenantId}/admin`}>
+          Ir para {membership.tenantName}
+        </a>
+      ))}
+    </AdminScreen>
+  );
+}
+
 function LoadingScreen() {
   return (
     <AdminScreen>
@@ -208,6 +257,7 @@ export default function Admin({ services, professionals }) {
   const [users, setUsers] = useState([]);
   const [catalog, setCatalog] = useState(null);
   const [foreignTenant, setForeignTenant] = useState(null);
+  const [memberships, setMemberships] = useState([]);
   const [module, setModule] = useState(initialModule);
   const [params, setParams] = useState({});
   const [expiredNotice, setExpiredNotice] = useState("");
@@ -228,9 +278,39 @@ export default function Admin({ services, professionals }) {
   const safeServices = catalog?.services || (Array.isArray(services) ? services : []);
   const safeProfessionals = catalog?.professionals || (Array.isArray(professionals) ? professionals : []);
 
+  async function bootstrapAccess() {
+    try {
+      const context = await api.adminContext();
+      setSession({ ...context.identity, tenantId: context.tenant.slug });
+      setMemberships(context.memberships || []);
+      setUsers(await api.getAdminUsers());
+      await loadCatalog();
+      setStatus("ready");
+    } catch (failure) {
+      if (failure.status === 401) {
+        setStatus("access-expired");
+        return;
+      }
+      if (failure.status === 403 || failure.status === 404) {
+        // 403 e 404 são o mesmo fato para quem opera: este painel não é dela.
+        const identity = await api.adminIdentity().catch(() => null);
+        setMemberships(identity?.memberships || []);
+        setStatus("no-membership");
+        return;
+      }
+      setStatus("unavailable");
+    }
+  }
+
   function bootstrap() {
     setStatus("loading");
     setForeignTenant(null);
+
+    if (isCloudflare) {
+      bootstrapAccess();
+      return;
+    }
+
     api.adminMe()
       .then(async (me) => {
         if (me.tenantId !== tenant.slug) {
@@ -261,6 +341,10 @@ export default function Admin({ services, professionals }) {
   }
 
   function handleSessionExpired() {
+    if (isCloudflare) {
+      setStatus("access-expired");
+      return;
+    }
     setExpiredNotice("Sua sessão expirou. Entre novamente para continuar.");
     setStatus("unauthenticated");
   }
@@ -274,8 +358,10 @@ export default function Admin({ services, professionals }) {
   }
 
   if (status === "loading") return <LoadingScreen />;
-  if (status === "unauthenticated") return <LoginScreen onSuccess={bootstrap} notice={expiredNotice} />;
-  if (status === "foreign") return <ForeignTenantScreen tenantId={foreignTenant} onLogout={handleLogout} />;
+  if (status === "access-expired") return <AccessExpiredScreen />;
+  if (status === "no-membership") return <NoMembershipScreen memberships={memberships} />;
+  if (!isCloudflare && status === "unauthenticated") return <LoginScreen onSuccess={bootstrap} notice={expiredNotice} />;
+  if (!isCloudflare && status === "foreign") return <ForeignTenantScreen tenantId={foreignTenant} onLogout={handleLogout} />;
   if (status === "unavailable") return <UnavailableScreen onRetry={bootstrap} />;
 
   const moduleProps = {
@@ -299,7 +385,9 @@ export default function Admin({ services, professionals }) {
         </div>
         <div className="panel-topbar-actions">
           {session?.name && <span className="panel-topbar-user">{session.name}</span>}
-          <button className="panel-ghost-dark" type="button" onClick={handleLogout}>Sair</button>
+          {isCloudflare
+            ? <span className="panel-topbar-user">{session?.email}</span>
+            : <button className="panel-ghost-dark" type="button" onClick={handleLogout}>Sair</button>}
         </div>
       </header>
 

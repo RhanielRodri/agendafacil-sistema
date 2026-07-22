@@ -513,7 +513,61 @@ async function getAgendaDay(ctx: AdminRequestContext): Promise<Response> {
   });
 }
 
+interface ExportRow {
+  id: string;
+  appointment_date: string;
+  start_time: string;
+  status: string;
+  service_name: string;
+  professional_name: string;
+  client_name: string;
+  client_phone: string;
+  client_email: string | null;
+}
+
+function csvField(value: string | null): string {
+  if (value === null || value === "") return "";
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+// A exportação sai pelo Worker administrativo e continua restrita ao tenant
+// autorizado; o Access injeta a asserção também no download do navegador.
+async function exportAppointments(ctx: AdminRequestContext): Promise<Response> {
+  const rows = await ctx.db.prepare(`
+    SELECT a.id, a.appointment_date, a.start_time, a.status,
+      s.name AS service_name, p.name AS professional_name,
+      a.client_name, a.client_phone, a.client_email
+    FROM appointments a
+    JOIN services s ON s.tenant_id = a.tenant_id AND s.id = a.service_id
+    JOIN professionals p ON p.tenant_id = a.tenant_id AND p.id = a.professional_id
+    WHERE a.tenant_id = ?
+    ORDER BY a.appointment_date, a.start_time
+  `).bind(ctx.tenantId).all<ExportRow>();
+
+  const header = "id,data,horario,status,servico,profissional,cliente,telefone,email";
+  const body = rows.results.map((row) => [
+    row.id,
+    row.appointment_date,
+    row.start_time,
+    row.status,
+    csvField(row.service_name),
+    csvField(row.professional_name),
+    csvField(row.client_name),
+    csvField(row.client_phone),
+    csvField(row.client_email)
+  ].join(","));
+
+  return new Response(`${[header, ...body].join("\n")}\n`, {
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": 'attachment; filename="agendamentos.csv"',
+      "Cache-Control": "no-store"
+    }
+  });
+}
+
 export const agendaRoutes: AdminRoute[] = [
+  route("GET", /^appointments\/export\.csv$/, exportAppointments),
   route("GET", /^appointments$/, listAppointments),
   route("GET", /^appointments\/([^/]+)$/, getAppointment),
   route("PATCH", /^appointments\/([^/]+)\/status$/, updateAppointmentStatus),

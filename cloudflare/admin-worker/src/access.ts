@@ -69,12 +69,11 @@ export async function verifyAccessToken(
   }
 }
 
-export async function resolveAdminContext(
+export async function resolveIdentity(
   request: Request,
   env: AdminEnv,
-  tenantSlug: string,
   key?: CryptoKey | JWTVerifyGetKey
-): Promise<AdminContext> {
+): Promise<AdminIdentity> {
   const token = request.headers.get("Cf-Access-Jwt-Assertion");
   if (!token) return unauthorized();
   const email = await verifyAccessToken(token, env, key);
@@ -84,7 +83,33 @@ export async function resolveAdminContext(
     WHERE email = ? AND active = 1
   `).bind(email).first<AdminIdentity>();
   if (!identity) return forbidden();
+  return identity;
+}
 
+// Os painéis autorizados vêm da membership, nunca do que o cliente informa.
+// É o que permite a mesma identidade operar as duas verticais sem trocar de
+// sessão e o painel dizer com precisão quando o tenant não é dela.
+export async function listMemberships(
+  db: D1Database,
+  identityId: string
+): Promise<{ tenantId: string; tenantName: string; role: "ADMIN" }[]> {
+  const rows = await db.prepare(`
+    SELECT t.slug AS tenantId, t.name AS tenantName, m.role
+    FROM admin_memberships m
+    JOIN tenants t ON t.slug = m.tenant_id
+    WHERE m.identity_id = ? AND m.active = 1 AND t.active = 1 AND m.role = 'ADMIN'
+    ORDER BY t.name, t.slug
+  `).bind(identityId).all<{ tenantId: string; tenantName: string; role: "ADMIN" }>();
+  return rows.results;
+}
+
+export async function resolveAdminContext(
+  request: Request,
+  env: AdminEnv,
+  tenantSlug: string,
+  key?: CryptoKey | JWTVerifyGetKey
+): Promise<AdminContext> {
+  const identity = await resolveIdentity(request, env, key);
   const tenant = await findActiveTenant(env.DB, tenantSlug);
   const membership = await env.DB.prepare(`
     SELECT role

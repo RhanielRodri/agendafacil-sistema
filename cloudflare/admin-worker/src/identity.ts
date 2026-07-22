@@ -1,5 +1,6 @@
 import { json } from "../../shared/src/http";
 import { publicTerminology } from "../../shared/src/public-catalog";
+import { listMemberships } from "./access";
 import { route, type AdminRoute } from "./router";
 
 interface IdentityRow {
@@ -16,7 +17,8 @@ export const identityRoutes: AdminRoute[] = [
     identity: ctx.admin.identity,
     tenant: ctx.admin.tenant,
     role: ctx.admin.role,
-    terminology: publicTerminology(ctx.tenantId)
+    terminology: publicTerminology(ctx.tenantId),
+    memberships: await listMemberships(ctx.db, ctx.admin.identity.id)
   })),
 
   route("GET", /^identities$/, async (ctx) => {

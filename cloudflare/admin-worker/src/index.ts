@@ -2,7 +2,7 @@ import type { JWTVerifyGetKey } from "jose";
 import { errorResponse, json, notFound } from "../../shared/src/http";
 import { normalizeTenantSlug } from "../../shared/src/tenant";
 import type { AdminEnv } from "../../shared/src/types";
-import { resolveAdminContext } from "./access";
+import { listMemberships, resolveAdminContext, resolveIdentity } from "./access";
 import { agendaRoutes } from "./agenda";
 import { catalogRoutes } from "./catalog";
 import { identityRoutes } from "./identity";
@@ -34,6 +34,13 @@ export function createAdminHandler(options: AdminHandlerOptions = {}): ExportedH
         if (request.method === "GET" && url.pathname === "/api/live") {
           const result = await env.DB.prepare("SELECT 1 AS ok").first<{ ok: number }>();
           return json({ ok: result?.ok === 1 });
+        }
+
+        // Contexto sem tenant: identifica quem entrou e quais painéis a
+        // membership autoriza, antes de qualquer escopo de negócio.
+        if (request.method === "GET" && url.pathname === "/api/admin/context") {
+          const identity = await resolveIdentity(request, env, options.jwtKey);
+          return json({ identity, memberships: await listMemberships(env.DB, identity.id) });
         }
 
         const scope = url.pathname.match(ADMIN_SCOPE);
