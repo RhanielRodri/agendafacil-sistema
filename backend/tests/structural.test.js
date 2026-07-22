@@ -705,29 +705,38 @@ test("A5B 25. conversão por origem separa criados e convertidos", async () => {
   assert.equal(booking.conversionRate, 0);
 });
 
-test("A5B 26. follow-ups vencidos e atraso médio são calculáveis", async () => {
-  const client = await createClient(STUDIO, "Cliente FollowUp A5B", "27977770110");
-  await prisma.followUp.create({
-    data: { tenantId: STUDIO, clientId: client.id, dueAt: hoursFromNow(-3), type: "CONTACT", status: "OPEN", createdByUserId: fx.studioAdmin.id }
-  });
-  await prisma.followUp.create({
-    data: {
-      tenantId: STUDIO,
-      clientId: client.id,
-      dueAt: hoursFromNow(-4),
-      type: "CONTACT",
-      status: "COMPLETED",
-      completedAt: hoursFromNow(-2),
-      createdByUserId: fx.studioAdmin.id
-    }
-  });
+test("A5B 26. follow-ups vencidos e atraso médio são calculáveis", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-07-15T12:00:00.000Z") });
 
-  const { data } = await api("/admin/metrics?period=today", { cookie: studioCookie });
+  try {
+    const cookie = await loginCookie(STUDIO, "a5b-studio@example.test");
+    const client = await createClient(STUDIO, "Cliente FollowUp A5B", "27977770110");
+    const createdAt = hoursFromNow(-5);
+    await prisma.followUp.create({
+      data: { tenantId: STUDIO, clientId: client.id, dueAt: hoursFromNow(-3), type: "CONTACT", status: "OPEN", createdAt, createdByUserId: fx.studioAdmin.id }
+    });
+    await prisma.followUp.create({
+      data: {
+        tenantId: STUDIO,
+        clientId: client.id,
+        dueAt: hoursFromNow(-4),
+        type: "CONTACT",
+        status: "COMPLETED",
+        completedAt: hoursFromNow(-2),
+        createdAt,
+        createdByUserId: fx.studioAdmin.id
+      }
+    });
 
-  assert.equal(data.followUps.created, 2);
-  assert.equal(data.followUps.completed, 1);
-  assert.equal(data.followUps.overdue, 1);
-  assert.ok(data.followUps.averageDelayMinutes >= 115 && data.followUps.averageDelayMinutes <= 125);
+    const { data } = await api("/admin/metrics?period=today", { cookie });
+
+    assert.equal(data.followUps.created, 2);
+    assert.equal(data.followUps.completed, 1);
+    assert.equal(data.followUps.overdue, 1);
+    assert.ok(data.followUps.averageDelayMinutes >= 115 && data.followUps.averageDelayMinutes <= 125);
+  } finally {
+    t.mock.timers.reset();
+  }
 });
 
 test("A5B 27. clientes recorrentes e sem retorno seguem regra documentada", async () => {
