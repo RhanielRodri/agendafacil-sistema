@@ -1,4 +1,5 @@
 import type { JWTVerifyGetKey } from "jose";
+import { serveAsset } from "../../shared/src/assets";
 import { errorResponse, json, notFound } from "../../shared/src/http";
 import { normalizeTenantSlug } from "../../shared/src/tenant";
 import type { AdminEnv } from "../../shared/src/types";
@@ -31,6 +32,14 @@ export function createAdminHandler(options: AdminHandlerOptions = {}): ExportedH
     async fetch(request: Request, env: AdminEnv): Promise<Response> {
       try {
         const url = new URL(request.url);
+
+        // Fora de `/api/*` a resposta é o painel: o Static Assets resolve o
+        // arquivo e o fallback de SPA cobre os deep links do painel.
+        if (!url.pathname.startsWith("/api/")) {
+          if (env.ASSETS) return await serveAsset(request, env.ASSETS, "admin");
+          return notFound();
+        }
+
         if (request.method === "GET" && url.pathname === "/api/live") {
           const result = await env.DB.prepare("SELECT 1 AS ok").first<{ ok: number }>();
           return json({ ok: result?.ok === 1 });

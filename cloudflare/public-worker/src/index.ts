@@ -9,6 +9,7 @@ import {
   validatePublicBookingPayload
 } from "../../shared/src/booking";
 import { errorResponse, json, notFound, readJsonObject } from "../../shared/src/http";
+import { serveAsset } from "../../shared/src/assets";
 import { calculateD1Availability } from "../../shared/src/availability";
 import {
   listPublicBusinessHours,
@@ -87,8 +88,10 @@ export default {
   async fetch(request: Request, env: PublicEnv): Promise<Response> {
     try {
       const url = new URL(request.url);
+      // `/api/*` é resolvido antes de qualquer coisa, então nunca cai no
+      // fallback de SPA do Static Assets.
       if (url.pathname.startsWith("/api/")) return await handleApi(request, env);
-      if (env.ASSETS) return env.ASSETS.fetch(request);
+      if (env.ASSETS) return await serveAsset(request, env.ASSETS, "public");
       return notFound();
     } catch (error) {
       return errorResponse(error);

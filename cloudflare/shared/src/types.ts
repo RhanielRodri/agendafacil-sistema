@@ -13,6 +13,7 @@ export interface AdminEnv {
   DB: D1Database;
   ACCESS_TEAM_DOMAIN: string;
   ACCESS_POLICY_AUD: string;
+  ASSETS?: Fetcher;
 }
 
 export interface AdminIdentity {
