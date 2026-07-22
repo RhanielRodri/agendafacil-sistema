@@ -4,13 +4,19 @@ import { normalizeTenantSlug } from "../../shared/src/tenant";
 import type { AdminEnv } from "../../shared/src/types";
 import { resolveAdminContext } from "./access";
 import { agendaRoutes } from "./agenda";
+import { catalogRoutes } from "./catalog";
 import { identityRoutes } from "./identity";
 import { relationshipRoutes } from "./relationship";
 import { matchRoute, type AdminRoute } from "./router";
 
 const ADMIN_SCOPE = /^\/api\/admin\/tenants\/([^/]+)\/(.+)$/;
 
-const routes: AdminRoute[] = [...identityRoutes, ...agendaRoutes, ...relationshipRoutes];
+const routes: AdminRoute[] = [
+  ...identityRoutes,
+  ...agendaRoutes,
+  ...relationshipRoutes,
+  ...catalogRoutes
+];
 
 interface AdminHandlerOptions {
   jwtKey?: CryptoKey | JWTVerifyGetKey;
