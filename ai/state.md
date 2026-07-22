@@ -385,3 +385,49 @@ justifique nesta etapa.
 
 Os dois Workers compartilhados de CF2, o Render e o Vercel continuam publicados
 e intactos.
+
+## CF2 — Cloudflare Access automatizado (2026-07-22)
+
+As duas aplicações self-hosted do Access foram criadas pela API oficial, uma por
+Admin Worker, com sessão de 24 horas e policy exclusiva `Allow configured admin
+email`. Cada policy contém somente o e-mail individual da vertical, precedência
+1 e nenhuma regra ampla. Os AUDs são distintos e foram gravados apenas em
+`cloudflare/.env.staging`, junto do team domain; nenhum valor sensível entrou no
+Git.
+
+O fluxo idempotente ficou em `cloudflare/scripts/configure-access.mjs`, com
+preflight de token, conta, duplicidade de domínio, tipo de aplicação e policies
+conflitantes. O script falha fechado diante de estado ambíguo, usa somente
+`CLOUDFLARE_ACCESS_API_TOKEN` para Access, recupera os AUDs reais, atualiza o
+arquivo local ignorado e oferece modos de configurar e verificar. Se o token não
+tem leitura de Organizations, o team domain é preservado do ambiente ou obtido
+pelo desafio real do Access.
+
+Os dois Admin Workers verticais foram republicados sem tocar os Workers públicos.
+Ambos usam o D1 `agendafacil-staging-db`, `TENANT_SLUG` fixo, team domain e AUD
+próprio. O bootstrap resultou em uma identidade ativa para o e-mail único
+configurado e duas memberships independentes, uma para `studio-cut` e outra para
+`lumiere`, sem duplicação.
+
+Smoke autenticado real concluído por código de e-mail: desafio do Access, JWT
+aceito pelo Worker, identidade, membership, refresh, deep links e os 11 módulos
+de cada vertical. A ausência temporária da membership do Lumière produziu a tela
+segura de acesso negado e a membership foi restaurada imediatamente pelo
+bootstrap idempotente. O painel voltou sem erros ou avisos no console.
+
+O smoke reversível de impacto alterou temporariamente a duração de um serviço do
+Studio Cut com dois agendamentos futuros. A prévia não escreveu no D1; a
+confirmação recalculou dois impactos no servidor; os dois agendamentos e horários
+permaneceram ativos. A duração original foi restaurada e o D1 foi conferido ao
+final. Logout encerrou a sessão e uma nova visita voltou ao desafio do Access.
+
+Gates: 152/152 testes existentes, 6/6 testes do script de Access, TypeScript,
+builds, dry-runs dos Admin Workers, `check:bundles` compartilhado e vertical,
+`git diff --check` e auditoria de secrets. `npm audit --omit=dev` encontrou zero
+vulnerabilidades em Cloudflare e frontend; o backend mantém uma vulnerabilidade
+baixa já existente em `body-parser`, fora do escopo da CF2.
+
+Produção não foi iniciada. Continuam pendentes domínio/cutover de produção,
+configuração equivalente do Access no ambiente produtivo e decisão sobre Smart
+Placement. Workers públicos, Workers compartilhados antigos, Render e Vercel
+permanecem intactos.

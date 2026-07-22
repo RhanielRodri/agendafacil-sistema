@@ -74,26 +74,32 @@ follow-ups ou histórico que já apontem para ela.
 
 ## Cloudflare Access
 
-Feito no painel, não por Wrangler: o token OAuth do Wrangler não tem escopo de
-Zero Trust, então criar a aplicação exige interação humana.
+A configuração usa exclusivamente um API Token com `Access: Apps and Policies
+Write`. Coloque as quatro variáveis abaixo no ambiente do processo ou em arquivo
+local ignorado. Nunca use Global API Key.
 
-Em `workers.dev` o caminho é o atalho do próprio Worker, que dispensa domínio
-próprio:
+```bash
+CLOUDFLARE_ACCESS_API_TOKEN=
+CLOUDFLARE_ACCOUNT_ID=
+STUDIO_CUT_ADMIN_EMAIL=
+LUMIERE_ADMIN_EMAIL=
+```
 
-1. Dashboard → **Workers & Pages** → Overview → selecione o Worker
-   **administrativo**. Nunca o público.
-2. **Settings** → **Domains & Routes** → na linha `workers.dev`, clique em
-   **Enable Cloudflare Access**.
-3. **Manage Cloudflare Access** → policy **Allow** por e-mail individual. Não
-   autorize domínio inteiro: qualquer identidade fora da lista é negada.
-4. Copie o **Application Audience (AUD) Tag** da aplicação criada e o domínio de
-   equipe em Zero Trust → Settings → Custom Pages (`<time>.cloudflareaccess.com`).
-5. Preencha `ACCESS_TEAM_DOMAIN` e a AUD daquela vertical no `.env.staging`, rode
-   `npm run staging:config` e republique aquele Worker administrativo.
-6. Rode o bootstrap com os mesmos e-mails da policy.
+O script lista as aplicações antes de criar, localiza cada uma pelo domínio exato,
+falha diante de duplicidade ou policy conflitante e mantém uma única policy
+`Allow` por e-mail individual. Ao final, recupera os AUDs reais e o domínio da
+organização Zero Trust, grava somente em `.env.staging` e não exibe valores
+sensíveis.
 
-Repita para cada painel. As aplicações são independentes e cada uma tem AUD
-própria — é o que impede um token emitido para uma vertical de valer na outra.
+```bash
+npm run access:test
+npm run access:configure
+npm run access:verify
+npm run staging:config
+```
+
+As aplicações são independentes e cada uma tem AUD própria. Para auditar sem
+alterar o estado remoto ou o arquivo local, use somente `npm run access:verify`.
 
 A policy do Access decide quem entra no painel. A membership no D1 decide qual
 tenant essa pessoa enxerga. As duas camadas são independentes de propósito: passar
