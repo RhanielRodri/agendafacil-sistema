@@ -1,12 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  accessProfiles,
   applicationHostnames,
   isExactEmailPolicy,
   parseEnv,
   run,
   updateEnvText
 } from "./configure-access.mjs";
+
+test("perfil de produção usa somente os domínios definitivos", () => {
+  assert.deepEqual(accessProfiles.production.targets.map(({ name, domain }) => ({ name, domain })), [
+    {
+      name: "AgendaFácil Production — Studio Cut Admin",
+      domain: "studio-cut-admin.sor-os-demos.workers.dev"
+    },
+    {
+      name: "AgendaFácil Production — Lumière Admin",
+      domain: "lumiere-admin.sor-os-demos.workers.dev"
+    }
+  ]);
+});
 
 test("parseEnv preserva somente pares válidos", () => {
   assert.deepEqual(parseEnv("A=1\nB='dois'\n# C=3\n"), { A: "1", B: "dois" });

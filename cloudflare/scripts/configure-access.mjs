@@ -5,23 +5,46 @@ import { fileURLToPath } from "node:url";
 const scriptPath = fileURLToPath(import.meta.url);
 const cloudflareRoot = dirname(dirname(scriptPath));
 const repositoryRoot = dirname(cloudflareRoot);
-const stagingEnvPath = join(cloudflareRoot, ".env.staging");
 const policyName = "Allow configured admin email";
 
-export const targets = [
-  {
-    key: "STUDIO_CUT",
-    label: "Studio Cut",
-    name: "AgendaFácil Staging — Studio Cut Admin",
-    domain: "agendafacil-staging-studio-cut-admin.sor-os-demos.workers.dev"
+export const accessProfiles = {
+  staging: {
+    envPath: join(cloudflareRoot, ".env.staging"),
+    targets: [
+      {
+        key: "STUDIO_CUT",
+        label: "Studio Cut",
+        name: "AgendaFácil Staging — Studio Cut Admin",
+        domain: "agendafacil-staging-studio-cut-admin.sor-os-demos.workers.dev"
+      },
+      {
+        key: "LUMIERE",
+        label: "Lumière",
+        name: "AgendaFácil Staging — Lumière Admin",
+        domain: "agendafacil-staging-lumiere-admin.sor-os-demos.workers.dev"
+      }
+    ]
   },
-  {
-    key: "LUMIERE",
-    label: "Lumière",
-    name: "AgendaFácil Staging — Lumière Admin",
-    domain: "agendafacil-staging-lumiere-admin.sor-os-demos.workers.dev"
+  production: {
+    envPath: join(cloudflareRoot, ".env.production"),
+    targets: [
+      {
+        key: "STUDIO_CUT",
+        label: "Studio Cut",
+        name: "AgendaFácil Production — Studio Cut Admin",
+        domain: "studio-cut-admin.sor-os-demos.workers.dev"
+      },
+      {
+        key: "LUMIERE",
+        label: "Lumière",
+        name: "AgendaFácil Production — Lumière Admin",
+        domain: "lumiere-admin.sor-os-demos.workers.dev"
+      }
+    ]
   }
-];
+};
+
+export const targets = accessProfiles.staging.targets;
 
 export function parseEnv(text) {
   const values = {};
@@ -37,13 +60,13 @@ function readEnvFile(path) {
   return existsSync(path) ? parseEnv(readFileSync(path, "utf8")) : {};
 }
 
-export function loadEnvironment(processEnvironment = process.env) {
+export function loadEnvironment(profile = accessProfiles.staging, processEnvironment = process.env) {
   return Object.assign(
     {},
     readEnvFile(join(repositoryRoot, "backend", ".env")),
     readEnvFile(join(repositoryRoot, ".env")),
     readEnvFile(join(repositoryRoot, ".env.local")),
-    readEnvFile(stagingEnvPath),
+    readEnvFile(profile.envPath),
     processEnvironment
   );
 }
@@ -218,8 +241,8 @@ async function getTeamDomain(api, environment) {
   return remote;
 }
 
-async function discoverTeamDomain(fetchImplementation = fetch) {
-  const response = await fetchImplementation(`https://${targets[0].domain}/api/admin/context`, {
+async function discoverTeamDomain(targetsForProfile, fetchImplementation = fetch) {
+  const response = await fetchImplementation(`https://${targetsForProfile[0].domain}/api/admin/context`, {
     redirect: "manual"
   });
   const location = response.headers.get("location");
@@ -230,10 +253,10 @@ async function discoverTeamDomain(fetchImplementation = fetch) {
   return hostname;
 }
 
-async function inspect(api, environment) {
+async function inspect(api, environment, targetsForProfile) {
   const applications = await api.list("/access/apps");
   const states = [];
-  for (const target of targets) {
+  for (const target of targetsForProfile) {
     const email = required(environment, `${target.key}_ADMIN_EMAIL`).toLowerCase();
     const applicationState = analyzeApplication(applications, target);
     let policyState = { policy: null, policyNeedsUpdate: true };
@@ -283,8 +306,8 @@ async function apply(api, states) {
   }
 }
 
-async function verify(api, environment) {
-  const states = await inspect(api, environment);
+async function verify(api, environment, targetsForProfile) {
+  const states = await inspect(api, environment, targetsForProfile);
   for (const state of states) {
     if (!state.application || state.applicationNeedsUpdate || !state.policy || state.policyNeedsUpdate) {
       throw new Error(`${state.target.label}: configuração remota não converge para o estado esperado.`);
@@ -297,44 +320,49 @@ async function verify(api, environment) {
   return states;
 }
 
-function persistEnvironment(teamDomain, states) {
-  const current = existsSync(stagingEnvPath) ? readFileSync(stagingEnvPath, "utf8") : "";
+function persistEnvironment(envPath, teamDomain, states) {
+  const current = existsSync(envPath) ? readFileSync(envPath, "utf8") : "";
   const next = updateEnvText(current, {
     ACCESS_TEAM_DOMAIN: teamDomain,
     STUDIO_CUT_ACCESS_POLICY_AUD: states[0].application.aud,
     LUMIERE_ACCESS_POLICY_AUD: states[1].application.aud
   });
-  const temporary = `${stagingEnvPath}.tmp`;
+  const temporary = `${envPath}.tmp`;
   writeFileSync(temporary, next, { encoding: "utf8", mode: 0o600 });
-  renameSync(temporary, stagingEnvPath);
+  renameSync(temporary, envPath);
   console.log("Configuração local ignorada atualizada sem exibir valores sensíveis.");
 }
 
 export async function run(options = {}) {
-  const environment = options.environment || loadEnvironment();
+  const profileName = options.profileName || "staging";
+  const profile = accessProfiles[profileName];
+  if (!profile) throw new Error(`Ambiente inválido: ${profileName}.`);
+  const environment = options.environment || loadEnvironment(profile);
   const token = required(environment, "CLOUDFLARE_ACCESS_API_TOKEN");
   const accountId = required(environment, "CLOUDFLARE_ACCOUNT_ID");
   required(environment, "STUDIO_CUT_ADMIN_EMAIL");
   required(environment, "LUMIERE_ADMIN_EMAIL");
   const api = options.api || new CloudflareApi(accountId, token, options.fetchImplementation);
   let teamDomain = await getTeamDomain(api, environment);
-  const initial = await inspect(api, environment);
+  const initial = await inspect(api, environment, profile.targets);
   if (options.check) {
-    const verified = await verify(api, environment);
-    teamDomain ||= await discoverTeamDomain(options.fetchImplementation);
+    const verified = await verify(api, environment, profile.targets);
+    teamDomain ||= await discoverTeamDomain(profile.targets, options.fetchImplementation);
     console.log("Cloudflare Access verificado: duas aplicações e duas policies estritas.");
     return verified;
   }
   await apply(api, initial);
-  const verified = await verify(api, environment);
-  teamDomain ||= await discoverTeamDomain(options.fetchImplementation);
-  persistEnvironment(teamDomain, verified);
+  const verified = await verify(api, environment, profile.targets);
+  teamDomain ||= await discoverTeamDomain(profile.targets, options.fetchImplementation);
+  persistEnvironment(profile.envPath, teamDomain, verified);
   console.log("Cloudflare Access configurado e verificado com sucesso.");
   return verified;
 }
 
 if (process.argv[1] && scriptPath === process.argv[1]) {
-  run({ check: process.argv.includes("--check") }).catch((error) => {
+  const environmentIndex = process.argv.indexOf("--environment");
+  const profileName = environmentIndex === -1 ? "staging" : process.argv[environmentIndex + 1];
+  run({ check: process.argv.includes("--check"), profileName }).catch((error) => {
     console.error(error instanceof Error ? error.message : "Falha inesperada ao configurar Cloudflare Access.");
     process.exitCode = 1;
   });

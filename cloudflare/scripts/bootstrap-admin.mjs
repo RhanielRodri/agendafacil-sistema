@@ -71,9 +71,9 @@ const dir = mkdtempSync(join(tmpdir(), "agendafacil-bootstrap-"));
 const file = join(dir, "bootstrap.sql");
 try {
   writeFileSync(file, sql);
-  execFileSync("npx", ["wrangler", "d1", "execute", database, "--remote", "--config", config, "--file", file], {
-    stdio: "inherit",
-    shell: process.platform === "win32"
+  const executable = process.platform === "win32" ? "npx.cmd" : "npx";
+  execFileSync(executable, ["wrangler", "d1", "execute", database, "--remote", "--config", config, "--file", file], {
+    stdio: "inherit"
   });
 } finally {
   rmSync(dir, { recursive: true, force: true });

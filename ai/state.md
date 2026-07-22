@@ -431,3 +431,35 @@ Produção não foi iniciada. Continuam pendentes domínio/cutover de produção
 configuração equivalente do Access no ambiente produtivo e decisão sobre Smart
 Placement. Workers públicos, Workers compartilhados antigos, Render e Vercel
 permanecem intactos.
+
+## CF3 — Produção separada publicada (2026-07-22)
+
+Produção foi criada sem domínio próprio e sem reutilizar recursos de staging. O
+D1 exclusivo `agendafacil-production-db` recebeu as duas migrations e o seed dos
+dois tenants. Antes do bootstrap havia zero agendamentos, leads, identidades e
+memberships. O bootstrap idempotente convergiu para uma identidade ativa e duas
+memberships ativas.
+
+Workers definitivos publicados: `studio-cut-public`, `studio-cut-admin`,
+`lumiere-public` e `lumiere-admin`. Cada Worker fixa o tenant por
+`TENANT_SLUG`; os públicos permanecem abertos e os administrativos são
+interceptados pelo Cloudflare Access. Smart Placement continua desativado.
+
+As aplicações `AgendaFácil Production — Studio Cut Admin` e `AgendaFácil
+Production — Lumière Admin` são self-hosted, cobrem somente seus domínios
+exatos, usam sessão de 24 horas, uma policy individual de precedência 1 e AUDs
+produtivos distintos entre si e de staging.
+
+Smoke público real aprovado nas duas verticais: branding, catálogo,
+profissionais, disponibilidade, booking 201, conflito 409, token, isolamento
+404, cancelamento 200, token revogado 410, reutilização de slot, fallback de SPA
+e rate limit 429. No navegador, as duas landings ficaram sem erro de console.
+
+Smoke administrativo real aprovado por código de e-mail: desafio do Access,
+JWT, identidade, membership filtrada, deep links e os 11 módulos de cada
+vertical, sem erro de console. O logout pelo endpoint da aplicação encerrou a
+sessão e restaurou o desafio do Access.
+
+Staging, Workers compartilhados antigos, Vercel, Render e `main` não foram
+alterados. O procedimento idempotente ficou documentado em
+`cloudflare/docs/DEPLOY_PRODUCTION.md`.
