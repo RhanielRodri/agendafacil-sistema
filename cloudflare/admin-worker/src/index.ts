@@ -5,11 +5,12 @@ import type { AdminEnv } from "../../shared/src/types";
 import { resolveAdminContext } from "./access";
 import { agendaRoutes } from "./agenda";
 import { identityRoutes } from "./identity";
+import { relationshipRoutes } from "./relationship";
 import { matchRoute, type AdminRoute } from "./router";
 
 const ADMIN_SCOPE = /^\/api\/admin\/tenants\/([^/]+)\/(.+)$/;
 
-const routes: AdminRoute[] = [...identityRoutes, ...agendaRoutes];
+const routes: AdminRoute[] = [...identityRoutes, ...agendaRoutes, ...relationshipRoutes];
 
 interface AdminHandlerOptions {
   jwtKey?: CryptoKey | JWTVerifyGetKey;
