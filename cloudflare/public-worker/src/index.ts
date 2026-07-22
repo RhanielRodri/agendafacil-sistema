@@ -17,11 +17,12 @@ import {
   publicContext,
   publicSettings
 } from "../../shared/src/public-catalog";
+import { capturePublicLead } from "../../shared/src/public-leads";
 import { enforceRateLimit } from "../../shared/src/rate-limit";
 import { findActiveTenant, tenantSlugFromPath } from "../../shared/src/tenant";
 import type { PublicEnv } from "../../shared/src/types";
 
-const TENANT_ROUTE = /^\/api\/tenants\/([^/]+)\/(context|services|professionals|business-hours|settings|available-slots|appointments|appointment(?:\/(?:confirm|cancel|reschedule-availability|reschedule))?)$/;
+const TENANT_ROUTE = /^\/api\/tenants\/([^/]+)\/(context|services|professionals|business-hours|settings|available-slots|appointments|leads|appointment(?:\/(?:confirm|cancel|reschedule-availability|reschedule))?)$/;
 
 async function handleApi(request: Request, env: PublicEnv): Promise<Response> {
   const url = new URL(request.url);
@@ -47,6 +48,11 @@ async function handleApi(request: Request, env: PublicEnv): Promise<Response> {
       await enforceRateLimit(env.DB, request, tenant.slug, "booking:create", 10);
       const payload = validatePublicBookingPayload(await readJsonObject(request));
       return json(await createPublicAppointment(env.DB, tenant.slug, payload), { status: 201 });
+    }
+    if (request.method === "POST" && resource === "leads") {
+      await enforceRateLimit(env.DB, request, tenant.slug, "lead:create", 5);
+      const result = await capturePublicLead(env.DB, tenant.slug, await readJsonObject(request));
+      return json(result.body, { status: result.status });
     }
     if (request.method === "GET" && resource === "appointment") {
       await enforceRateLimit(env.DB, request, tenant.slug, "booking:read", 60);

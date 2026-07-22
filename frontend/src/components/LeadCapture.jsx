@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { toId } from "../utils/id.js";
 import tenant from "../config/tenant.js";
 import { api } from "../services/api.js";
 import StateMessage from "./StateMessage.jsx";
@@ -41,7 +42,7 @@ export default function LeadCapture({ services }) {
     try {
       const response = await api.captureLead({
         ...form,
-        serviceId: form.serviceId ? Number(form.serviceId) : null,
+        serviceId: toId(form.serviceId),
         ...(tenant.slug === "studio-cut" ? { urgency: form.urgency } : {})
       });
       setState("success");

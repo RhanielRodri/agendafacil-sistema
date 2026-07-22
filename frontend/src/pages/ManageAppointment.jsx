@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { toId } from "../utils/id.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import StateMessage from "../components/StateMessage.jsx";
 import { api } from "../services/api.js";
@@ -59,7 +60,7 @@ export default function ManageAppointment({ token, professionals, onBack }) {
     setSlotsState("loading");
     setSlots([]);
     setSlot("");
-    api.getRescheduleAvailability({ token, date, professionalId: Number(professionalId) })
+    api.getRescheduleAvailability({ token, date, professionalId: toId(professionalId) })
       .then((data) => {
         if (!active) return;
         setSlots(Array.isArray(data) ? data : []);
@@ -113,7 +114,7 @@ export default function ManageAppointment({ token, professionals, onBack }) {
       const result = await api.rescheduleManagedAppointment(token, {
         date,
         time: slot,
-        professionalId: Number(professionalId)
+        professionalId: toId(professionalId)
       });
       window.history.replaceState({}, "", result.managementPath);
       window.location.reload();

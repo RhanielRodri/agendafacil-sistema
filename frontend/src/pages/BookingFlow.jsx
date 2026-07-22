@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { toId, sameId } from "../utils/id.js";
 import { api } from "../services/api.js";
 import StateMessage from "../components/StateMessage.jsx";
 import { formatCurrency, todayInputValue } from "../utils/format.js";
@@ -24,12 +25,12 @@ export default function BookingFlow({ services, professionals, initialServiceId,
   const [submitting, setSubmitting] = useState(false);
 
   const selectedService = useMemo(
-    () => services.find((service) => service.id === Number(selectedServiceId)),
+    () => services.find((service) => sameId(service.id, selectedServiceId)),
     [services, selectedServiceId]
   );
 
   const selectedProfessional = useMemo(
-    () => professionals.find((professional) => professional.id === Number(selectedProfessionalId)),
+    () => professionals.find((professional) => sameId(professional.id, selectedProfessionalId)),
     [professionals, selectedProfessionalId]
   );
 
@@ -83,8 +84,8 @@ export default function BookingFlow({ services, professionals, initialServiceId,
     setSubmitting(true);
 
     api.createAppointment({
-      serviceId: Number(selectedServiceId),
-      professionalId: Number(selectedProfessionalId),
+      serviceId: toId(selectedServiceId),
+      professionalId: toId(selectedProfessionalId),
       date,
       time,
       ...form

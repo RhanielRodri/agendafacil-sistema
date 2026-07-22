@@ -9,3 +9,7 @@ dist/
 *.sqlite3
 *.db
 coverage/
+public-worker/assets/*
+!public-worker/assets/.gitkeep
+admin-worker/assets/*
+!admin-worker/assets/.gitkeep

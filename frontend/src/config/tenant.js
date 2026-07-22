@@ -6,6 +6,13 @@ export const businesses = {
   lumiere
 };
 
+// `full` mantém o comportamento único do build atual (Vercel). Em Cloudflare a
+// mesma aplicação é publicada duas vezes: o Public Worker só expõe as rotas
+// públicas e o Admin Worker só expõe os painéis.
+export const surface = ["public", "admin"].includes(import.meta.env.VITE_CF_SURFACE)
+  ? import.meta.env.VITE_CF_SURFACE
+  : "full";
+
 const routes = {
   "/studio-cut": { page: "home", businessId: "studio-cut" },
   "/studio-cut/admin": { page: "admin", businessId: "studio-cut" },
@@ -26,17 +33,24 @@ function normalizePath(pathname) {
   return normalized || "/";
 }
 
+function surfacePath(path) {
+  // No painel, o endereço público do mesmo negócio é atalho para o painel.
+  if (surface === "admin" && routes[path]?.page === "home") return `${path}/admin`;
+  return path;
+}
+
 const requestedPath = normalizePath(window.location.pathname);
-const canonicalPath = legacyRedirects[requestedPath] || requestedPath;
+const canonicalPath = surfacePath(legacyRedirects[requestedPath] || requestedPath);
 
 if (canonicalPath !== requestedPath) {
   window.history.replaceState({}, "", canonicalPath);
 }
 
-export const currentRoute = routes[canonicalPath] || {
-  page: "neutral",
-  businessId: null
-};
+const matched = routes[canonicalPath];
+const allowedHere = matched
+  && (surface === "full" || (surface === "admin" ? matched.page === "admin" : matched.page === "home"));
+
+export const currentRoute = allowedHere ? matched : { page: "neutral", businessId: null };
 
 const tenant = currentRoute.businessId ? businesses[currentRoute.businessId] : null;
 

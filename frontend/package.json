@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:cf:public": "vite build --mode cf-public",
+    "build:cf:admin": "vite build --mode cf-admin",
+    "build:cf": "npm run build:cf:public && npm run build:cf:admin"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.5.1",

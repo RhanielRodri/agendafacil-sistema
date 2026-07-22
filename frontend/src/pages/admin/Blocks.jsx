@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { toId } from "../../utils/id.js";
 import { api } from "../../services/api.js";
 import { usePanelData } from "../../utils/usePanelData.js";
 import { useStructuralAction } from "../../utils/useStructuralAction.js";
@@ -32,7 +33,7 @@ export default function Blocks({ professionals, onSessionExpired }) {
   function submit(event) {
     event.preventDefault();
     const payload = {
-      professionalId: form.professionalId ? Number(form.professionalId) : null,
+      professionalId: toId(form.professionalId),
       date: form.date,
       allDay: form.allDay,
       startTime: form.allDay ? null : form.startTime,

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { toId } from "../../utils/id.js";
 import { api } from "../../services/api.js";
 import { usePanelData } from "../../utils/usePanelData.js";
 import { PanelEmpty, PanelError, PanelLoading, PanelMessage, StatusPill } from "../../components/panel/PanelState.jsx";
@@ -18,7 +19,7 @@ export default function Clients({ params, onNavigate, onSessionExpired }) {
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState(params.clientId ? Number(params.clientId) : null);
+  const [selectedId, setSelectedId] = useState(toId(params.clientId));
   const [detail, setDetail] = useState(null);
   const [detailState, setDetailState] = useState("idle");
   const [history, setHistory] = useState([]);

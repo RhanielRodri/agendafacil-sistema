@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { toId } from "../../utils/id.js";
 import { api } from "../../services/api.js";
 import { usePanelData } from "../../utils/usePanelData.js";
 import { PanelEmpty, PanelError, PanelLoading, PanelMessage, StatusPill } from "../../components/panel/PanelState.jsx";
@@ -175,7 +176,7 @@ export default function Leads({ tenantId, vertical, services, professionals, use
   }
 
   React.useEffect(() => {
-    if (params.leadId) openLead(Number(params.leadId));
+    if (params.leadId) openLead(toId(params.leadId));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -447,7 +448,7 @@ export default function Leads({ tenantId, vertical, services, professionals, use
               <select
                 value={selected.ownerUserId || ""}
                 onChange={(event) => mutate(
-                  () => api.assignLeadOwner(selected.id, event.target.value ? Number(event.target.value) : null),
+                  () => api.assignLeadOwner(selected.id, toId(event.target.value)),
                   "Responsável atualizado."
                 )}
               >
@@ -472,7 +473,7 @@ export default function Leads({ tenantId, vertical, services, professionals, use
                   event.preventDefault();
                   mutate(() => api.updateLeadQualification(selected.id, {
                     ...qualification,
-                    preferredProfessionalId: qualification.preferredProfessionalId ? Number(qualification.preferredProfessionalId) : null
+                    preferredProfessionalId: toId(qualification.preferredProfessionalId)
                   }), "Qualificação salva.");
                 }}
               >
@@ -638,7 +639,7 @@ export default function Leads({ tenantId, vertical, services, professionals, use
                           onClick={() => mutate(() => api.completeFollowUp(followUp.id, {
                             dueAt: new Date(followUpForm.dueAt).toISOString(),
                             type: followUpForm.type,
-                            ownerUserId: followUpForm.ownerUserId ? Number(followUpForm.ownerUserId) : null,
+                            ownerUserId: toId(followUpForm.ownerUserId),
                             note: followUpForm.note
                           }), "Follow-up concluído e próxima ação criada.")}
                         >
@@ -667,7 +668,7 @@ export default function Leads({ tenantId, vertical, services, professionals, use
                       leadId: selected.id,
                       dueAt: new Date(followUpForm.dueAt).toISOString(),
                       type: followUpForm.type,
-                      ownerUserId: followUpForm.ownerUserId ? Number(followUpForm.ownerUserId) : null,
+                      ownerUserId: toId(followUpForm.ownerUserId),
                       note: followUpForm.note
                     }), "Próxima ação criada.");
                   }}
@@ -747,7 +748,7 @@ export default function Leads({ tenantId, vertical, services, professionals, use
                           setMessage({ type: "error", text: "Selecione um agendamento válido." });
                           return;
                         }
-                        mutate(() => api.convertLead(selected.id, Number(appointmentId)), "Lead convertido.");
+                        mutate(() => api.convertLead(selected.id, toId(appointmentId)), "Lead convertido.");
                       }}
                     >
                       Converter
@@ -761,8 +762,8 @@ export default function Leads({ tenantId, vertical, services, professionals, use
                       mutate(() => api.convertLead(selected.id, {
                         appointment: {
                           ...appointmentForm,
-                          serviceId: Number(appointmentForm.serviceId),
-                          professionalId: Number(appointmentForm.professionalId)
+                          serviceId: toId(appointmentForm.serviceId),
+                          professionalId: toId(appointmentForm.professionalId)
                         }
                       }), "Agendamento criado e lead convertido.");
                     }}

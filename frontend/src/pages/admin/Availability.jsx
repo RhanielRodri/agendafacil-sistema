@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { toId } from "../../utils/id.js";
 import { api } from "../../services/api.js";
 import { usePanelData } from "../../utils/usePanelData.js";
 import { useStructuralAction } from "../../utils/useStructuralAction.js";
@@ -87,7 +88,7 @@ export default function Availability({ professionals, params, onSessionExpired }
   function submitInterval(event) {
     event.preventDefault();
     const payload = {
-      professionalId: Number(intervalForm.professionalId),
+      professionalId: toId(intervalForm.professionalId),
       dayOfWeek: Number(intervalForm.dayOfWeek),
       startTime: intervalForm.startTime,
       endTime: intervalForm.endTime,
@@ -109,11 +110,11 @@ export default function Availability({ professionals, params, onSessionExpired }
   function submitCopy(event) {
     event.preventDefault();
     const payload = {
-      targetProfessionalId: Number(selectedId),
+      targetProfessionalId: toId(selectedId),
       source: copyForm.source,
-      ...(copyForm.source === "professional" ? { fromProfessionalId: Number(copyForm.fromProfessionalId) } : {}),
+      ...(copyForm.source === "professional" ? { fromProfessionalId: toId(copyForm.fromProfessionalId) } : {}),
       ...(copyForm.source === "day"
-        ? { fromProfessionalId: Number(selectedId), fromDayOfWeek: Number(copyForm.fromDayOfWeek) }
+        ? { fromProfessionalId: toId(selectedId), fromDayOfWeek: Number(copyForm.fromDayOfWeek) }
         : {}),
       ...(copyForm.targetDays.length ? { targetDays: copyForm.targetDays } : {})
     };
@@ -279,7 +280,7 @@ export default function Availability({ professionals, params, onSessionExpired }
             title="Sem agenda configurada"
             actionLabel="Copiar horário do negócio"
             onAction={() => action.run(
-              (confirm) => api.copyProfessionalSchedules({ targetProfessionalId: Number(selectedId), source: "business", confirm }),
+              (confirm) => api.copyProfessionalSchedules({ targetProfessionalId: toId(selectedId), source: "business", confirm }),
               "Agenda copiada do horário do negócio."
             )}
           >

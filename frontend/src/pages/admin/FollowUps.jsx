@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { toId } from "../../utils/id.js";
 import { api } from "../../services/api.js";
 import { usePanelData } from "../../utils/usePanelData.js";
 import { PanelEmpty, PanelError, PanelLoading, PanelMessage, StatusPill } from "../../components/panel/PanelState.jsx";
@@ -165,7 +166,7 @@ export default function FollowUps({ users, params, onNavigate, onSessionExpired 
                           disabled={busyId === followUp.id}
                           onChange={(event) => run(
                             followUp,
-                            () => api.assignFollowUpOwner(followUp.id, event.target.value ? Number(event.target.value) : null),
+                            () => api.assignFollowUpOwner(followUp.id, toId(event.target.value)),
                             "Responsável atualizado."
                           )}
                         >
