@@ -140,11 +140,26 @@ Não portadas por decisão de escopo: `P/first-availability`, sem consumidor enc
 | PATCH | `/api/admin/settings` | administrativa | sessão | cookie local | `TenantSettings` | upsert de campos válidos | settings salvos | `Settings` | `A/settings` |
 | GET | `/api/admin/metrics` | administrativa | sessão | cookie local | `BusinessHours`, `ProfessionalSchedule`, `ScheduleBlock`, `Professional`, `Appointment`, `Lead`, `FollowUp`, `Client`, `RelationshipHistoryEvent` | nenhum | indicadores por período, funil, SLA e capacidade | `Metrics` | `A/metrics` |
 
+### Estado após CF1C
+
+Portadas e provadas no D1 local, todas sob `A/` com identidade exclusiva do Cloudflare Access e tenant vindo só do slug da rota:
+
+- Identidade: `A/context` (agora com terminologia da vertical) e `A/identities`, recorte das memberships do tenant.
+- Agenda: `A/appointments`, `A/appointments/:id`, `A/appointments/:id/status`, `A/appointments/:id/history`, `A/overview`, `A/agenda`.
+- Relacionamento: `A/clients` e derivadas, `A/leads` e todas as ações de pipeline, `A/follow-ups` e derivadas.
+- Catálogo: `A/services` e `A/professionals` com ordenação, dependências, associações e prévia/confirmação estrutural.
+- Horários: `A/business-hours`, `A/professional-schedules` (incluindo `/copy`) e `A/schedule-blocks`.
+- Configuração e indicadores: `A/settings` e `A/metrics`.
+
+Login e logout locais foram removidos por decisão de arquitetura: identidade é Cloudflare Access, sem senha, PBKDF2, JWT próprio ou sessão local.
+
+Incompatibilidades conhecidas que permanecem: `A/appointments/export.csv` e os Static Assets seguem reservados para CF1D; `P/first-availability` e `P/leads` continuam não portados; conflitos estruturais respondem `409` com `code: "CONFLICT_REQUIRES_CONFIRMATION"` e a lista `conflicts`, como no backend atual — a coluna “Resposta esperada” desta matriz ainda diz `422` e está desatualizada em relação ao código.
+
 ## Destino por fase
 
 - CF1A: somente `/api/live`, resolução segura de tenant, contexto público mínimo e contexto administrativo autorizado.
 - CF1B: rotas públicas e lifecycle público.
-- CF1C: agenda, relacionamento, pipeline e indicadores administrativos.
-- CF1D: gestão estrutural, settings, CSV, Static Assets e adaptação final do frontend.
+- CF1C: identidade, agenda, relacionamento, pipeline, catálogo, horários, configuração e indicadores administrativos.
+- CF1D: CSV, Static Assets e adaptação final do frontend.
 
-Nenhuma linha desta matriz, exceto a fundação explicitamente listada para CF1A, representa endpoint já implementado no Worker.
+Fora do que está listado como portado em CF1A, CF1B e CF1C, nenhuma linha desta matriz representa endpoint já implementado no Worker.

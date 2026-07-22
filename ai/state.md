@@ -3,7 +3,7 @@ project: AgendaFácil
 updated_at: 2026-07-21
 review_at: 2026-07-24
 status: active
-current_phase: CF1B_local_concluida
+current_phase: CF1C_local_concluida
 technical_baseline:
   commit: 194932c2f88110cc57d25fc1388c0db0cde5a682
   validation_status: partial
@@ -257,6 +257,27 @@ Validação local confirmada:
 - o backend original mantém 1 vulnerabilidade baixa preexistente em `body-parser` e não foi alterado.
 
 Permanecem para as fases seguintes: rotas administrativas e Cloudflare Access na CF1C; adaptação do frontend para slug na rota, IDs string, envelope de erro, Static Assets e regressão E2E na CF1D. `/api/public/leads` e `/api/first-availability` não foram portadas na CF1B pelas razões registradas em `cloudflare/docs/PUBLIC_API.md`.
+
+## CF1C — Operação administrativa no Admin Worker e D1 local
+
+CF1C foi implementada e validada somente na branch `codex/cf1-cloudflare-migration`, sem deploy, push, D1 remoto, migration nova ou alteração de backend PostgreSQL, Prisma, frontend, Render e Vercel. O Admin Worker ganhou roteador próprio sob `/api/admin/tenants/:slug/`, com identidade exclusiva do Cloudflare Access — sem senha, PBKDF2, JWT próprio ou sessão local — e tenant vindo só do slug da rota, autorizado por `AdminMembership` ativa. `tenant`, `tenantId` e `demoId` enviados em query, corpo, cookie ou header são ignorados.
+
+Domínios portados: identidade e memberships; agenda, agendamentos, histórico, overview e indicadores do dia; clientes, leads e follow-ups com pipeline completo; serviços, profissionais, associações e dependências; horário do negócio, agendas profissionais, cópia de agenda e bloqueios; configurações e indicadores consolidados.
+
+`DB.batch` é usado só onde a operação é composta e precisa ser atômica: transição de status com histórico, revogação de token e liberação de slots; criação de lead com follow-up e eventos; perda e conversão com fechamento de follow-ups; substituição de associações; upsert da semana de expediente; cópia de agenda. Prévia estrutural continua somente leitura e responde `409` com `code: "CONFLICT_REQUIRES_CONFIRMATION"`; a confirmação recarrega o estado e recalcula o impacto, ignorando qualquer `appliedImpact` enviado pelo cliente. Nenhuma operação estrutural cancela ou move agendamento existente.
+
+Validação local confirmada:
+
+- 125/125 testes Cloudflare, 67 novos na CF1C sobre os 58 anteriores;
+- TypeScript e dry-run dos Workers público e administrativo verdes;
+- Vite original com 66 módulos e três entradas;
+- `git diff --check` limpo e árvore de trabalho limpa;
+- nenhuma migration D1 nova e nenhum artefato local versionado.
+
+Não validado nesta fase: a suíte do backend original não pôde ser executada porque o PostgreSQL local depende do Docker Desktop, que está parado; `DATABASE_URL` aponta para a porta 5433 e só a 5432 está escutando. CF1C não alterou nenhum arquivo de `backend/`, mas o gate permanece pendente e o número 209 do baseline segue não reconciliado com os 217 testes que a suíte coleta hoje.
+
+Permanecem para a CF1D: `A/appointments/export.csv`, Static Assets e adaptação do frontend.
+
 O rollout remoto continua bloqueado — não mais pelo drift, e sim pelas onze
 migrations acumuladas, que exigem fase própria com backup, janela e smoke de
 produção antes de qualquer aplicação fora do Docker local.
