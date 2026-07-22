@@ -54,6 +54,31 @@
   --shadow-sm: none;
   --shadow-md: none;
 
+  /* Escala compartilhada (A6): espaçamento, tipografia e movimento herdados por
+     ambas as verticais. Cor, raio e família continuam definidos por vertical. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+  --space-10: 64px;
+
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+
+  --dur-fast: 0.15s;
+  --dur-base: 0.2s;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --focus-ring: 2px solid var(--accent);
+  --focus-offset: 2px;
+
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
   line-height: 1.5;
 }
@@ -70,3 +95,21 @@ body {
 
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
+
+/* Foco visível compartilhado para as superfícies públicas. O painel mantém o
+   seu próprio anel (`.panel-shell :focus-visible`), de maior especificidade. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+/* Respeita quem reduz movimento: sem scroll suave, sem transições longas. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
