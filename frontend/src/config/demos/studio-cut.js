@@ -16,7 +16,7 @@ const studioCut = {
     description: "Escolha seu serviço, profissional e horário na Studio Cut.",
     themeColor: "#111111",
     image: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80",
-    canonical: "https://agendafacil-sistema.vercel.app/studio-cut"
+    canonical: "https://studio-cut-public.sor-os-demos.workers.dev"
   },
 
   hero: {

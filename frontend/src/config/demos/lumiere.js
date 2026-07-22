@@ -16,7 +16,7 @@ const lumiere = {
     description: "Agende seu horário para cuidados faciais e corporais na Lumière Estética.",
     themeColor: "#faf8f5",
     image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
-    canonical: "https://agendafacil-sistema.vercel.app/lumiere"
+    canonical: "https://lumiere-public.sor-os-demos.workers.dev"
   },
 
   hero: {

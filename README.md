@@ -2,8 +2,9 @@
 
 Sistema full stack de agendamento online para pequenos negocios de servico. A demonstracao usa a marca ficticia Studio Cut, onde o cliente escolhe servico, profissional, data e horario, e a empresa acompanha tudo em um painel administrativo.
 
-[Demo publica](https://agendafacil-sistema.vercel.app)  
-[Painel admin](https://agendafacil-sistema.vercel.app/admin)  
+[Solução comercial](https://sor-one-internal.vercel.app/solucoes/agendamento)
+[Demo Studio Cut](https://studio-cut-public.sor-os-demos.workers.dev)
+[Demo Lumière](https://lumiere-public.sor-os-demos.workers.dev)
 [Repositorio](https://github.com/RhanielRodri/agendafacil-sistema)
 
 > O painel admin usa a senha configurada em `ADMIN_SECRET`. Nao existe senha real versionada no repositorio.
@@ -123,8 +124,8 @@ Use valores reais apenas nos arquivos `.env` locais ou nos paineis da Vercel/Ren
 - Frontend: Vercel, com root directory `frontend`.
 - Backend: Render, usando `render.yaml` na raiz.
 - Banco: PostgreSQL no Render.
-- API publicada: `https://agendafacil-api-5zxc.onrender.com/api`
-- Health check: `https://agendafacil-api-5zxc.onrender.com/api/health`
+- APIs públicas: Workers Cloudflare exclusivos por vertical
+- Persistência: D1 produtivo exclusivo
 
 ## O que este projeto demonstra
 

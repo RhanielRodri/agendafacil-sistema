@@ -1,47 +1,54 @@
 {
   "redirects": [
     {
+      "source": "/",
+      "destination": "https://sor-one-internal.vercel.app/solucoes/agendamento",
+      "permanent": true
+    },
+    {
       "source": "/demo/studio-cut",
-      "destination": "/studio-cut",
+      "destination": "https://studio-cut-public.sor-os-demos.workers.dev",
       "permanent": true
     },
     {
       "source": "/demo/lumiere",
-      "destination": "/lumiere",
+      "destination": "https://lumiere-public.sor-os-demos.workers.dev",
       "permanent": true
     },
     {
       "source": "/demo/studio-cut/admin",
-      "destination": "/studio-cut/admin",
+      "destination": "https://studio-cut-admin.sor-os-demos.workers.dev",
       "permanent": true
     },
     {
       "source": "/demo/lumiere/admin",
-      "destination": "/lumiere/admin",
+      "destination": "https://lumiere-admin.sor-os-demos.workers.dev",
       "permanent": true
     },
     {
       "source": "/admin",
-      "destination": "/studio-cut/admin",
-      "permanent": false
-    }
-  ],
-  "rewrites": [
+      "destination": "https://studio-cut-admin.sor-os-demos.workers.dev",
+      "permanent": true
+    },
     {
       "source": "/studio-cut",
-      "destination": "/studio-cut/index.html"
+      "destination": "https://studio-cut-public.sor-os-demos.workers.dev",
+      "permanent": true
     },
     {
       "source": "/studio-cut/admin",
-      "destination": "/studio-cut/index.html"
+      "destination": "https://studio-cut-admin.sor-os-demos.workers.dev",
+      "permanent": true
     },
     {
       "source": "/lumiere",
-      "destination": "/lumiere/index.html"
+      "destination": "https://lumiere-public.sor-os-demos.workers.dev",
+      "permanent": true
     },
     {
       "source": "/lumiere/admin",
-      "destination": "/lumiere/index.html"
+      "destination": "https://lumiere-admin.sor-os-demos.workers.dev",
+      "permanent": true
     }
   ]
 }
