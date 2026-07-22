@@ -32,7 +32,7 @@
 }
 
 .footer-credit {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 10px;
   letter-spacing: 0.04em;
 }

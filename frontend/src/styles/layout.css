@@ -67,7 +67,7 @@
 .eyebrow {
   display: inline-block;
   margin-bottom: 10px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.14em;
@@ -89,7 +89,7 @@
 }
 
 .footer-brand {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -97,13 +97,13 @@
 }
 
 .footer-tagline {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 11px;
   margin: 2px 0 0;
 }
 
 .footer a {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 11px;
   text-decoration: none;
   transition: color 0.15s;
