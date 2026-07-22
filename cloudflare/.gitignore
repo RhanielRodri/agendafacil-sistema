@@ -11,3 +11,9 @@ dist/
 coverage/
 public-worker/assets/
 admin-worker/assets/
+
+# Ambiente remoto: IDs e política reais nunca entram no Git.
+.env.staging
+.env.production
+wrangler.staging.*.jsonc
+wrangler.production.*.jsonc

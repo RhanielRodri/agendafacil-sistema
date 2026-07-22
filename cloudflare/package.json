@@ -11,7 +11,12 @@
     "db:migrate:local": "wrangler d1 migrations apply agendafacil-cf1-local --local --config wrangler.public.jsonc",
     "db:seed:local": "wrangler d1 execute agendafacil-cf1-local --local --config wrangler.public.jsonc --file seed/0001_demo.sql",
     "test": "vitest run",
-    "check:bundles": "node scripts/check-bundles.mjs"
+    "check:bundles": "node scripts/check-bundles.mjs",
+    "staging:config": "node scripts/staging-config.mjs",
+    "staging:migrate": "wrangler d1 migrations apply agendafacil-staging-db --remote --config wrangler.staging.public.jsonc",
+    "staging:seed": "wrangler d1 execute agendafacil-staging-db --remote --config wrangler.staging.public.jsonc --file seed/0001_demo.sql",
+    "staging:deploy:public": "wrangler deploy --config wrangler.staging.public.jsonc",
+    "staging:deploy:admin": "wrangler deploy --config wrangler.staging.admin.jsonc"
   },
   "dependencies": {
     "jose": "6.2.4"

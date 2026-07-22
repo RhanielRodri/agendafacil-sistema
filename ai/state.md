@@ -3,7 +3,7 @@ project: AgendaFácil
 updated_at: 2026-07-22
 review_at: 2026-07-25
 status: active
-current_phase: CF1D_local_concluida
+current_phase: CF2_staging_publicado
 technical_baseline:
   commit: 194932c2f88110cc57d25fc1388c0db0cde5a682
   validation_status: partial
@@ -299,3 +299,43 @@ Permanece para CF2, tudo ato remoto: publicar os dois Workers, criar o D1 remoto
 O rollout remoto continua bloqueado — não mais pelo drift, e sim pelas onze
 migrations acumuladas, que exigem fase própria com backup, janela e smoke de
 produção antes de qualquer aplicação fora do Docker local.
+
+## CF2 — Staging publicado (2026-07-22)
+
+Branch `codex/cf1-cloudflare-migration` empurrada para `origin` a partir de
+`0968d08`. `main` não foi tocada e continua sem nenhum commit da migração.
+
+Ambiente remoto criado: D1 `agendafacil-staging-db` (região ENAM), migrations
+`0001_full_schema` e `0002_public_rate_limits` aplicadas e seed executado —
+2 tenants, 6 serviços, 4 profissionais, 14 faixas de horário, 0 identidades
+administrativas. Workers `agendafacil-staging-public` e
+`agendafacil-staging-admin` publicados, compartilhando o mesmo D1.
+
+Nada do ambiente foi versionado: `.env.staging` e os `wrangler.staging.*.jsonc`
+gerados são ignorados; o repositório guarda apenas `scripts/staging-config.mjs`,
+`scripts/bootstrap-admin.mjs` e `docs/DEPLOY_STAGING.md`.
+
+Provado contra o D1 remoto, nas duas verticais: catálogo, profissionais,
+disponibilidade, criação `201`, conflito de mesmo slot `409`, slot removido da
+disponibilidade, consulta por token `200`, token de outro tenant `404`,
+cancelamento `200`, slot devolvido à disponibilidade, token revogado `410`,
+rate limit de 10 por minuto seguido de `429`, serviço de outro tenant `404`,
+`/api/*` respondendo JSON e nunca o HTML da SPA, rota inexistente caindo no
+fallback, HTML público `max-age=0, must-revalidate`, asset versionado
+`immutable`, resposta administrativa `no-store` com `X-Robots-Tag`.
+
+Interface conferida no navegador contra staging: landings das duas verticais com
+terminologia e identidade próprias, deep link `#agendamento=<token>` abrindo a
+gestão do agendamento pelo fallback da SPA, console limpo e nenhuma requisição
+ao Render em nenhuma das duas superfícies.
+
+Sem Access configurado o Worker administrativo falha fechado: `401` em toda rota
+de API e a tela "Sessão expirada" no lugar de qualquer formulário de senha.
+
+Pendente de decisão humana, não de código: domínio de equipe do Zero Trust,
+aplicação e policy do Access, AUD, e-mails administrativos para o bootstrap,
+domínio próprio e a autorização do corte de produção.
+
+Alerta de latência: D1 não tem região na América do Sul. Com o primário em ENAM,
+o TTFB a partir do Brasil fica em ~0,34 s nas rotas que tocam o banco contra
+~0,11 s nas puramente estáticas. Avaliar Smart Placement antes do corte.

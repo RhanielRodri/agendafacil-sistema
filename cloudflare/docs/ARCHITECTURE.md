@@ -177,9 +177,32 @@ Para exercitar o painel localmente sem Access definitivo existe `admin-worker/sr
 
 Os arquivos versionados usam nomes e IDs locais sintéticos. Valores reais de `ACCESS_TEAM_DOMAIN`, `ACCESS_POLICY_AUD`, IDs de conta/banco, tokens e emails administrativos nunca entram no Git. O bootstrap administrativo é descrito em `SEED_AND_BOOTSTRAP.md`.
 
+## Staging (CF2)
+
+Staging é o mesmo código de CF1D publicado num ambiente próprio. Os dois Workers
+compartilham um único D1 remoto, criado na região ENAM. O procedimento completo
+está em `DEPLOY_STAGING.md`.
+
+O ambiente nunca é versionado. `scripts/staging-config.mjs` gera
+`wrangler.staging.public.jsonc` e `wrangler.staging.admin.jsonc` a partir de
+`.env.staging`; os três arquivos são ignorados, então o repositório guarda o
+procedimento e não a conta.
+
+Enquanto `ACCESS_TEAM_DOMAIN` e `ACCESS_POLICY_AUD` não apontarem para uma
+aplicação real do Zero Trust, nenhum token satisfaz `verifyAccessToken` e o
+Worker administrativo responde `401` em todas as rotas de API, servindo apenas o
+shell da SPA. Esse é o estado seguro de espera, não uma falha.
+
+O seed não cria identidades administrativas de propósito: e-mail é dado de
+ambiente. `scripts/bootstrap-admin.mjs` recebe os endereços por argumento, aplica
+o SQL a partir de um arquivo temporário fora da árvore do projeto e o apaga.
+
 ## Limites desta fase
 
-- Nenhum Worker é publicado.
-- Nenhum D1 remoto é criado.
-- Nenhuma configuração de Render, Vercel ou produção é alterada.
-- Após CF1D a aplicação está completa e integrada localmente; o que falta é ato remoto: publicar os Workers, criar o D1 remoto, aplicar as migrations e configurar o Access definitivo.
+- Produção continua no Render e no Vercel, intacta, até o corte ser autorizado.
+- O corte de domínio, a remoção da infraestrutura antiga e qualquer alteração em
+  `main` dependem de autorização explícita.
+- D1 não tem região na América do Sul; com o primário em ENAM, cada consulta a
+  partir do Brasil custa cerca de 230 ms de ida e volta. É o piso de latência das
+  rotas que tocam o banco, e a alternativa a avaliar em produção é Smart
+  Placement, não uma região mais próxima.
