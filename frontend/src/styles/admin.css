@@ -154,7 +154,7 @@
   min-height: 46px;
   margin-top: 8px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-text);
   border: none;
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
@@ -295,7 +295,7 @@
 }
 
 .metric-value.accent {
-  color: var(--accent);
+  color: var(--panel-accent);
 }
 
 .metric-value.success {
@@ -332,7 +332,7 @@
 }
 
 .appointment-card:hover {
-  border-color: rgba(200, 135, 74, 0.3);
+  border-color: var(--panel-ring-strong);
   box-shadow: var(--shadow-sm);
 }
 
@@ -403,9 +403,9 @@
 }
 
 .badge.pending {
-  background: var(--accent-muted);
-  color: var(--accent);
-  border: 1px solid rgba(200, 135, 74, 0.25);
+  background: var(--status-pending-bg);
+  color: var(--status-pending);
+  border: 1px solid rgba(150, 86, 10, 0.25);
 }
 
 .badge.confirmed {
@@ -597,9 +597,9 @@
 }
 
 .admin-action-primary {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
+  border-color: var(--panel-accent);
+  background: var(--panel-accent);
+  color: var(--panel-accent-contrast);
 }
 
 .admin-action-secondary,

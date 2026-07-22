@@ -37,6 +37,18 @@
   --text-on-light: #15171a;
   --text-on-light-muted: #585e68;
 
+  /* Nomes usados pelo admin.css que nunca foram definidos: card claro e input
+     elevado nas telas escuras ficavam transparentes. */
+  --bg-light-surface: #ffffff;
+  --bg-dark-elevated: #202024;
+
+  /* Ação primária da superfície operacional CLARA. Diferente de --accent, que é
+     calibrado para a superfície pública de cada vertical (branco no Studio Cut
+     escuro). Cada vertical sobrescreve preservando a sua identidade. */
+  --panel-accent: #15171a;
+  --panel-accent-contrast: #ffffff;
+  --panel-ring-strong: rgba(21, 23, 26, 0.22);
+
   --status-pending: #96560a;
   --status-pending-bg: #fdf3e6;
   --status-confirmed: #146b3f;

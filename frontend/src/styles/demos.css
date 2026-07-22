@@ -50,6 +50,9 @@
   --accent-hover: #dedede;
   --accent-muted: rgba(255, 255, 255, 0.07);
   --accent-text: #101010;
+  --panel-accent: #101010;
+  --panel-accent-contrast: #ffffff;
+  --panel-ring-strong: rgba(16, 16, 16, 0.24);
   --radius-sm: 0;
   --radius-md: 0;
   --radius-lg: 0;
@@ -101,6 +104,9 @@
   --accent-hover: #a17c52;
   --accent-muted: rgba(184, 146, 101, 0.14);
   --accent-text: #ffffff;
+  --panel-accent: #b89265;
+  --panel-accent-contrast: #ffffff;
+  --panel-ring-strong: rgba(184, 146, 101, 0.34);
   --radius-sm: 12px;
   --radius-md: 22px;
   --radius-lg: 32px;
