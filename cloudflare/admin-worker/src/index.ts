@@ -9,6 +9,7 @@ import { identityRoutes } from "./identity";
 import { relationshipRoutes } from "./relationship";
 import { matchRoute, type AdminRoute } from "./router";
 import { schedulingRoutes } from "./scheduling";
+import { settingsRoutes } from "./settings";
 
 const ADMIN_SCOPE = /^\/api\/admin\/tenants\/([^/]+)\/(.+)$/;
 
@@ -17,7 +18,8 @@ const routes: AdminRoute[] = [
   ...agendaRoutes,
   ...relationshipRoutes,
   ...catalogRoutes,
-  ...schedulingRoutes
+  ...schedulingRoutes,
+  ...settingsRoutes
 ];
 
 interface AdminHandlerOptions {
