@@ -1,0 +1,186 @@
+/* === SHELL DO PAINEL (CF1D) ===
+   Sidebar agrupada no desktop, drawer no tablet e no celular. A superfície
+   continua clara e densa; a hierarquia vem de agrupamento, peso e espaço. */
+
+.panel-body {
+  display: flex;
+  align-items: flex-start;
+  min-height: calc(100vh - 53px);
+}
+
+.panel-sidebar {
+  flex: 0 0 232px;
+  align-self: stretch;
+  padding: 20px 12px 40px;
+  background: var(--surface-light);
+  border-right: 1px solid var(--border-light);
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.panel-nav-group + .panel-nav-group { margin-top: 18px; }
+
+.panel-nav-group-label {
+  margin: 0 0 6px;
+  padding: 0 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-on-light-muted);
+}
+
+.panel-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.panel-nav-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-on-light-muted);
+  line-height: 1.3;
+}
+
+.panel-nav-item:hover {
+  color: var(--text-on-light);
+  background: var(--bg-light);
+}
+
+.panel-nav-item[aria-current="page"] {
+  color: var(--text-on-light);
+  font-weight: 600;
+  border-left-color: var(--text-on-light);
+  background: var(--bg-light);
+}
+
+.panel-body .panel-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  max-width: 1180px;
+}
+
+/* === DRAWER === */
+
+.panel-drawer-trigger {
+  display: none;
+  background: none;
+  border: 1px solid var(--border-dark);
+  color: var(--text-on-dark);
+  padding: 5px 11px;
+  font-size: 0.95rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.panel-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 40;
+}
+
+.panel-drawer {
+  display: none;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(300px, 86vw);
+  z-index: 41;
+  padding: 16px 12px 32px;
+  background: var(--surface-light);
+  border-right: 1px solid var(--border-light);
+  overflow-y: auto;
+}
+
+.panel-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 0 10px 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.panel-drawer-head strong {
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.panel-drawer-open { overflow: hidden; }
+
+/* === CABEÇALHO E ATALHOS DA VISÃO GERAL === */
+
+.panel-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 20px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.panel-context h1 {
+  margin: 0;
+  font-size: 1.32rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.panel-context-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-on-light-muted);
+}
+
+.panel-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.panel-shortcut {
+  background: var(--surface-light);
+  border: 1px solid var(--border-light);
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-on-light);
+}
+
+.panel-shortcut:hover { border-color: var(--text-on-light-muted); }
+
+@media (max-width: 1023px) {
+  .panel-sidebar { display: none; }
+  .panel-drawer-trigger { display: inline-flex; }
+  .panel-drawer { display: block; transform: translateX(-100%); }
+  .panel-drawer.is-open { transform: none; }
+  .panel-body { display: block; }
+  .panel-body .panel-main { max-width: none; }
+}
+
+@media (max-width: 640px) {
+  .panel-context { gap: 6px 12px; }
+  .panel-context h1 { font-size: 1.15rem; }
+  .panel-shortcut { font-size: 0.78rem; padding: 6px 10px; }
+}

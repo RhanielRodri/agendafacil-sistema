@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { api, apiMode } from "../services/api.js";
-
-// Constante de build: no destino Cloudflare os ramos de senha e sessão própria
-// viram código morto e saem do bundle administrativo.
-const isCloudflare = apiMode === "cloudflare";
 import tenant, { adminPath } from "../config/tenant.js";
 import { verticalConfig } from "../config/verticals.js";
+import PanelShell, { moduleGroups } from "../components/panel/PanelShell.jsx";
 import Overview from "./admin/Overview.jsx";
 import Agenda from "./admin/Agenda.jsx";
 import Leads from "./admin/Leads.jsx";
@@ -18,19 +15,11 @@ import Blocks from "./admin/Blocks.jsx";
 import Metrics from "./admin/Metrics.jsx";
 import Settings from "./admin/Settings.jsx";
 
-const moduleIds = [
-  "visao-geral",
-  "agenda",
-  "leads",
-  "clientes",
-  "follow-ups",
-  "servicos",
-  "profissionais",
-  "disponibilidade",
-  "bloqueios",
-  "indicadores",
-  "configuracoes"
-];
+// Constante de build: no destino Cloudflare os ramos de senha e sessão própria
+// viram código morto e saem do bundle administrativo.
+const isCloudflare = apiMode === "cloudflare";
+
+const moduleIds = moduleGroups.flatMap((group) => group.modules);
 
 // O rótulo muda por vertical; o identificador na URL, não.
 function moduleLabels(vertical) {
@@ -42,7 +31,7 @@ function moduleLabels(vertical) {
     "follow-ups": "Follow-ups",
     servicos: vertical.servicePlural,
     profissionais: vertical.professionalPlural,
-    disponibilidade: "Disponibilidade",
+    disponibilidade: "Horários",
     bloqueios: "Bloqueios",
     indicadores: "Indicadores",
     configuracoes: "Configurações"
@@ -376,35 +365,25 @@ export default function Admin({ services, professionals }) {
     onCatalogChange: () => loadCatalog().catch(() => {})
   };
 
+  const identity = (
+    <>
+      {session?.name && <span className="panel-topbar-user">{session.name}</span>}
+      {isCloudflare
+        ? <span className="panel-topbar-user">{session?.email}</span>
+        : <button className="panel-ghost-dark" type="button" onClick={handleLogout}>Sair</button>}
+    </>
+  );
+
   return (
-    <div className="panel-shell">
-      <header className="panel-topbar">
-        <div className="panel-topbar-brand">
-          <strong>{tenant.name}</strong>
-          <span>Painel operacional</span>
-        </div>
-        <div className="panel-topbar-actions">
-          {session?.name && <span className="panel-topbar-user">{session.name}</span>}
-          {isCloudflare
-            ? <span className="panel-topbar-user">{session?.email}</span>
-            : <button className="panel-ghost-dark" type="button" onClick={handleLogout}>Sair</button>}
-        </div>
-      </header>
-
-      <nav className="panel-nav" aria-label="Módulos do painel">
-        {moduleIds.map((id) => (
-          <button
-            key={id}
-            type="button"
-            aria-current={module === id ? "page" : undefined}
-            onClick={() => navigate(id)}
-          >
-            {labels[id]}
-          </button>
-        ))}
-      </nav>
-
-      <main className="panel-main" key={`${module}:${JSON.stringify(params)}`}>
+    <PanelShell
+      brand={tenant.name}
+      subtitle="Painel operacional"
+      identity={identity}
+      labels={labels}
+      current={module}
+      onSelect={(id) => navigate(id)}
+    >
+      <div key={`${module}:${JSON.stringify(params)}`}>
         {module === "visao-geral" && <Overview {...moduleProps} />}
         {module === "agenda" && <Agenda {...moduleProps} />}
         {module === "leads" && <Leads {...moduleProps} />}
@@ -416,7 +395,7 @@ export default function Admin({ services, professionals }) {
         {module === "bloqueios" && <Blocks {...moduleProps} />}
         {module === "indicadores" && <Metrics {...moduleProps} />}
         {module === "configuracoes" && <Settings {...moduleProps} />}
-      </main>
-    </div>
+      </div>
+    </PanelShell>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { api } from "../../services/api.js";
+import tenant from "../../config/tenant.js";
 import { usePanelData } from "../../utils/usePanelData.js";
 import { PanelEmpty, PanelError, PanelLoading, PanelMessage, StatusPill } from "../../components/panel/PanelState.jsx";
 import {
@@ -10,7 +11,29 @@ import {
   relativeDayLabel
 } from "../../utils/panel.js";
 
+// O cabeçalho diz onde a pessoa está e de quando são os números; os atalhos no
+// fim levam de volta para as filas que a vertical prioriza. Nenhum dos dois
+// calcula nada: todo valor exibido continua vindo do Worker.
+function PanelContext({ businessName, verticalLabel, date }) {
+  return (
+    <header className="panel-context">
+      <div>
+        <h1>Visão geral</h1>
+        <p className="panel-context-meta">
+          <span>{businessName}</span>
+          <span>{verticalLabel}</span>
+        </p>
+      </div>
+      <p className="panel-context-meta">
+        <span>{relativeDayLabel(date)}</span>
+        <span>{date.split("-").reverse().join("/")}</span>
+      </p>
+    </header>
+  );
+}
+
 export default function Overview({ vertical, onNavigate, onSessionExpired }) {
+  const businessName = tenant?.name ?? "";
   const [message, setMessage] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const { state, data, error, reload } = usePanelData(() => api.getOverview(), [], onSessionExpired);
@@ -80,12 +103,18 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
 
   return (
     <>
+      <PanelContext
+        businessName={businessName}
+        verticalLabel={`${vertical.servicePlural} · ${vertical.professionalPlural}`}
+        date={data.date}
+      />
+
       <PanelMessage message={message} onDismiss={() => setMessage(null)} />
 
       <section className="panel-block">
         <div className="panel-block-head">
           <h2>{vertical.dayTitle}</h2>
-          <p>{relativeDayLabel(data.date)} · {data.date.split("-").reverse().join("/")}</p>
+          <p>Resumo operacional do dia</p>
         </div>
         <div className="panel-stats">
           {stats.map((stat) => (
@@ -191,7 +220,7 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
 
       <section className="panel-block">
         <div className="panel-block-head">
-          <h2>Pipeline comercial</h2>
+          <h2>Relacionamento</h2>
           <button className="panel-btn-link" type="button" onClick={() => onNavigate("leads", {})}>
             Abrir leads
           </button>
@@ -220,7 +249,7 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
       {vertical.showOccupancy && data.occupancy.length > 0 && (
         <section className="panel-block">
           <div className="panel-block-head">
-            <h2>Ocupação de hoje</h2>
+            <h2>Ocupação da equipe</h2>
             <p>Atendimentos do dia por profissional</p>
           </div>
           <div className="panel-availability">
@@ -234,9 +263,33 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
         </section>
       )}
 
-      <p className="panel-block">
-        <button className="panel-btn" type="button" onClick={reload}>Atualizar dados</button>
-      </p>
+      <section className="panel-block">
+        <div className="panel-block-head">
+          <h2>Atalhos</h2>
+          <p>As filas que esta operação costuma abrir primeiro</p>
+        </div>
+        <div className="panel-shortcuts">
+          {vertical.leadShortcuts.map((shortcut) => (
+            <button
+              key={shortcut.id}
+              className="panel-shortcut"
+              type="button"
+              onClick={() => onNavigate("leads", shortcut.filters)}
+            >
+              {shortcut.label}
+            </button>
+          ))}
+          <button className="panel-shortcut" type="button" onClick={() => onNavigate("agenda", {})}>
+            Agenda do dia
+          </button>
+          <button className="panel-shortcut" type="button" onClick={() => onNavigate("indicadores", {})}>
+            Indicadores
+          </button>
+          <button className="panel-shortcut" type="button" onClick={reload}>
+            Atualizar dados
+          </button>
+        </div>
+      </section>
     </>
   );
 }
