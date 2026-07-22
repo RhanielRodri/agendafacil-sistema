@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "agendafacil-cf1-admin-local",
+  "main": "admin-worker/src/index.ts",
+  "compatibility_date": "2026-07-21",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "agendafacil-cf1-local",
+      "database_id": "local-development-only",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "ACCESS_TEAM_DOMAIN": "example.cloudflareaccess.com",
+    "ACCESS_POLICY_AUD": "local-test-audience"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "agendafacil-cloudflare",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm run build:public && npm run build:admin",
+    "build:admin": "wrangler deploy --dry-run --config wrangler.admin.jsonc --outdir dist/admin",
+    "build:public": "wrangler deploy --dry-run --config wrangler.public.jsonc --outdir dist/public",
+    "check": "tsc --noEmit",
+    "db:migrate:local": "wrangler d1 migrations apply agendafacil-cf1-local --local --config wrangler.public.jsonc",
+    "db:seed:local": "wrangler d1 execute agendafacil-cf1-local --local --config wrangler.public.jsonc --file seed/0001_demo.sql",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "jose": "6.2.4"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.18.7",
+    "@cloudflare/workers-types": "5.20260721.1",
+    "@types/node": "^26.1.1",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10",
+    "wrangler": "4.113.0"
+  }
+}

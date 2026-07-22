@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.wrangler/
+.wrangler-*/
+.dev.vars
+.dev.vars.*
+*.log
+*.sqlite
+*.sqlite3
+*.db
+coverage/
