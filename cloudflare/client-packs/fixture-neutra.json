@@ -1,0 +1,141 @@
+{
+  "packVersion": 1,
+  "publishable": false,
+  "tenant": {
+    "slug": "fixture-neutra",
+    "name": "Operação de Teste",
+    "active": true
+  },
+  "identity": {
+    "segment": "Serviços por horário",
+    "city": "Cidade Exemplo, UF",
+    "schedule": "Seg a Sex",
+    "logo": {
+      "mark": "FX",
+      "background": "#1f2933",
+      "foreground": "#ffffff"
+    }
+  },
+  "metadata": {
+    "title": "Operação de Teste | Agendamento",
+    "description": "Fixture neutra usada apenas para validar o ciclo de vida do Client Pack.",
+    "themeColor": "#1f2933",
+    "image": "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+    "canonical": "https://fixture-neutra.example.com"
+  },
+  "content": {
+    "hero": {
+      "eyebrow": "Agendamento · Cidade Exemplo",
+      "headline": ["SEU", "HORÁRIO", "AQUI."],
+      "sub": "Escolha o serviço, o profissional e o melhor horário para o seu atendimento.",
+      "primaryCta": "Agendar horário",
+      "secondaryCta": "Ver serviços",
+      "highlights": ["Agendamento online", "Atendimento organizado", "Seg a Sex"],
+      "image": "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+      "imageAlt": "Ambiente de atendimento de exemplo",
+      "badge": "Consulte a agenda abaixo"
+    },
+    "details": {
+      "eyebrow": "A experiência",
+      "title": "Um fluxo simples do começo ao fim",
+      "items": [
+        { "title": "Escolha simples", "text": "Serviços, profissionais e horários reunidos em um único fluxo." },
+        { "title": "Atendimento organizado", "text": "Cada pedido chega com serviço, data e horário definidos." },
+        { "title": "Rotina prática", "text": "Consulte as opções disponíveis sem troca de mensagens." }
+      ]
+    },
+    "process": {
+      "eyebrow": "Como funciona",
+      "title": "Seu horário em poucos passos",
+      "items": [
+        { "number": "01", "title": "Escolha o serviço", "text": "Veja as opções disponíveis e selecione o atendimento." },
+        { "number": "02", "title": "Defina profissional e horário", "text": "Escolha quem vai atender e consulte a agenda." },
+        { "number": "03", "title": "Confirme seus dados", "text": "Informe seus dados para concluir a solicitação." }
+      ]
+    },
+    "space": {
+      "eyebrow": "O espaço",
+      "title": "Onde o atendimento acontece",
+      "description": ["Um espaço de exemplo usado apenas para validar o produto."],
+      "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1400&q=80",
+      "imageAlt": "Espaço de atendimento de exemplo"
+    },
+    "copy": {
+      "servicesEyebrow": "Serviços",
+      "servicesTitle": "Escolha o seu atendimento",
+      "professionalsEyebrow": "Profissionais",
+      "professionalsTitle": "Quem vai atender você"
+    },
+    "footer": {
+      "tagline": "Agendamento online de exemplo"
+    }
+  },
+  "terminology": {
+    "dayTitle": "Agenda de hoje",
+    "waitingSource": null,
+    "waitingLabel": "Pedidos aguardando contato",
+    "waitingHint": "Pedidos em aberto",
+    "showOccupancy": true,
+    "serviceNoun": "Serviço",
+    "servicePlural": "Serviços",
+    "professionalNoun": "Profissional",
+    "professionalPlural": "Profissionais",
+    "showEvaluationFlag": false,
+    "metricHighlights": ["occupancyByProfessional", "topServices", "returning", "noShow"],
+    "attentionOrder": ["overdueFollowUps", "leadsWithoutNextAction", "pendingUpcoming", "leadsWithoutOwner", "followUpsToday"],
+    "leadShortcuts": [
+      { "id": "overdue", "label": "Follow-up vencido", "filters": { "overdue": true } },
+      { "id": "no-action", "label": "Sem próxima ação", "filters": { "noNextAction": true } },
+      { "id": "unassigned", "label": "Sem responsável", "filters": { "unassigned": true } },
+      { "id": "high", "label": "Prioridade alta", "filters": { "priority": "HIGH" } }
+    ]
+  },
+  "settings": {
+    "publicName": "Operação de Teste",
+    "timezone": "America/Sao_Paulo",
+    "slotDurationMinutes": 30,
+    "minAdvanceMinutes": 60,
+    "maxFutureDays": 60,
+    "cancellationPolicy": "Cancelamentos respeitam a antecedência informada.",
+    "confirmationMessage": "Chegue alguns minutos antes do horário.",
+    "bookingEnabled": true
+  },
+  "catalog": {
+    "services": [
+      { "id": "service-fixture-a", "name": "Serviço A", "description": "Atendimento padrão de exemplo.", "durationMinutes": 30, "priceCents": 5000, "active": true, "displayOrder": 0, "requiresEvaluation": false },
+      { "id": "service-fixture-b", "name": "Serviço B", "description": "Atendimento estendido de exemplo.", "durationMinutes": 60, "priceCents": 9000, "active": true, "displayOrder": 1, "requiresEvaluation": false }
+    ],
+    "professionals": [
+      { "id": "professional-fixture-1", "name": "Profissional 1", "specialty": "Atendimento geral", "photo": "/assets/professionals/studio-1.webp", "active": true, "displayOrder": 0 }
+    ],
+    "associations": [
+      { "professionalId": "professional-fixture-1", "serviceId": "service-fixture-a" },
+      { "professionalId": "professional-fixture-1", "serviceId": "service-fixture-b" }
+    ]
+  },
+  "schedule": {
+    "businessHours": [
+      { "dayOfWeek": 0, "openTime": "00:00", "closeTime": "00:00", "isOpen": false },
+      { "dayOfWeek": 1, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 2, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 3, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 4, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 5, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 6, "openTime": "00:00", "closeTime": "00:00", "isOpen": false }
+    ],
+    "professionalSchedules": [
+      { "id": "schedule-fixture-1-mon", "professionalId": "professional-fixture-1", "dayOfWeek": 1, "startTime": "09:00", "endTime": "18:00", "active": true }
+    ],
+    "scheduleBlocks": []
+  },
+  "whatsapp": {
+    "templates": {
+      "confirmation": "Olá {cliente}! Seu horário na {negocio} está confirmado: {servico} em {data} às {hora}.",
+      "reminder": "Olá {cliente}! Lembrete: {servico} na {negocio} amanhã, {data} às {hora}.",
+      "return": "Olá {cliente}! Quer marcar um novo {servico} na {negocio}?",
+      "reschedule": "Olá {cliente}! Precisamos ajustar seu {servico} de {data} às {hora}. Qual horário fica melhor?",
+      "quote": "Olá {cliente}! Sobre o {servico} na {negocio}: posso enviar detalhes e valores.",
+      "initialContact": "Olá {cliente}! Aqui é da {negocio}. Vamos ajudar a agendar seu horário."
+    }
+  }
+}

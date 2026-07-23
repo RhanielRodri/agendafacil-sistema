@@ -1,0 +1,153 @@
+{
+  "packVersion": 1,
+  "tenant": {
+    "slug": "lumiere",
+    "name": "Lumière Estética",
+    "active": true
+  },
+  "identity": {
+    "segment": "Clínica de estética",
+    "city": "Vila Velha, ES",
+    "schedule": "Seg a Sáb",
+    "logo": {
+      "mark": "L",
+      "background": "#c9a97a",
+      "foreground": "#2c2420"
+    }
+  },
+  "metadata": {
+    "title": "Lumière Estética | Cuidados em Vila Velha",
+    "description": "Agende seu horário para cuidados faciais e corporais na Lumière Estética.",
+    "themeColor": "#faf8f5",
+    "image": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+    "canonical": "https://lumiere-public.sor-os-demos.workers.dev"
+  },
+  "content": {
+    "hero": {
+      "eyebrow": "Estética e cuidado · Vila Velha, ES",
+      "headline": ["CUIDADO", "EM CADA", "DETALHE."],
+      "sub": "Escolha seu tratamento e reserve um momento pensado para cuidado e atendimento individual.",
+      "primaryCta": "Agendar avaliação",
+      "secondaryCta": "Conhecer tratamentos",
+      "highlights": ["Atendimento individual", "Cuidados faciais e corporais", "Seg a Sáb"],
+      "image": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+      "imageAlt": "Ambiente de cuidado da Lumière Estética",
+      "badge": "Consulte a agenda abaixo"
+    },
+    "details": {
+      "eyebrow": "Cuidados e confiança",
+      "title": "Uma experiência tranquila desde a escolha do tratamento",
+      "items": [
+        { "title": "Atendimento individual", "text": "Cada agendamento começa com a escolha do cuidado e da profissional." },
+        { "title": "Informações claras", "text": "Tratamentos, duração e horários aparecem antes da confirmação." },
+        { "title": "Escolha no seu tempo", "text": "Consulte a agenda e selecione a opção adequada para sua rotina." }
+      ]
+    },
+    "process": {
+      "eyebrow": "Processo de atendimento",
+      "title": "Do cuidado escolhido ao horário reservado",
+      "items": [
+        { "number": "01", "title": "Escolha o tratamento", "text": "Consulte as opções disponíveis para cuidados faciais e corporais." },
+        { "number": "02", "title": "Selecione a profissional", "text": "Veja a equipe e escolha com quem deseja realizar o atendimento." },
+        { "number": "03", "title": "Reserve o horário", "text": "Defina data, horário e dados de contato para enviar sua solicitação." }
+      ]
+    },
+    "space": {
+      "eyebrow": "A clínica",
+      "title": "Leveza e atenção em cada etapa",
+      "description": [
+        "Um ambiente voltado para cuidado, conforto e atendimento individual.",
+        "A escolha do tratamento e do horário acontece de forma simples e transparente."
+      ],
+      "image": "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1400&q=80",
+      "imageAlt": "Espaço de atendimento da Lumière Estética"
+    },
+    "copy": {
+      "servicesEyebrow": "Tratamentos",
+      "servicesTitle": "Cuidados para diferentes momentos",
+      "professionalsEyebrow": "Equipe",
+      "professionalsTitle": "Profissionais que acompanham seu atendimento"
+    },
+    "footer": {
+      "tagline": "Cuidado e atendimento individual"
+    }
+  },
+  "terminology": {
+    "dayTitle": "Atendimentos de hoje",
+    "waitingSource": "EVALUATION",
+    "waitingLabel": "Avaliações aguardando contato",
+    "waitingHint": "Pedidos de avaliação em aberto",
+    "showOccupancy": false,
+    "serviceNoun": "Procedimento",
+    "servicePlural": "Procedimentos",
+    "professionalNoun": "Profissional",
+    "professionalPlural": "Profissionais",
+    "showEvaluationFlag": true,
+    "metricHighlights": ["evaluations", "bookedDuration", "qualifiedLeads", "packageInterest", "rescheduled"],
+    "attentionOrder": ["waiting", "overdueFollowUps", "leadsWithoutNextAction", "pendingUpcoming", "leadsWithoutOwner", "followUpsToday"],
+    "leadShortcuts": [
+      { "id": "evaluation", "label": "Avaliações", "filters": { "source": "EVALUATION" } },
+      { "id": "qualified", "label": "Qualificados", "filters": { "status": "QUALIFIED" } },
+      { "id": "overdue", "label": "Follow-up vencido", "filters": { "overdue": true } },
+      { "id": "no-action", "label": "Sem próxima ação", "filters": { "noNextAction": true } },
+      { "id": "unassigned", "label": "Sem responsável", "filters": { "unassigned": true } },
+      { "id": "high", "label": "Prioridade alta", "filters": { "priority": "HIGH" } }
+    ]
+  },
+  "settings": {
+    "publicName": "Lumière Estética",
+    "timezone": "America/Sao_Paulo",
+    "slotDurationMinutes": 30,
+    "minAdvanceMinutes": 180,
+    "maxFutureDays": 90,
+    "cancellationPolicy": "Reagendamentos respeitam a antecedência informada.",
+    "confirmationMessage": "Procedimentos podem exigir avaliação prévia.",
+    "bookingEnabled": true
+  },
+  "catalog": {
+    "services": [
+      { "id": "service-lumiere-skin", "name": "Limpeza de pele", "description": "Cuidado facial com limpeza e hidratação.", "durationMinutes": 60, "priceCents": 18000, "active": true, "displayOrder": 0, "requiresEvaluation": false },
+      { "id": "service-lumiere-evaluation", "name": "Harmonização facial", "description": "Procedimento com avaliação prévia.", "durationMinutes": 90, "priceCents": 120000, "active": true, "displayOrder": 1, "requiresEvaluation": true },
+      { "id": "service-lumiere-drainage", "name": "Drenagem linfática", "description": "Cuidado corporal e drenagem.", "durationMinutes": 60, "priceCents": 15000, "active": true, "displayOrder": 2, "requiresEvaluation": false }
+    ],
+    "professionals": [
+      { "id": "professional-lumiere-1", "name": "Especialista Lumière 1", "specialty": "Cuidados faciais", "photo": "/assets/professionals/lumiere-1.webp", "active": true, "displayOrder": 0 },
+      { "id": "professional-lumiere-2", "name": "Especialista Lumière 2", "specialty": "Procedimentos e avaliação", "photo": "/assets/professionals/lumiere-2.webp", "active": true, "displayOrder": 1 }
+    ],
+    "associations": [
+      { "professionalId": "professional-lumiere-1", "serviceId": "service-lumiere-skin" },
+      { "professionalId": "professional-lumiere-1", "serviceId": "service-lumiere-drainage" },
+      { "professionalId": "professional-lumiere-2", "serviceId": "service-lumiere-evaluation" }
+    ]
+  },
+  "schedule": {
+    "businessHours": [
+      { "dayOfWeek": 0, "openTime": "00:00", "closeTime": "00:00", "isOpen": false },
+      { "dayOfWeek": 1, "openTime": "00:00", "closeTime": "00:00", "isOpen": false },
+      { "dayOfWeek": 2, "openTime": "10:00", "closeTime": "19:00", "isOpen": true },
+      { "dayOfWeek": 3, "openTime": "10:00", "closeTime": "19:00", "isOpen": true },
+      { "dayOfWeek": 4, "openTime": "10:00", "closeTime": "19:00", "isOpen": true },
+      { "dayOfWeek": 5, "openTime": "10:00", "closeTime": "19:00", "isOpen": true },
+      { "dayOfWeek": 6, "openTime": "10:00", "closeTime": "16:00", "isOpen": true }
+    ],
+    "professionalSchedules": [
+      { "id": "schedule-lumiere-1-tue", "professionalId": "professional-lumiere-1", "dayOfWeek": 2, "startTime": "10:00", "endTime": "19:00", "active": true },
+      { "id": "schedule-lumiere-1-thu-am", "professionalId": "professional-lumiere-1", "dayOfWeek": 4, "startTime": "11:00", "endTime": "14:00", "active": true },
+      { "id": "schedule-lumiere-1-thu-pm", "professionalId": "professional-lumiere-1", "dayOfWeek": 4, "startTime": "15:00", "endTime": "19:00", "active": true },
+      { "id": "schedule-lumiere-2-tue", "professionalId": "professional-lumiere-2", "dayOfWeek": 2, "startTime": "10:00", "endTime": "19:00", "active": true }
+    ],
+    "scheduleBlocks": [
+      { "id": "block-lumiere-full", "professionalId": null, "date": "2099-01-16", "allDay": true, "startTime": null, "endTime": null, "reason": "Bloqueio integral de demonstração" }
+    ]
+  },
+  "whatsapp": {
+    "templates": {
+      "confirmation": "Olá {cliente}! Sua avaliação na {negocio} está confirmada: {servico} em {data} às {hora}. Até breve!",
+      "reminder": "Olá {cliente}! Lembrete do seu atendimento na {negocio}: {servico} amanhã, {data} às {hora}.",
+      "return": "Olá {cliente}! Que tal cuidar de você novamente? Podemos agendar um novo {servico} na {negocio}.",
+      "reschedule": "Olá {cliente}! Precisamos reagendar seu {servico} de {data} às {hora}. Qual outro horário fica melhor para você?",
+      "quote": "Olá {cliente}! Sobre o {servico} na {negocio}: posso te enviar os detalhes e valores. Quando prefere ser atendida?",
+      "initialContact": "Olá {cliente}! Aqui é da {negocio}. Recebemos seu contato e vamos ajudar a agendar seu atendimento."
+    }
+  }
+}

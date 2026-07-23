@@ -1,0 +1,152 @@
+{
+  "packVersion": 1,
+  "tenant": {
+    "slug": "studio-cut",
+    "name": "Studio Cut",
+    "active": true
+  },
+  "identity": {
+    "segment": "Barbearia",
+    "city": "Vila Velha, ES",
+    "schedule": "Seg a Sáb",
+    "logo": {
+      "mark": "SC",
+      "background": "#111111",
+      "foreground": "#ffffff"
+    }
+  },
+  "metadata": {
+    "title": "Studio Cut | Barbearia em Vila Velha",
+    "description": "Escolha seu serviço, profissional e horário na Studio Cut.",
+    "themeColor": "#111111",
+    "image": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80",
+    "canonical": "https://studio-cut-public.sor-os-demos.workers.dev"
+  },
+  "content": {
+    "hero": {
+      "eyebrow": "Barbearia · Vila Velha, ES",
+      "headline": ["PRECISÃO", "NO", "CORTE."],
+      "sub": "Escolha o serviço, o profissional e o melhor horário para cuidar do seu visual.",
+      "primaryCta": "Agendar horário",
+      "secondaryCta": "Conhecer serviços",
+      "highlights": ["Corte e barba", "Agendamento online", "Seg a Sáb"],
+      "image": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80",
+      "imageAlt": "Interior da barbearia Studio Cut",
+      "badge": "Consulte a agenda abaixo"
+    },
+    "details": {
+      "eyebrow": "A experiência",
+      "title": "Direto ao ponto, do jeito que uma boa barbearia deve ser",
+      "items": [
+        { "title": "Escolha simples", "text": "Serviços, profissionais e horários reunidos em um único fluxo." },
+        { "title": "Atendimento organizado", "text": "Seu pedido chega com serviço, data e horário já definidos." },
+        { "title": "Rotina prática", "text": "Consulte as opções disponíveis sem depender de troca de mensagens." }
+      ]
+    },
+    "process": {
+      "eyebrow": "Como funciona",
+      "title": "Seu horário em poucos passos",
+      "items": [
+        { "number": "01", "title": "Escolha o serviço", "text": "Veja as opções disponíveis e selecione o cuidado que procura." },
+        { "number": "02", "title": "Defina profissional e horário", "text": "Escolha quem vai atender e consulte a agenda disponível." },
+        { "number": "03", "title": "Confirme seus dados", "text": "Informe seus dados para concluir a solicitação de agendamento." }
+      ]
+    },
+    "space": {
+      "eyebrow": "O espaço",
+      "title": "Onde o corte acontece",
+      "description": ["Uma barbearia com atendimento organizado e foco em corte, barba e acabamento."],
+      "image": "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1400&q=80",
+      "imageAlt": "Espaço interno da barbearia Studio Cut"
+    },
+    "copy": {
+      "servicesEyebrow": "Serviços",
+      "servicesTitle": "Escolha o seu próximo cuidado",
+      "professionalsEyebrow": "Profissionais",
+      "professionalsTitle": "Quem cuida do seu estilo"
+    },
+    "footer": {
+      "tagline": "Corte, barba e agendamento online"
+    }
+  },
+  "terminology": {
+    "dayTitle": "Movimento de hoje",
+    "waitingSource": "WAITLIST",
+    "waitingLabel": "Encaixes aguardando contato",
+    "waitingHint": "Lista de espera do dia",
+    "showOccupancy": true,
+    "serviceNoun": "Serviço",
+    "servicePlural": "Serviços",
+    "professionalNoun": "Barbeiro",
+    "professionalPlural": "Barbeiros",
+    "showEvaluationFlag": false,
+    "metricHighlights": ["occupancyByProfessional", "topServices", "waitlist", "returning", "noShow"],
+    "attentionOrder": ["waiting", "pendingUpcoming", "overdueFollowUps", "leadsWithoutNextAction", "leadsWithoutOwner", "followUpsToday"],
+    "leadShortcuts": [
+      { "id": "waitlist", "label": "Encaixes", "filters": { "source": "WAITLIST" } },
+      { "id": "high", "label": "Prioridade alta", "filters": { "priority": "HIGH" } },
+      { "id": "overdue", "label": "Follow-up vencido", "filters": { "overdue": true } },
+      { "id": "no-action", "label": "Sem próxima ação", "filters": { "noNextAction": true } },
+      { "id": "unassigned", "label": "Sem responsável", "filters": { "unassigned": true } },
+      { "id": "today", "label": "Novos hoje", "filters": { "newToday": true } }
+    ]
+  },
+  "settings": {
+    "publicName": "Studio Cut",
+    "timezone": "America/Sao_Paulo",
+    "slotDurationMinutes": 30,
+    "minAdvanceMinutes": 60,
+    "maxFutureDays": 60,
+    "cancellationPolicy": "Cancelamentos respeitam a antecedência informada.",
+    "confirmationMessage": "Chegue alguns minutos antes do horário.",
+    "bookingEnabled": true
+  },
+  "catalog": {
+    "services": [
+      { "id": "service-studio-cut", "name": "Corte masculino", "description": "Corte completo com acabamento.", "durationMinutes": 30, "priceCents": 4500, "active": true, "displayOrder": 0, "requiresEvaluation": false },
+      { "id": "service-studio-beard", "name": "Barba completa", "description": "Desenho e finalização de barba.", "durationMinutes": 30, "priceCents": 3500, "active": true, "displayOrder": 1, "requiresEvaluation": false },
+      { "id": "service-studio-combo", "name": "Corte + barba", "description": "Cuidado completo para cabelo e barba.", "durationMinutes": 60, "priceCents": 7500, "active": true, "displayOrder": 2, "requiresEvaluation": false }
+    ],
+    "professionals": [
+      { "id": "professional-studio-1", "name": "Barbeiro Studio 1", "specialty": "Cortes clássicos", "photo": "/assets/professionals/studio-1.webp", "active": true, "displayOrder": 0 },
+      { "id": "professional-studio-2", "name": "Barbeiro Studio 2", "specialty": "Barba e degradê", "photo": "/assets/professionals/studio-2.webp", "active": true, "displayOrder": 1 }
+    ],
+    "associations": [
+      { "professionalId": "professional-studio-1", "serviceId": "service-studio-cut" },
+      { "professionalId": "professional-studio-1", "serviceId": "service-studio-combo" },
+      { "professionalId": "professional-studio-2", "serviceId": "service-studio-beard" },
+      { "professionalId": "professional-studio-2", "serviceId": "service-studio-combo" }
+    ]
+  },
+  "schedule": {
+    "businessHours": [
+      { "dayOfWeek": 0, "openTime": "00:00", "closeTime": "00:00", "isOpen": false },
+      { "dayOfWeek": 1, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 2, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 3, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 4, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 5, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 6, "openTime": "08:00", "closeTime": "14:00", "isOpen": true }
+    ],
+    "professionalSchedules": [
+      { "id": "schedule-studio-1-mon-am", "professionalId": "professional-studio-1", "dayOfWeek": 1, "startTime": "09:00", "endTime": "12:00", "active": true },
+      { "id": "schedule-studio-1-mon-pm", "professionalId": "professional-studio-1", "dayOfWeek": 1, "startTime": "13:00", "endTime": "17:00", "active": true },
+      { "id": "schedule-studio-1-tue", "professionalId": "professional-studio-1", "dayOfWeek": 2, "startTime": "09:00", "endTime": "18:00", "active": true },
+      { "id": "schedule-studio-2-mon", "professionalId": "professional-studio-2", "dayOfWeek": 1, "startTime": "09:00", "endTime": "18:00", "active": true }
+    ],
+    "scheduleBlocks": [
+      { "id": "block-studio-partial", "professionalId": null, "date": "2099-01-15", "allDay": false, "startTime": "12:00", "endTime": "13:00", "reason": "Pausa geral de demonstração" },
+      { "id": "block-studio-professional", "professionalId": "professional-studio-1", "date": "2099-01-15", "allDay": false, "startTime": "15:00", "endTime": "16:00", "reason": "Bloqueio individual de demonstração" }
+    ]
+  },
+  "whatsapp": {
+    "templates": {
+      "confirmation": "Olá {cliente}! Seu horário na {negocio} está confirmado: {servico} em {data} às {hora}. Até lá!",
+      "reminder": "Olá {cliente}! Lembrete do seu horário na {negocio}: {servico} amanhã, {data} às {hora}.",
+      "return": "Olá {cliente}! Já faz um tempo desde seu último {servico} na {negocio}. Quer marcar um novo horário?",
+      "reschedule": "Olá {cliente}! Precisamos ajustar seu horário de {servico} em {data} às {hora}. Qual outro horário fica melhor para você?",
+      "quote": "Olá {cliente}! Sobre o {servico} na {negocio}: posso te passar os detalhes e valores. Quando prefere ser atendido?",
+      "initialContact": "Olá {cliente}! Aqui é da {negocio}. Recebemos seu contato e queremos ajudar a agendar seu horário."
+    }
+  }
+}

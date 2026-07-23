@@ -1,0 +1,139 @@
+{
+  "packVersion": 1,
+  "publishable": false,
+  "tenant": {
+    "slug": "novo-cliente",
+    "name": "Nome do Cliente",
+    "active": true
+  },
+  "identity": {
+    "segment": "Segmento do cliente",
+    "city": "Cidade, UF",
+    "schedule": "Seg a Sex",
+    "logo": {
+      "mark": "NC",
+      "background": "#111111",
+      "foreground": "#ffffff"
+    }
+  },
+  "metadata": {
+    "title": "Nome do Cliente | Agendamento",
+    "description": "Descrição pública curta usada em busca e compartilhamento.",
+    "themeColor": "#111111",
+    "image": "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+    "canonical": "https://novo-cliente-public.exemplo.workers.dev"
+  },
+  "content": {
+    "hero": {
+      "eyebrow": "Segmento · Cidade, UF",
+      "headline": ["PRIMEIRA", "LINHA", "AQUI."],
+      "sub": "Frase curta que explica o valor e convida ao agendamento.",
+      "primaryCta": "Agendar horário",
+      "secondaryCta": "Ver serviços",
+      "highlights": ["Destaque 1", "Destaque 2", "Destaque 3"],
+      "image": "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+      "imageAlt": "Descrição da imagem do hero",
+      "badge": "Consulte a agenda abaixo"
+    },
+    "details": {
+      "eyebrow": "A experiência",
+      "title": "Título da seção de diferenciais",
+      "items": [
+        { "title": "Diferencial 1", "text": "Descrição curta do primeiro diferencial." },
+        { "title": "Diferencial 2", "text": "Descrição curta do segundo diferencial." },
+        { "title": "Diferencial 3", "text": "Descrição curta do terceiro diferencial." }
+      ]
+    },
+    "process": {
+      "eyebrow": "Como funciona",
+      "title": "Título do passo a passo",
+      "items": [
+        { "number": "01", "title": "Primeiro passo", "text": "Descrição do primeiro passo." },
+        { "number": "02", "title": "Segundo passo", "text": "Descrição do segundo passo." },
+        { "number": "03", "title": "Terceiro passo", "text": "Descrição do terceiro passo." }
+      ]
+    },
+    "space": {
+      "eyebrow": "O espaço",
+      "title": "Título da seção do espaço",
+      "description": ["Parágrafo descrevendo o ambiente do cliente."],
+      "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1400&q=80",
+      "imageAlt": "Descrição da imagem do espaço"
+    },
+    "copy": {
+      "servicesEyebrow": "Serviços",
+      "servicesTitle": "Título da lista de serviços",
+      "professionalsEyebrow": "Equipe",
+      "professionalsTitle": "Título da lista de profissionais"
+    },
+    "footer": {
+      "tagline": "Frase curta de rodapé"
+    }
+  },
+  "terminology": {
+    "dayTitle": "Agenda de hoje",
+    "waitingSource": null,
+    "waitingLabel": "Pedidos aguardando contato",
+    "waitingHint": "Pedidos em aberto",
+    "showOccupancy": true,
+    "serviceNoun": "Serviço",
+    "servicePlural": "Serviços",
+    "professionalNoun": "Profissional",
+    "professionalPlural": "Profissionais",
+    "showEvaluationFlag": false,
+    "metricHighlights": ["occupancyByProfessional", "topServices", "returning", "noShow"],
+    "attentionOrder": ["overdueFollowUps", "leadsWithoutNextAction", "pendingUpcoming", "leadsWithoutOwner", "followUpsToday"],
+    "leadShortcuts": [
+      { "id": "overdue", "label": "Follow-up vencido", "filters": { "overdue": true } },
+      { "id": "no-action", "label": "Sem próxima ação", "filters": { "noNextAction": true } },
+      { "id": "unassigned", "label": "Sem responsável", "filters": { "unassigned": true } },
+      { "id": "high", "label": "Prioridade alta", "filters": { "priority": "HIGH" } }
+    ]
+  },
+  "settings": {
+    "publicName": "Nome do Cliente",
+    "timezone": "America/Sao_Paulo",
+    "slotDurationMinutes": 30,
+    "minAdvanceMinutes": 60,
+    "maxFutureDays": 60,
+    "cancellationPolicy": "Descreva a política de cancelamento.",
+    "confirmationMessage": "Mensagem exibida na confirmação do agendamento.",
+    "bookingEnabled": true
+  },
+  "catalog": {
+    "services": [
+      { "id": "service-novo-cliente-1", "name": "Serviço 1", "description": "Descrição do primeiro serviço.", "durationMinutes": 30, "priceCents": 5000, "active": true, "displayOrder": 0, "requiresEvaluation": false }
+    ],
+    "professionals": [
+      { "id": "professional-novo-cliente-1", "name": "Profissional 1", "specialty": "Especialidade", "photo": "/assets/professionals/studio-1.webp", "active": true, "displayOrder": 0 }
+    ],
+    "associations": [
+      { "professionalId": "professional-novo-cliente-1", "serviceId": "service-novo-cliente-1" }
+    ]
+  },
+  "schedule": {
+    "businessHours": [
+      { "dayOfWeek": 0, "openTime": "00:00", "closeTime": "00:00", "isOpen": false },
+      { "dayOfWeek": 1, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 2, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 3, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 4, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 5, "openTime": "09:00", "closeTime": "18:00", "isOpen": true },
+      { "dayOfWeek": 6, "openTime": "00:00", "closeTime": "00:00", "isOpen": false }
+    ],
+    "professionalSchedules": [
+      { "id": "schedule-novo-cliente-1-mon", "professionalId": "professional-novo-cliente-1", "dayOfWeek": 1, "startTime": "09:00", "endTime": "18:00", "active": true }
+    ],
+    "scheduleBlocks": []
+  },
+  "whatsapp": {
+    "templates": {
+      "confirmation": "Olá {cliente}! Seu horário na {negocio} está confirmado: {servico} em {data} às {hora}.",
+      "reminder": "Olá {cliente}! Lembrete: {servico} na {negocio} amanhã, {data} às {hora}.",
+      "return": "Olá {cliente}! Quer marcar um novo {servico} na {negocio}?",
+      "reschedule": "Olá {cliente}! Precisamos ajustar seu {servico} de {data} às {hora}. Qual horário fica melhor?",
+      "quote": "Olá {cliente}! Sobre o {servico} na {negocio}: posso enviar detalhes e valores.",
+      "initialContact": "Olá {cliente}! Aqui é da {negocio}. Vamos ajudar a agendar seu horário."
+    }
+  }
+}
