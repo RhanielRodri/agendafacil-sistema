@@ -19,112 +19,48 @@
   outline-offset: 1px;
 }
 
-.panel-shell {
-  min-height: 100vh;
-  background: var(--bg-light);
-  color: var(--text-on-light);
-}
-
-.panel-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 12px 24px;
-  background: var(--bg-dark);
-  color: var(--text-on-dark);
-  border-bottom: 1px solid var(--border-dark);
-}
-
-.panel-topbar-brand {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-
-.panel-topbar-brand strong {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.panel-topbar-brand span {
-  font-size: 0.78rem;
-  color: var(--text-on-dark-muted);
-}
-
-.panel-topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.panel-topbar-user {
-  font-size: 0.78rem;
-  color: var(--text-on-dark-muted);
-}
-
-.panel-ghost-dark {
-  background: none;
-  border: 1px solid var(--border-dark);
-  color: var(--text-on-dark);
-  padding: 5px 12px;
-  font-size: 0.78rem;
-}
-
-.panel-ghost-dark:hover { border-color: var(--text-on-dark-muted); }
-
-/* === NAVEGAÇÃO === */
-
-.panel-nav {
-  display: flex;
-  gap: 0;
-  padding: 0 16px;
-  background: var(--surface-light);
-  border-bottom: 1px solid var(--border-light);
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-
-.panel-nav button {
-  flex: 0 0 auto;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 12px 14px;
-  font-size: 0.86rem;
-  font-weight: 500;
-  color: var(--text-on-light-muted);
-  white-space: nowrap;
-}
-
-.panel-nav button:hover { color: var(--text-on-light); }
-
-.panel-nav button[aria-current="page"] {
-  color: var(--text-on-light);
-  font-weight: 600;
-  border-bottom-color: var(--text-on-light);
-}
-
-.panel-nav-count {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 6px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  background: var(--status-cancelled-bg);
-  color: var(--status-cancelled);
-}
+/* Casca (.panel-shell, .panel-sidebar, .panel-topbar, drawer) vive em
+   panel-shell.css. Aqui fica só o conteúdo operacional da coluna principal. */
 
 .panel-main {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 20px 24px 48px;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  padding: 32px;
+}
+
+/* Raio suave (10–14px na Lumière, 0 no Studio Cut) nas superfícies largas. O
+   overflow recorta as divisórias internas para o canto arredondado fechar. */
+.panel-surface,
+.panel-stats,
+.panel-attention,
+.panel-list,
+.panel-availability,
+.panel-week,
+.panel-pipeline,
+.panel-detail,
+.panel-form-grid,
+.panel-checklist,
+.panel-empty,
+.panel-skeleton,
+.panel-toolbar {
+  border-radius: var(--panel-radius);
+}
+
+.panel-stats,
+.panel-attention,
+.panel-availability,
+.panel-week,
+.panel-pipeline {
+  overflow: hidden;
+}
+
+/* A lista operacional é densa e larga: em telas estreitas ela rola na horizontal
+   dentro do próprio cartão (scroll controlado) em vez de recortar ações. O raio
+   continua fechando o canto porque overflow-x:auto também recorta. */
+.panel-list {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 /* === BLOCOS === */
@@ -266,6 +202,25 @@ button.panel-stat:hover { background: var(--surface-light-2); }
 .panel-row:last-child { border-bottom: none; }
 .panel-row:hover { background: var(--surface-light-2); }
 
+/* Cabeçalho de tabela: caixa-alta pequena sobre a mesma grade das linhas, para
+   as colunas alinharem. Some no mobile, onde as linhas viram blocos. */
+.panel-list-head {
+  display: grid;
+  grid-template-columns: 84px minmax(160px, 1.4fr) minmax(140px, 1.2fr) minmax(120px, 1fr) 110px auto;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface-light-2);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.panel-list-head span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-on-light-muted);
+}
+
 .panel-row-time {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -330,13 +285,24 @@ button.panel-stat:hover { background: var(--surface-light-2); }
 /* === STATUS === */
 
 .panel-status {
-  display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  padding: 3px 11px 3px 9px;
+  border-radius: 999px;
   white-space: nowrap;
+}
+
+.panel-status::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .panel-status.pending { color: var(--status-pending); background: var(--status-pending-bg); }
@@ -353,22 +319,25 @@ button.panel-stat:hover { background: var(--surface-light-2); }
   border: 1px solid var(--border-light-strong);
   background: var(--surface-light);
   color: var(--text-on-light);
-  padding: 5px 10px;
+  padding: 6px 12px;
   font-size: 0.78rem;
   font-weight: 500;
   white-space: nowrap;
+  border-radius: calc(var(--panel-radius) * 0.7);
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
-.panel-btn:hover { background: var(--bg-light); }
+.panel-btn:hover { background: var(--bg-light); border-color: var(--text-on-light-muted); }
 
+/* Primário champagne: fundo dourado, texto café — sem gradiente, sem sombra. */
 .panel-btn-primary {
-  background: var(--text-on-light);
-  border-color: var(--text-on-light);
-  color: var(--surface-light);
+  background: var(--panel-accent);
+  border-color: var(--panel-accent);
+  color: var(--panel-accent-contrast);
   font-weight: 600;
 }
 
-.panel-btn-primary:hover { background: #000; }
+.panel-btn-primary:hover { filter: brightness(0.95); background: var(--panel-accent); }
 
 .panel-btn:disabled,
 .panel-btn-primary:disabled {
@@ -388,6 +357,72 @@ button.panel-stat:hover { background: var(--surface-light-2); }
 
 .panel-btn-link:hover { color: var(--text-on-light); }
 
+/* === CONTROLES COMPARTILHADOS ===
+   Uma base única para todo input/select/textarea do painel. `booking.css` aplica
+   `input, select { width: 100% }` nas páginas públicas; aqui a base do painel
+   (maior especificidade por `.panel-main`) padroniza borda, altura, raio e foco
+   de todos os módulos — sem estilizar cada tela isoladamente. */
+/* Os `:not()` elevam a especificidade acima da regra pública de `demos.css`
+   (`:root[data-demo="x"] select` = 0,2,1), que senão forçaria `--radius-sm` só
+   em select/textarea — deixando raio inconsistente com os inputs e os botões. */
+.panel-main input:not([type="checkbox"]):not([type="radio"]),
+.panel-main select:not([multiple]):not([hidden]),
+.panel-main textarea:not([readonly]):not([hidden]) {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border-light-strong);
+  background: var(--surface-light);
+  color: var(--text-on-light);
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  min-height: 38px;
+  border-radius: calc(var(--panel-radius) * 0.7);
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.panel-main textarea { min-height: 72px; padding: 8px 10px; line-height: 1.45; resize: vertical; }
+
+.panel-main input:hover:not(:disabled),
+.panel-main select:hover:not(:disabled),
+.panel-main textarea:hover:not(:disabled) { border-color: var(--text-on-light-muted); }
+
+.panel-main input:focus-visible,
+.panel-main select:focus-visible,
+.panel-main textarea:focus-visible { border-color: var(--panel-accent); }
+
+.panel-main input:disabled,
+.panel-main select:disabled,
+.panel-main textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--surface-light-2);
+}
+
+.panel-main input::placeholder,
+.panel-main textarea::placeholder { color: var(--text-on-light-muted); opacity: 0.7; }
+
+/* Caixas e rádios usam o dourado/champagne da vertical (preto no Studio Cut). */
+.panel-main input[type="checkbox"],
+.panel-main input[type="radio"] {
+  accent-color: var(--panel-accent);
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+/* Linha de checkbox: caixa + rótulo alinhados (os módulos embrulham em <span>). */
+.panel-field > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: var(--text-on-light);
+}
+
+/* Inline na barra de filtros: controles densos de largura automática. */
+.panel-toolbar input,
+.panel-toolbar select { width: auto; }
+
 /* === FILTROS === */
 
 .panel-toolbar {
@@ -399,23 +434,6 @@ button.panel-stat:hover { background: var(--surface-light-2); }
   background: var(--surface-light);
   border: 1px solid var(--border-light);
   margin-bottom: 12px;
-}
-
-/* `booking.css` aplica `input, select { width: 100% }` globalmente para as
-   páginas públicas; o painel precisa reverter isso para controles densos. */
-.panel-toolbar input,
-.panel-toolbar select,
-.panel-field input,
-.panel-field select,
-.panel-field textarea {
-  border: 1px solid var(--border-light-strong);
-  background: var(--surface-light);
-  color: var(--text-on-light);
-  padding: 5px 8px;
-  font-size: 0.82rem;
-  min-width: 0;
-  width: auto;
-  min-height: 36px;
 }
 
 .panel-toolbar > input,
@@ -448,15 +466,16 @@ button.panel-stat:hover { background: var(--surface-light-2); }
   border: 1px solid var(--border-light-strong);
   background: var(--surface-light);
   color: var(--text-on-light-muted);
-  padding: 4px 10px;
+  padding: 5px 12px;
   font-size: 0.78rem;
   font-weight: 500;
+  border-radius: 999px;
 }
 
 .panel-chip[aria-pressed="true"] {
-  background: var(--text-on-light);
-  border-color: var(--text-on-light);
-  color: var(--surface-light);
+  background: var(--panel-accent);
+  border-color: var(--panel-accent);
+  color: var(--panel-accent-contrast);
   font-weight: 600;
 }
 
@@ -863,6 +882,8 @@ button.panel-stat:hover { background: var(--surface-light-2); }
 .panel-segmented {
   display: inline-flex;
   border: 1px solid var(--border-light-strong);
+  border-radius: calc(var(--panel-radius) * 0.7);
+  overflow: hidden;
 }
 
 .panel-segmented button {
@@ -873,15 +894,15 @@ button.panel-stat:hover { background: var(--surface-light-2); }
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-on-light-muted);
-  padding: 8px 14px;
+  padding: 8px 16px;
   cursor: pointer;
 }
 
 .panel-segmented button:last-child { border-right: none; }
 
 .panel-segmented button[aria-pressed="true"] {
-  background: var(--text-on-light);
-  color: var(--surface-light);
+  background: var(--panel-accent);
+  color: var(--panel-accent-contrast);
 }
 
 .panel-detail-facts div small {
@@ -958,9 +979,9 @@ button.panel-stat:hover { background: var(--surface-light-2); }
 }
 
 @media (max-width: 900px) {
-  .panel-main { padding: 16px 12px 40px; }
-  .panel-topbar { padding: 10px 12px; }
-  .panel-nav { padding: 0 6px; }
+  .panel-main { padding: 18px 14px 40px; }
+
+  .panel-list-head { display: none; }
 
   .panel-row {
     grid-template-columns: 72px 1fr;
@@ -1012,26 +1033,11 @@ button.panel-stat:hover { background: var(--surface-light-2); }
   .panel-btn,
   .panel-btn-primary,
   .panel-btn-danger { min-height: 40px; }
-  .panel-topbar-user { display: none; }
   .panel-form-grid { grid-template-columns: 1fr; padding: 12px; }
   .panel-form-grid .panel-field { grid-column: 1 / -1 !important; }
   .panel-segmented { width: 100%; }
   .panel-segmented button { flex: 1 1 auto; min-height: 40px; }
   .panel-checklist { grid-template-columns: 1fr; }
-
-  /* Navegação quebra em linhas em vez de rolar: nenhum módulo fica escondido. */
-  .panel-nav {
-    flex-wrap: wrap;
-    overflow-x: visible;
-    padding: 0;
-  }
-
-  .panel-nav button {
-    flex: 1 1 33%;
-    padding: 10px 6px;
-    font-size: 0.8rem;
-    text-align: center;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

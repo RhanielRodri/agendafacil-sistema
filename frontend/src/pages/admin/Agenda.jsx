@@ -187,6 +187,14 @@ export default function Agenda({ professionals, params, onNavigate, onSessionExp
               </PanelEmpty>
             ) : (
               <div className="panel-list">
+                <div className="panel-list-head" aria-hidden="true">
+                  <span>Hora</span>
+                  <span>Cliente</span>
+                  <span>Procedimento</span>
+                  <span>Profissional</span>
+                  <span>Status</span>
+                  <span />
+                </div>
                 {data.items.map((appointment) => {
                   const actions = appointmentTransitions[appointment.status] || [];
                   return (
