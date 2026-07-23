@@ -2,12 +2,12 @@
 project: AgendaFácil
 updated_at: 2026-07-22
 review_at: 2026-07-25
-status: active
-current_phase: A7_productizacao_comercial
+status: frozen
+current_phase: AGENDAFACIL_FINALIZADO_E_CONGELADO
 technical_baseline:
-  commit: 194932c2f88110cc57d25fc1388c0db0cde5a682
-  validation_status: partial
-  validated_at: 2026-07-21
+  commit: 349185754a761319e50b6f4762f9306e91b9e5db
+  validation_status: complete
+  validated_at: 2026-07-22
   validated:
     - "A0-A5A preservadas: tenant, autenticação, agenda individual, bloqueios, ciclo do agendamento, pipeline comercial e painel modular"
     - "A5B: serviços, profissionais, associação profissional-serviço, horário do negócio, agenda individual, cópia de agenda, bloqueios, configurações e indicadores"
@@ -498,10 +498,10 @@ Os quatro Workers produtivos conservaram os mesmos deployments publicados antes
 da A6. Não houve push nem deploy de produção. A6 aprovada em staging e pronta
 para push e autorização separada de publicação produtiva.
 
-## A7 — Productização comercial (2026-07-22) — aprovada com alertas
+## A7 — Productização comercial (2026-07-22) — AGENDAFÁCIL FINALIZADO E CONGELADO
 
-Sete commits locais sobre a baseline `480fc10`, sem push, deploy, migration
-remota ou alteração de produção:
+Oito commits locais sobre a baseline `480fc10`, sem push, migration remota ou
+alteração de produção:
 
 | # | Commit | Conteúdo |
 | --- | --- | --- |
@@ -512,6 +512,7 @@ remota ou alteração de produção:
 | 5 | `1a37be6` | WhatsApp manual: núcleo `wa.me`/templates + ações no painel (agenda, clientes, leads, follow-ups). |
 | 6 | `bf21917` | `cloudflare/docs/CLIENT_LIFECYCLE.md` — onboarding e operação do que está implementado. |
 | 7 | `5749914` | Teste de ciclo de vida ponta a ponta. |
+| 8 | `3491857` | Configs Wrangler locais, builds da fixture e operação manual completa de WhatsApp. |
 
 **Contrato**: `cloudflare/client-packs/schema.mjs` valida identidade, conteúdo,
 terminologia, catálogo, agenda e configurações; recusa campo desconhecido,
@@ -537,10 +538,12 @@ removidos e nunca referencia tabelas operacionais — provado em SQLite real com
 FKs de que o atendimento é preservado. Export/backup excluem tokens, identidades
 e memberships do Access; restore valida checksum e recusa alvo de outro tenant.
 
-**Gates (todos verdes)**: 152/152 testes Cloudflare; 7/7 Access; **38/38 novos
-testes A7** (contrato, projeção, seed/idempotência/reconciliação, backup/export/
-restore, WhatsApp, ciclo de vida ponta a ponta em SQLite real); TypeScript;
-builds Studio Cut e Lumière público e admin (71 módulos); `check:bundles`
+**Gates (todos verdes)**: 152/152 testes Cloudflare; 7/7 Access; **38/38 testes
+A7 preservados + 5/5 novos testes contratuais** (43/43 no total: contrato,
+projeção, seed/idempotência/reconciliação, backup/export/restore, provisionamento,
+WhatsApp e ciclo de vida ponta a ponta em SQLite real); TypeScript; builds Studio
+Cut e Lumière público e admin (73 módulos) e fixture público/admin (72 módulos);
+`check:bundles`
 verticais sem vazamento; `git diff --check` limpo; `npm audit --omit=dev` zero
 em Cloudflare e frontend; nenhuma chamada ao Render; nenhum artefato/segredo
 versionado; árvore de trabalho limpa. Nenhum arquivo de `backend/` alterado.
@@ -548,36 +551,29 @@ versionado; árvore de trabalho limpa. Nenhum arquivo de `backend/` alterado.
 **Regressão das duas verticais**: preservada e provada pelo gate de equivalência
 e pelos builds; identidade e comportamento intactos.
 
-### Alertas (por isso "aprovada com alertas", não congelada)
+### Fechamento das pendências contratuais
 
-- Provisionamento Cloudflare está como **plano** textual com detecção de
-  conflito staging↔produção; a CLI **não gera** os `wrangler.<env>.<slug>.*.jsonc`
-  do novo tenant — o passo é manual, guiado por `CLIENT_LIFECYCLE.md`.
-- **Build da fixture como terceira vertical (Worker público/admin) não executado**:
-  a fixture valida, projeta um módulo de front importável e gera seed parseável,
-  mas um build de Worker exigiria configs wrangler de um terceiro tenant, que a
-  A7 não deveria publicar. Cobertura atual é por teste, não por build de Worker.
-- WhatsApp: ações `wa.me` com mensagem pré-preenchida foram ligadas ao painel
-  usando os templates padrão (espelho do pack neutro, com teste anti-drift). O
-  **seletor de template por cliente** e as ações explícitas de "registrar contato
-  manual / próximo follow-up / não contatar" não foram adicionados — o registro
-  de relacionamento existente do pipeline não foi estendido.
-- **Verificação interativa do painel populado não foi possível**: sem backend/D1
-  local, a UI de WhatsApp foi validada por build e testes unitários, não por
-  clique com dados reais. Recomenda-se smoke em staging.
+- `client provision` gera configs Wrangler público/admin ignoradas pelo Git,
+  com tenant, D1, assets, placeholders seguros de Access, dry-run padrão,
+  escrita só com `--apply`, idempotência e recusa de conflitos incompatíveis.
+- A fixture neutra gerou os dois configs e completou builds Vite e dry-runs dos
+  Workers público/admin sem deploy nem criação remota.
+- O painel usa os templates do Client Pack e oferece, em agenda, clientes, leads
+  e follow-ups, somente ações manuais: abrir `wa.me`, registrar contato realizado,
+  registrar opt-out/não contatar e agendar o próximo follow-up. Não há envio
+  automático, fila, cron ou integração com Cloud API.
+- Os quatro Workers de staging existentes foram republicados. Smoke autenticado
+  com D1 real aprovou Studio Cut e Lumière, público/admin, em 1280, 768 e 360 px,
+  sem overflow ou erro de console. Nenhuma ação de escrita foi disparada no smoke.
 
-### Pendências reais
+Versões de staging publicadas:
 
-1. Gerar as configs wrangler por tenant (público/admin, `TENANT_SLUG`, binding
-   D1) e o build de Worker da fixture/terceiro tenant.
-2. Seletor de template de WhatsApp por cliente e ações de registro de contato.
-3. Smoke em staging do painel populado (ações `wa.me` e CTA), sem republicar
-   produção.
+| Worker | Version ID |
+| --- | --- |
+| `agendafacil-staging-studio-cut-public` | `c5d1c83a-b803-48c1-9868-3222b522526c` |
+| `agendafacil-staging-studio-cut-admin` | `7c95b80d-be18-46f0-8f4d-f89a7fec8a55` |
+| `agendafacil-staging-lumiere-public` | `65a2c0b1-a296-48c0-b391-8ec79ae170b6` |
+| `agendafacil-staging-lumiere-admin` | `0cad1350-f3e8-4dd4-afcd-00713590dcbe` |
 
-**Tempo observado** para implantar um novo cliente com o que existe: ~15–25 min
-para redigir e provisionar o pack localmente; +20–30 min manuais para configs
-wrangler, Access e smoke em staging.
-
-Sem push, deploy ou alteração de produção. Render/Neon, SOR ONE, Workers/D1/
-Access atuais e `main` intactos. Projeto **não** congelado: as pendências acima
-mantêm A7 como aprovada com alertas.
+Sem push ou alteração de produção, schema, APIs centrais, Render/Neon ou SOR ONE.
+AgendaFácil encerrado no escopo contratado: **AGENDAFÁCIL FINALIZADO E CONGELADO**.
