@@ -16,7 +16,7 @@
     "access:verify": "node scripts/configure-access.mjs --check",
     "access:test": "node --test scripts/configure-access.test.mjs",
     "client": "node scripts/client.mjs",
-    "client:test": "node --test scripts/client-pack.test.mjs scripts/client-compile.test.mjs scripts/client-seed.test.mjs scripts/client-backup.test.mjs scripts/client-whatsapp.test.mjs",
+    "client:test": "node --test scripts/client-pack.test.mjs scripts/client-compile.test.mjs scripts/client-seed.test.mjs scripts/client-backup.test.mjs scripts/client-whatsapp.test.mjs scripts/client-lifecycle.test.mjs",
     "client:validate:all": "node scripts/client.mjs validate studio-cut && node scripts/client.mjs validate lumiere && node scripts/client.mjs validate fixture-neutra && node scripts/client.mjs validate template",
     "production:config": "node scripts/production-config.mjs",
     "production:migrate": "wrangler d1 migrations apply agendafacil-production-db --remote --config wrangler.production.studio-cut.public.jsonc",
