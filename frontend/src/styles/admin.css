@@ -355,6 +355,19 @@
   font-size: 0.88rem;
 }
 
+/* Ação manual de WhatsApp (link wa.me) ao lado do telefone. */
+.wa-link {
+  color: var(--panel-accent);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.wa-link:hover,
+.wa-link:focus-visible {
+  text-decoration: underline;
+}
+
 /* === STATUS SELECT === */
 
 .status-select-wrapper {

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import tenant from "../../config/tenant.js";
 import { toId } from "../../utils/id.js";
 import { api } from "../../services/api.js";
+import { buildWaAction } from "../../utils/whatsapp.js";
 import { usePanelData } from "../../utils/usePanelData.js";
 import { PanelEmpty, PanelError, PanelLoading, PanelMessage, StatusPill } from "../../components/panel/PanelState.jsx";
 import {
@@ -169,7 +171,13 @@ export default function Clients({ params, onNavigate, onSessionExpired }) {
           <div className="panel-detail-head">
             <div>
               <h3>{detail.name}</h3>
-              <p>{detail.phone}{detail.email ? ` · ${detail.email}` : ""}</p>
+              <p>
+                {detail.phone}{detail.email ? ` · ${detail.email}` : ""}
+                {(() => {
+                  const wa = buildWaAction({ phone: detail.phone, kind: "return", context: { cliente: detail.name, negocio: tenant?.name || "" } });
+                  return wa ? <> · <a className="wa-link" href={wa.url} target="_blank" rel="noreferrer">WhatsApp</a></> : null;
+                })()}
+              </p>
             </div>
             <button className="panel-btn" type="button" onClick={() => { setDetail(null); setSelectedId(null); setDetailState("idle"); }}>
               Fechar ficha

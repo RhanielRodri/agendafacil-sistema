@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from "react";
+import tenant from "../../config/tenant.js";
 import { toId } from "../../utils/id.js";
 import { api } from "../../services/api.js";
+import { buildWaAction } from "../../utils/whatsapp.js";
 import { usePanelData } from "../../utils/usePanelData.js";
 import { PanelEmpty, PanelError, PanelLoading, PanelMessage, StatusPill } from "../../components/panel/PanelState.jsx";
 import {
@@ -419,7 +421,13 @@ export default function Leads({ tenantId, vertical, services, professionals, use
           <div className="panel-detail-head">
             <div>
               <h3>{selected.client.name}</h3>
-              <p>{selected.client.phone}{selected.client.email ? ` · ${selected.client.email}` : ""}</p>
+              <p>
+                {selected.client.phone}{selected.client.email ? ` · ${selected.client.email}` : ""}
+                {(() => {
+                  const wa = buildWaAction({ phone: selected.client.phone, kind: "initialContact", context: { cliente: selected.client.name, negocio: tenant?.name || "" } });
+                  return wa ? <> · <a className="wa-link" href={wa.url} target="_blank" rel="noreferrer">WhatsApp</a></> : null;
+                })()}
+              </p>
             </div>
             <div className="panel-row-actions">
               <button className="panel-btn" type="button" onClick={() => onNavigate("clientes", { clientId: selected.clientId })}>

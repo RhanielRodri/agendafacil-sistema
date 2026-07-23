@@ -1,5 +1,7 @@
 import React, { useState } from "react";
+import tenant from "../../config/tenant.js";
 import { api } from "../../services/api.js";
+import { buildWaAction } from "../../utils/whatsapp.js";
 import { usePanelData } from "../../utils/usePanelData.js";
 import { PanelEmpty, PanelError, PanelLoading, PanelMessage, StatusPill } from "../../components/panel/PanelState.jsx";
 import {
@@ -187,6 +189,20 @@ export default function Agenda({ professionals, params, onNavigate, onSessionExp
               <div className="panel-list">
                 {data.items.map((appointment) => {
                   const actions = appointmentTransitions[appointment.status] || [];
+                  // Ação manual de WhatsApp com mensagem pré-preenchida pelos
+                  // dados do próprio agendamento. Quem revisa e envia é a pessoa.
+                  const wa = buildWaAction({
+                    phone: appointment.clientPhone,
+                    kind: appointment.status === "PENDING" ? "confirmation" : "reminder",
+                    context: {
+                      cliente: appointment.clientName,
+                      negocio: tenant?.name || "",
+                      servico: appointment.serviceName,
+                      profissional: appointment.professionalName,
+                      data: appointment.date || "",
+                      hora: appointment.time
+                    }
+                  });
                   return (
                     <div className="panel-row" key={appointment.id}>
                       <div className="panel-row-time">
@@ -195,7 +211,15 @@ export default function Agenda({ professionals, params, onNavigate, onSessionExp
                       </div>
                       <div className="panel-row-main">
                         <strong>{appointment.clientName}</strong>
-                        <span>{appointment.clientPhone}</span>
+                        <span>
+                          {appointment.clientPhone}
+                          {wa && (
+                            <>
+                              {" · "}
+                              <a className="wa-link" href={wa.url} target="_blank" rel="noreferrer">WhatsApp</a>
+                            </>
+                          )}
+                        </span>
                         <div className="panel-tags">
                           {appointment.leadSource && <span className="panel-tag">{leadSourceLabels[appointment.leadSource]}</span>}
                           {appointment.rescheduledFromId && <span className="panel-tag">Reagendado de #{appointment.rescheduledFromId}</span>}
