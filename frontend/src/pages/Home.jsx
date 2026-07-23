@@ -3,7 +3,17 @@ import BookingFlow from "./BookingFlow.jsx";
 import StateMessage from "../components/StateMessage.jsx";
 import LeadCapture from "../components/LeadCapture.jsx";
 import { formatCurrency } from "../utils/format.js";
-import tenant from "../config/tenant.js";
+import tenant from "../config/site.js";
+
+function professionalProfile(professional) {
+  const override = tenant.professionals?.[professional.id] || {};
+  return {
+    name: override.name || professional.name,
+    specialty: override.specialty || professional.specialty,
+    bio: override.bio || "",
+    photo: override.photo || professional.photo
+  };
+}
 
 function ProfessionalPhoto({ src, name }) {
   const [failed, setFailed] = useState(false);
@@ -18,7 +28,7 @@ function ProfessionalPhoto({ src, name }) {
     return <div className="professional-avatar" aria-hidden="true">{initials}</div>;
   }
 
-  return <img src={src} alt={name} onError={() => setFailed(true)} />;
+  return <img src={src} alt={`${name}, profissional da equipe`} width="640" height="800" loading="lazy" onError={() => setFailed(true)} />;
 }
 
 function Hero({ onStartBooking }) {
@@ -55,11 +65,27 @@ function Hero({ onStartBooking }) {
         </div>
       </div>
       <div className="hero-image">
-        <img src={tenant.hero.image} alt={tenant.hero.imageAlt} />
+        <img src={tenant.hero.image} alt={tenant.hero.imageAlt} width="1200" height="1450" />
         <div className="hero-image-badge">
           <div className="hero-badge-dot" />
           <span>{tenant.hero.badge}</span>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function DifferentialsBand() {
+  if (!tenant.differentials) return null;
+  return (
+    <section className="differentials" aria-label="Diferenciais">
+      <div className="differentials-track">
+        {tenant.differentials.items.map((item) => (
+          <div className="differential" key={item.title}>
+            <strong>{item.title}</strong>
+            <span>{item.text}</span>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -99,6 +125,7 @@ function ServicesSection({ services, loading, error, selectedServiceId, onSelect
                 <strong>{formatCurrency(service.price) || "Sob consulta"}</strong>
                 <span>{service.duration} min</span>
               </div>
+              <span className="service-card-cta" aria-hidden="true">Agendar →</span>
             </button>
           ))}
         </div>
@@ -109,7 +136,7 @@ function ServicesSection({ services, loading, error, selectedServiceId, onSelect
 
 function ProfessionalsSection({ professionals, loading, error, onRetry }) {
   return (
-    <section className="section professionals-section">
+    <section className="section professionals-section" id="profissionais">
       <div className="section-heading">
         <span className="eyebrow">{tenant.copy.professionalsEyebrow}</span>
         <h2>{tenant.copy.professionalsTitle}</h2>
@@ -127,17 +154,70 @@ function ProfessionalsSection({ professionals, loading, error, onRetry }) {
       )}
       {!loading && !error && professionals.length > 0 && (
         <div className="grid team-grid">
-          {professionals.map((professional) => (
-            <article className="professional-card" key={professional.id}>
-              <ProfessionalPhoto src={professional.photo} name={professional.name} />
-              <div className="professional-card-body">
-                <h3>{professional.name}</h3>
-                <p>{professional.specialty}</p>
-              </div>
-            </article>
-          ))}
+          {professionals.map((professional) => {
+            const profile = professionalProfile(professional);
+            return (
+              <article className="professional-card" key={professional.id}>
+                <div className="professional-photo">
+                  <ProfessionalPhoto src={profile.photo} name={profile.name} />
+                </div>
+                <div className="professional-card-body">
+                  <h3>{profile.name}</h3>
+                  <p className="professional-specialty">{profile.specialty}</p>
+                  {profile.bio && <p className="professional-bio">{profile.bio}</p>}
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
+    </section>
+  );
+}
+
+function GallerySection() {
+  if (!tenant.gallery) return null;
+  return (
+    <section className="section gallery-section" id="galeria">
+      <div className="section-heading">
+        <span className="eyebrow">{tenant.gallery.eyebrow}</span>
+        <h2>{tenant.gallery.title}</h2>
+      </div>
+      <div className="gallery-grid">
+        {tenant.gallery.items.map((item) => (
+          <figure className="gallery-item" key={item.src}>
+            <img src={item.src} alt={item.alt} width="800" height="800" loading="lazy" />
+            <figcaption>{item.label}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ReviewsSection() {
+  if (!tenant.reviews) return null;
+  return (
+    <section className="section reviews-section" id="avaliacoes">
+      <div className="section-heading">
+        <span className="eyebrow">{tenant.reviews.eyebrow}</span>
+        <h2>{tenant.reviews.title}</h2>
+      </div>
+      <div className="reviews-grid">
+        {tenant.reviews.items.map((review) => (
+          <blockquote className="review-card" key={review.name}>
+            <div className="review-stars" aria-label={`${review.rating} de 5`}>
+              <span aria-hidden="true">{"★".repeat(review.rating)}</span>
+            </div>
+            <p>{review.text}</p>
+            <footer>
+              <span className="review-name">{review.name}</span>
+              <span className="review-role">{review.role}</span>
+            </footer>
+          </blockquote>
+        ))}
+      </div>
+      {tenant.reviews.note && <p className="reviews-note">{tenant.reviews.note}</p>}
     </section>
   );
 }
@@ -183,16 +263,32 @@ function ProcessSection() {
 
 function SpaceSection() {
   return (
-    <section className="section studio-section">
+    <section className="section studio-section" id="espaco">
       <div className="section-heading">
         <span className="eyebrow">{tenant.space.eyebrow}</span>
         <h2>{tenant.space.title}</h2>
         {tenant.space.description.map((paragraph) => (
           <p className="section-description" key={paragraph}>{paragraph}</p>
         ))}
+        {(tenant.space.location || tenant.space.hours) && (
+          <dl className="space-facts">
+            {tenant.space.location && (
+              <div>
+                <dt>Localização</dt>
+                <dd>{tenant.space.location}</dd>
+              </div>
+            )}
+            {tenant.space.hours && (
+              <div>
+                <dt>Horários</dt>
+                <dd>{tenant.space.hours.map((line) => <span key={line}>{line}</span>)}</dd>
+              </div>
+            )}
+          </dl>
+        )}
       </div>
       <div className="studio-photo">
-        <img src={tenant.space.image} alt={tenant.space.imageAlt} />
+        <img src={tenant.space.image} alt={tenant.space.imageAlt} width="1400" height="1000" loading="lazy" />
         <div className="studio-caption">
           <strong>{tenant.name}</strong>
           <span>{tenant.city} · {tenant.schedule}</span>
@@ -241,6 +337,7 @@ function Footer() {
       <div>
         <span className="footer-brand">{tenant.name}</span>
         <p className="footer-tagline">{tenant.city} · {tenant.footer.tagline}</p>
+        <p className="footer-demo">Ambiente de demonstração. Imagens, avaliações e profissionais são ilustrativos.</p>
       </div>
       <span className="footer-credit">Desenvolvido pela SOR ONE</span>
     </footer>
@@ -260,7 +357,7 @@ export default function Home({ services, professionals, loading, error, onSucces
   }
 
   const sharedSections = {
-    hero: <Hero key="hero" onStartBooking={scrollToBooking} />,
+    differentials: <DifferentialsBand key="differentials" />,
     services: (
       <ServicesSection
         key="services"
@@ -281,6 +378,8 @@ export default function Home({ services, professionals, loading, error, onSucces
         onRetry={onRetry}
       />
     ),
+    gallery: <GallerySection key="gallery" />,
+    reviews: <ReviewsSection key="reviews" />,
     details: <DetailsSection key="details" />,
     process: <ProcessSection key="process" />,
     space: <SpaceSection key="space" />,
@@ -300,11 +399,12 @@ export default function Home({ services, professionals, loading, error, onSucces
   };
 
   const order = tenant.slug === "lumiere"
-    ? ["hero", "details", "space", "services", "process", "professionals", "contact", "booking"]
-    : ["hero", "services", "professionals", "details", "booking", "contact", "process", "space"];
+    ? ["differentials", "details", "space", "services", "professionals", "gallery", "reviews", "process", "booking", "contact"]
+    : ["differentials", "services", "professionals", "gallery", "reviews", "process", "space", "booking", "contact"];
 
   return (
     <main className={`business-site ${tenant.slug}-site`}>
+      <Hero onStartBooking={scrollToBooking} />
       {order.map((section) => sharedSections[section])}
       <Footer />
     </main>

@@ -53,6 +53,11 @@ export default defineConfig(({ mode }) => {
         "import.meta.env.VITE_CF_TENANT": JSON.stringify(tenantSlug),
         "import.meta.env.VITE_CF_API_URL": JSON.stringify("")
       },
+      // Cada vertical serve apenas os seus próprios assets, e só a superfície
+      // pública os carrega. `public/<slug>` é isolado por build, então o bundle
+      // do Studio Cut nunca copia uma imagem da Lumière (e o admin não copia
+      // imagem nenhuma).
+      publicDir: tenantSlug && surface === "public" ? resolve(process.cwd(), "public", tenantSlug) : false,
       build: {
         outDir: resolve(process.cwd(), outDir),
         emptyOutDir: true,
@@ -65,6 +70,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), singleTenantPlugin("")],
+    publicDir: false,
     build: {
       rollupOptions: {
         input: {
