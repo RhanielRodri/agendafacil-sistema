@@ -3,7 +3,7 @@ project: AgendaFácil
 updated_at: 2026-07-22
 review_at: 2026-07-25
 status: active
-current_phase: CF2_staging_separado_por_vertical
+current_phase: A7_productizacao_comercial
 technical_baseline:
   commit: 194932c2f88110cc57d25fc1388c0db0cde5a682
   validation_status: partial
@@ -497,3 +497,87 @@ continuam ignorados.
 Os quatro Workers produtivos conservaram os mesmos deployments publicados antes
 da A6. Não houve push nem deploy de produção. A6 aprovada em staging e pronta
 para push e autorização separada de publicação produtiva.
+
+## A7 — Productização comercial (2026-07-22) — aprovada com alertas
+
+Sete commits locais sobre a baseline `480fc10`, sem push, deploy, migration
+remota ou alteração de produção:
+
+| # | Commit | Conteúdo |
+| --- | --- | --- |
+| 1 | `226bf45` | Contrato versionado do Client Pack (schema fail-closed, packs reais, template, fixture não publicável). |
+| 2 | `dcee3d8` | Runtime pack-driven por projeção, com gate de equivalência. |
+| 3 | `d84212f` | CLI de ciclo de vida (`validate/plan/provision/update/smoke/decommission-plan`) + seed idempotente/reconciliador. |
+| 4 | `efe4c87` | Backup, export (JSON + CSV por domínio, mascaramento, período) e restore com checksum e proteção cross-tenant. |
+| 5 | `1a37be6` | WhatsApp manual: núcleo `wa.me`/templates + ações no painel (agenda, clientes, leads, follow-ups). |
+| 6 | `bf21917` | `cloudflare/docs/CLIENT_LIFECYCLE.md` — onboarding e operação do que está implementado. |
+| 7 | `5749914` | Teste de ciclo de vida ponta a ponta. |
+
+**Contrato**: `cloudflare/client-packs/schema.mjs` valida identidade, conteúdo,
+terminologia, catálogo, agenda e configurações; recusa campo desconhecido,
+segredo, AUD, HTML/CSS, URL insegura e referência quebrada. Packs reais
+`studio-cut.json` e `lumiere.json` derivados do estado vigente; `template.json` e
+`fixture-neutra.json` marcados `publishable: false`.
+
+**Runtime pack-driven sem regressão**: o front usa deployment fixado por vertical,
+então o pack não é lido em runtime — é a fonte de build que projeta
+`demos/<slug>.js` e a terminologia. Um gate de igualdade (`compile.mjs` +
+`client-compile.test.mjs`) prova que Studio Cut e Lumière permanecem idênticos
+(zero diff no runtime das verticais). Hardcodes de identidade/conteúdo/catálogo
+passam a ter o pack como fonte única.
+
+**CLI segura**: dry-run por padrão, escrita só com `--apply`, produção exige
+`--confirm <slug>`, non-publicável recusa provisão remota, saída resumida/JSON,
+códigos de saída estáveis, logs sanitizados. A CLI nunca faz deploy nem toca D1
+remoto — gera artefatos (ignorados pelo Git) e imprime os comandos wrangler.
+
+**Reconciliação e dados**: seed idempotente (upsert por chave estável) escopado
+por tenant; a reconciliação **inativa** (nunca apaga) serviços/profissionais
+removidos e nunca referencia tabelas operacionais — provado em SQLite real com
+FKs de que o atendimento é preservado. Export/backup excluem tokens, identidades
+e memberships do Access; restore valida checksum e recusa alvo de outro tenant.
+
+**Gates (todos verdes)**: 152/152 testes Cloudflare; 7/7 Access; **38/38 novos
+testes A7** (contrato, projeção, seed/idempotência/reconciliação, backup/export/
+restore, WhatsApp, ciclo de vida ponta a ponta em SQLite real); TypeScript;
+builds Studio Cut e Lumière público e admin (71 módulos); `check:bundles`
+verticais sem vazamento; `git diff --check` limpo; `npm audit --omit=dev` zero
+em Cloudflare e frontend; nenhuma chamada ao Render; nenhum artefato/segredo
+versionado; árvore de trabalho limpa. Nenhum arquivo de `backend/` alterado.
+
+**Regressão das duas verticais**: preservada e provada pelo gate de equivalência
+e pelos builds; identidade e comportamento intactos.
+
+### Alertas (por isso "aprovada com alertas", não congelada)
+
+- Provisionamento Cloudflare está como **plano** textual com detecção de
+  conflito staging↔produção; a CLI **não gera** os `wrangler.<env>.<slug>.*.jsonc`
+  do novo tenant — o passo é manual, guiado por `CLIENT_LIFECYCLE.md`.
+- **Build da fixture como terceira vertical (Worker público/admin) não executado**:
+  a fixture valida, projeta um módulo de front importável e gera seed parseável,
+  mas um build de Worker exigiria configs wrangler de um terceiro tenant, que a
+  A7 não deveria publicar. Cobertura atual é por teste, não por build de Worker.
+- WhatsApp: ações `wa.me` com mensagem pré-preenchida foram ligadas ao painel
+  usando os templates padrão (espelho do pack neutro, com teste anti-drift). O
+  **seletor de template por cliente** e as ações explícitas de "registrar contato
+  manual / próximo follow-up / não contatar" não foram adicionados — o registro
+  de relacionamento existente do pipeline não foi estendido.
+- **Verificação interativa do painel populado não foi possível**: sem backend/D1
+  local, a UI de WhatsApp foi validada por build e testes unitários, não por
+  clique com dados reais. Recomenda-se smoke em staging.
+
+### Pendências reais
+
+1. Gerar as configs wrangler por tenant (público/admin, `TENANT_SLUG`, binding
+   D1) e o build de Worker da fixture/terceiro tenant.
+2. Seletor de template de WhatsApp por cliente e ações de registro de contato.
+3. Smoke em staging do painel populado (ações `wa.me` e CTA), sem republicar
+   produção.
+
+**Tempo observado** para implantar um novo cliente com o que existe: ~15–25 min
+para redigir e provisionar o pack localmente; +20–30 min manuais para configs
+wrangler, Access e smoke em staging.
+
+Sem push, deploy ou alteração de produção. Render/Neon, SOR ONE, Workers/D1/
+Access atuais e `main` intactos. Projeto **não** congelado: as pendências acima
+mantêm A7 como aprovada com alertas.
