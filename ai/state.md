@@ -463,3 +463,37 @@ sessão e restaurou o desafio do Access.
 Staging, Workers compartilhados antigos, Vercel, Render e `main` não foram
 alterados. O procedimento idempotente ficou documentado em
 `cloudflare/docs/DEPLOY_PRODUCTION.md`.
+
+## A6 — Sistema visual validado em staging (2026-07-22)
+
+A A6 foi concluída nos cinco commits locais `b36ef02`, `d3b0660`, `98f2db0`,
+`d83893a` e `3e972b4`. O escopo permaneceu restrito ao sistema visual
+compartilhado, painel, foco, CTA da Lumière, rodapé e eyebrow. Nenhuma regra de
+negócio, schema, migration ou configuração de produção foi alterada.
+
+Os quatro Workers de staging foram republicados a partir do HEAD `3e972b4`:
+
+| Worker | Version ID |
+| --- | --- |
+| `agendafacil-staging-studio-cut-public` | `7b6bda48-9239-4c1f-a3f9-e65203320b9b` |
+| `agendafacil-staging-studio-cut-admin` | `7c1b7288-1de6-4fc2-a7e1-1684c57ee841` |
+| `agendafacil-staging-lumiere-public` | `60378093-f28f-4b98-9165-cb17dd297ff1` |
+| `agendafacil-staging-lumiere-admin` | `545251d4-bc57-4863-a0ef-5860da7fc5b1` |
+
+Smoke visual real aprovado em 1280, 768 e 360 px nas duas superfícies públicas
+e nos dois painéis autenticados pelo Cloudflare Access. Os 11 módulos de cada
+painel abriram contra o D1 remoto com dados reais. Botões primários, cards,
+inputs, CTA da Lumière, foco por teclado, rodapé e eyebrow permaneceram legíveis.
+Estados vazios reais, loading real do painel e do agendamento e erro real de
+token inválido foram conferidos. Não houve overflow horizontal, clipping de
+conteúdo ativo, erro ou aviso de console, falha visual de rede nem chamada ao
+Render. Nenhuma regressão exigiu correção adicional.
+
+Gates finais: `staging:dryrun:verticals`, 152/152 testes do Cloudflare, 7/7 testes
+de Access, TypeScript, quatro builds Vite, quatro dry-runs, quatro bundle checks
+verticais e `git diff --check`. Artefatos, configs Wrangler e arquivos de ambiente
+continuam ignorados.
+
+Os quatro Workers produtivos conservaram os mesmos deployments publicados antes
+da A6. Não houve push nem deploy de produção. A6 aprovada em staging e pronta
+para push e autorização separada de publicação produtiva.
