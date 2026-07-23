@@ -14,6 +14,8 @@ admin-worker/assets/
 
 # Artefatos gerados localmente pela CLI de Client Pack (provision/update).
 seed/generated/
+# Backups/exports contêm dados de cliente (PII) — nunca versionar.
+backups/
 
 # Ambiente remoto: IDs e política reais nunca entram no Git.
 .env.staging

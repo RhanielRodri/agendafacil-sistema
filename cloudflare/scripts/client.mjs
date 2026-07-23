@@ -12,6 +12,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { validatePack, isPublishable } from "../client-packs/schema.mjs";
 import { compileSeedSql } from "../client-packs/seed.mjs";
 import { renderFrontendModule } from "../client-packs/compile.mjs";
+import { buildBackup, verifyBackup, restoreStatements, toCsv, groupByDomain } from "../client-packs/backup.mjs";
+import { readTenantTables } from "../client-packs/source.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const PACKS_DIR = resolve(__dirname, "..", "client-packs");
@@ -22,18 +24,21 @@ const ENVIRONMENTS = ["local", "staging", "production"];
 export const EXIT = { OK: 0, ERROR: 1, USAGE: 2 };
 
 export function parseArgs(argv) {
-  const flags = { json: false, apply: false, env: "local", confirm: null, help: false };
+  const flags = { json: false, apply: false, env: "local", confirm: null, help: false,
+    source: null, out: null, from: null, to: null, mask: false, target: null };
   const positional = [];
+  const valued = { "--env": "env", "--confirm": "confirm", "--source": "source", "--out": "out",
+    "--from": "from", "--to": "to", "--target": "target" };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--json") flags.json = true;
     else if (arg === "--apply") flags.apply = true;
+    else if (arg === "--mask") flags.mask = true;
     else if (arg === "--help" || arg === "-h") flags.help = true;
-    else if (arg === "--env") flags.env = argv[++i];
-    else if (arg === "--confirm") flags.confirm = argv[++i];
-    else if (arg.startsWith("--env=")) flags.env = arg.slice(6);
-    else if (arg.startsWith("--confirm=")) flags.confirm = arg.slice(10);
-    else if (arg.startsWith("--")) throw new UsageError(`flag desconhecida: ${arg}`);
+    else if (valued[arg]) flags[valued[arg]] = argv[++i];
+    else if (arg.startsWith("--") && arg.includes("=") && valued[arg.slice(0, arg.indexOf("="))]) {
+      flags[valued[arg.slice(0, arg.indexOf("="))]] = arg.slice(arg.indexOf("=") + 1);
+    } else if (arg.startsWith("--")) throw new UsageError(`flag desconhecida: ${arg}`);
     else positional.push(arg);
   }
   return { flags, positional };
@@ -276,11 +281,114 @@ function cmdDecommissionPlan({ positional, flags }) {
   });
 }
 
+const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+const BACKUPS_DIR = join(CF_DIR, "backups");
+
+function requireSlug(ref) {
+  if (!ref || !SLUG_RE.test(ref)) throw new UsageError("informe o slug do tenant");
+  return ref;
+}
+
+function stamp(now) {
+  return now.replace(/[:.]/g, "-");
+}
+
+// Extrai as tabelas do tenant. Local exige --source (SQLite). Em staging/
+// produção esta CLI não busca dados remotos sozinha: instrui o comando wrangler.
+function extractOrGuide(slug, flags) {
+  if (flags.source) {
+    return readTenantTables(resolve(process.cwd(), flags.source), slug, { from: flags.from, to: flags.to });
+  }
+  if (flags.env !== "local") {
+    throw new UsageError(
+      `sem --source: exporte o D1 de ${flags.env} com wrangler primeiro, ex.:\n` +
+      `  wrangler d1 export <db-${flags.env}> --remote --output dump.sqlite\n` +
+      `  depois rode este comando com --source dump.sqlite`
+    );
+  }
+  throw new UsageError("informe --source <arquivo.sqlite> (D1 local do wrangler)");
+}
+
+async function cmdBackup({ positional, flags }) {
+  checkEnv(flags.env);
+  const slug = requireSlug(positional[0]);
+  const tables = extractOrGuide(slug, flags);
+  const now = new Date().toISOString();
+  const backup = buildBackup({ tenant: slug, tables, now });
+  const totals = Object.fromEntries(Object.entries(backup.tables).map(([t, r]) => [t, r.length]));
+  const outPath = flags.out ? resolve(process.cwd(), flags.out) : join(BACKUPS_DIR, `${slug}-${stamp(now)}.json`);
+  await mkdir(dirname(outPath), { recursive: true });
+  await writeFile(outPath, JSON.stringify(backup, null, 2), "utf8");
+  const data = { command: "backup", slug, out: outPath, checksum: backup.checksum, totals };
+  emit(flags, `BACKUP  ${slug} — ${outPath}\n  checksum: ${backup.checksum}\n  linhas: ${Object.values(totals).reduce((a, b) => a + b, 0)}`, data);
+  return EXIT.OK;
+}
+
+async function cmdExport({ positional, flags }) {
+  checkEnv(flags.env);
+  const slug = requireSlug(positional[0]);
+  const tables = extractOrGuide(slug, flags);
+  const now = new Date().toISOString();
+  const backup = buildBackup({ tenant: slug, tables, now });
+  const outDir = flags.out ? resolve(process.cwd(), flags.out) : join(BACKUPS_DIR, `${slug}-${stamp(now)}`);
+  await mkdir(outDir, { recursive: true });
+  await writeFile(join(outDir, "backup.json"), JSON.stringify(backup, null, 2), "utf8");
+  const groups = groupByDomain(tables);
+  const csvFiles = [];
+  for (const [domain, rows] of Object.entries(groups)) {
+    const csv = toCsv(rows, { mask: flags.mask });
+    if (csv) {
+      const file = join(outDir, `${domain}.csv`);
+      await writeFile(file, csv, "utf8");
+      csvFiles.push({ domain, rows: rows.length });
+    }
+  }
+  const data = { command: "export", slug, out: outDir, masked: flags.mask, checksum: backup.checksum, domains: csvFiles };
+  emit(flags, `EXPORT  ${slug} — ${outDir}\n  JSON restaurável + ${csvFiles.length} CSV por domínio${flags.mask ? " (mascarado)" : ""}\n  checksum: ${backup.checksum}`, data);
+  return EXIT.OK;
+}
+
+async function cmdRestore({ positional, flags }) {
+  checkEnv(flags.env);
+  const backupPath = positional[0];
+  if (!backupPath) throw new UsageError("informe o arquivo de backup");
+  const target = requireSlug(flags.target || "");
+  let backup;
+  try {
+    backup = JSON.parse(await readFile(resolve(process.cwd(), backupPath), "utf8"));
+  } catch (e) {
+    throw new UsageError(`backup ilegível: ${e.message}`);
+  }
+  const check = verifyBackup(backup);
+  if (!check.ok) throw Object.assign(new Error(`backup inválido: ${check.errors.join("; ")}`), { validation: true });
+  if (flags.env === "production" && flags.apply && flags.confirm !== target) {
+    throw new UsageError(`produção exige --confirm ${target}`);
+  }
+  // restoreStatements recusa fechado se o backup for de outro tenant.
+  const statements = restoreStatements(backup, target, { now: new Date().toISOString() });
+  const sql = statements.join("\n") + "\n";
+  const outPath = join(CF_DIR, "seed", "generated", `${target}.restore.sql`);
+  const localApply = flags.apply && flags.env === "local";
+  const art = await writeArtifact(outPath, sql, localApply);
+  const data = { command: "restore", target, source: backupPath, env: flags.env, apply: flags.apply, checksum: backup.checksum, artifact: art };
+  const lines = [
+    `RESTORE  ${target} — ambiente ${flags.env}${flags.apply ? " (apply)" : " (dry-run)"}`,
+    `  backup de "${backup.tenant}" (checksum ${backup.checksum}) — alvo confere.`,
+    `  SQL de restauração: ${art.written ? "escrito" : "geraria"} ${outPath}`
+  ];
+  if (flags.env !== "local") lines.push(`  apply remoto NÃO executado por esta CLI — revise e aplique via wrangler manualmente.`);
+  emit(flags, lines.join("\n"), data);
+  return EXIT.OK;
+}
+
 const COMMANDS = {
   validate: cmdValidate,
   plan: cmdPlan,
   provision: cmdProvision,
   update: cmdUpdate,
+  backup: cmdBackup,
+  export: cmdExport,
+  restore: cmdRestore,
   smoke: cmdSmoke,
   "decommission-plan": cmdDecommissionPlan
 };
@@ -295,6 +403,9 @@ Comandos:
   plan <pack>                Mostra o que a provisão faria (dry-run).
   provision <pack>           Gera seed + config do tenant (--apply escreve local).
   update <pack>              Gera SQL de reconciliação idempotente (inativa o que saiu).
+  backup <slug>              Snapshot JSON com checksum (--source <sqlite>).
+  export <slug>              JSON restaurável + CSV por domínio (--mask opcional).
+  restore <backup.json>      Gera SQL de restauração (--target <slug>; recusa cross-tenant).
   smoke <pack>               Checks locais proporcionais (contrato, seed, config).
   decommission-plan <pack>   Planeja a desativação (nada é executado).
 
@@ -303,6 +414,11 @@ Flags:
   --apply             Executa a escrita (comandos que alteram estado).
   --env <ambiente>    local | staging | production (default: local).
   --confirm <slug>    Confirmação extra exigida em produção.
+  --source <sqlite>   Fonte D1 local para backup/export.
+  --out <destino>     Arquivo/pasta de saída.
+  --from/--to <data>  Filtro de período no export/backup.
+  --mask              Mascara dados pessoais no export.
+  --target <slug>     Tenant alvo do restore.
   -h, --help          Esta ajuda.
 
 Pack pode ser um slug (client-packs/<slug>.json) ou um caminho .json.`;
