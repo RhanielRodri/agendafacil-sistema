@@ -59,6 +59,25 @@
   --shadow-sm: none;
   --shadow-md: none;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+
+  /* Painel do Studio Cut: mesma arquitetura de casca (sidebar escura + topbar
+     de contexto), mas em preto e branco de barbearia — nada de dourado. */
+  --panel-sidebar-bg: #131313;
+  --panel-sidebar-surface: #1f1f1f;
+  --panel-sidebar-border: rgba(255, 255, 255, 0.09);
+  --panel-sidebar-heading: #6d6d6d;
+  --panel-sidebar-text: #a8a8a8;
+  --panel-sidebar-text-hover: #ffffff;
+  --panel-sidebar-active: #ffffff;
+  --panel-sidebar-active-bg: #222222;
+  --panel-sidebar-logo-mark-bg: #ffffff;
+  --panel-sidebar-logo-mark-border: #ffffff;
+  --panel-sidebar-logo-mark-text: #101010;
+  --panel-sidebar-logo-text: #ffffff;
+
+  --panel-radius: 0px;
+  --panel-brand-font: "Barlow Condensed", Impact, sans-serif;
+  --panel-title-font: "Barlow Condensed", Impact, sans-serif;
 }
 
 :root[data-demo="studio-cut"] .navbar,
@@ -106,8 +125,8 @@
   /* Texto sobre o dourado: escuro, como o próprio logo da Lumière. Branco sobre
      #b89265 dava 2.86:1 (falha AA) nos botões primários e no login do painel. */
   --accent-text: #302722;
-  --panel-accent: #b89265;
-  --panel-accent-contrast: #302722;
+  --panel-accent: #c9a97a;
+  --panel-accent-contrast: #2c2420;
   --panel-ring-strong: rgba(184, 146, 101, 0.34);
   --radius-sm: 12px;
   --radius-md: 22px;
@@ -115,6 +134,52 @@
   --shadow-sm: 0 8px 30px rgba(70, 54, 45, 0.06);
   --shadow-md: 0 18px 48px rgba(70, 54, 45, 0.11);
   font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+
+  /* Painel operacional da Lumière: sidebar café quase preta, dourado nos ativos,
+     área principal marfim quente sobre superfícies brancas com borda bege fina.
+     Redefine os nomes de painel de tokens.css para dar à operação a mesma
+     identidade da superfície pública, sem virar um dashboard SaaS. */
+  --bg-light: #f7f3ec;
+  --surface-light: #ffffff;
+  --surface-light-2: #faf6ef;
+  --border-light: #ece4d6;
+  --border-light-strong: #ddcfbb;
+  --text-on-light: #2c2420;
+  --text-on-light-muted: #8a7c6d;
+
+  --panel-sidebar-bg: #241c17;
+  --panel-sidebar-surface: #33291f;
+  --panel-sidebar-border: rgba(201, 169, 122, 0.16);
+  --panel-sidebar-heading: #8c745a;
+  --panel-sidebar-text: #b7a892;
+  --panel-sidebar-text-hover: #efe4d2;
+  --panel-sidebar-active: #cba976;
+  --panel-sidebar-active-bg: #33291f;
+  --panel-sidebar-logo-mark-bg: transparent;
+  --panel-sidebar-logo-mark-border: rgba(201, 169, 122, 0.5);
+  --panel-sidebar-logo-mark-text: #cba976;
+  --panel-sidebar-logo-text: #f0e7d7;
+
+  --panel-topbar-bg: #f7f3ec;
+  --panel-topbar-border: #ece4d6;
+  --panel-topbar-text: #2c2420;
+  --panel-topbar-muted: #8a7c6d;
+
+  --panel-radius: 12px;
+  --panel-brand-font: "Cormorant Garamond", Georgia, serif;
+  --panel-title-font: "Cormorant Garamond", Georgia, serif;
+
+  /* Pills de status quentes e suaves, como na referência (ponto + rótulo). */
+  --status-pending: #9a6b1f;
+  --status-pending-bg: #f6ecda;
+  --status-confirmed: #3f6b4e;
+  --status-confirmed-bg: #e8efe7;
+  --status-completed: #6a5f54;
+  --status-completed-bg: #efe9e0;
+  --status-cancelled: #9e3b38;
+  --status-cancelled-bg: #f6e4e2;
+  --status-noshow: #7a5a34;
+  --status-noshow-bg: #f1e7d8;
 }
 
 :root[data-demo="lumiere"] .navbar,

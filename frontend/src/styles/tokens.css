@@ -49,6 +49,31 @@
   --panel-accent-contrast: #ffffff;
   --panel-ring-strong: rgba(21, 23, 26, 0.22);
 
+  /* Casca do painel (CG1): sidebar escura, topbar de contexto clara e superfícies
+     de operação. Cada vertical redefine estes nomes em demos.css preservando a
+     sua identidade; aqui ficam os padrões neutros usados pela rota "neutral". */
+  --panel-sidebar-bg: #1b1b1e;
+  --panel-sidebar-surface: #26262b;
+  --panel-sidebar-border: rgba(255, 255, 255, 0.08);
+  --panel-sidebar-heading: #6f6f78;
+  --panel-sidebar-text: #a2a2ad;
+  --panel-sidebar-text-hover: #f2f2f5;
+  --panel-sidebar-active: #ffffff;
+  --panel-sidebar-active-bg: rgba(255, 255, 255, 0.06);
+  --panel-sidebar-logo-mark-bg: transparent;
+  --panel-sidebar-logo-mark-border: rgba(255, 255, 255, 0.28);
+  --panel-sidebar-logo-mark-text: #f2f2f5;
+  --panel-sidebar-logo-text: #f2f2f5;
+
+  --panel-topbar-bg: #f3f4f6;
+  --panel-topbar-border: #d8dae0;
+  --panel-topbar-text: #15171a;
+  --panel-topbar-muted: #585e68;
+
+  --panel-radius: 0px;
+  --panel-brand-font: inherit;
+  --panel-title-font: inherit;
+
   --status-pending: #96560a;
   --status-pending-bg: #fdf3e6;
   --status-confirmed: #146b3f;

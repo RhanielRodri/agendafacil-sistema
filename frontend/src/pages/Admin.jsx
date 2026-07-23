@@ -38,6 +38,24 @@ function moduleLabels(vertical) {
   };
 }
 
+// Subtítulo curto por módulo — dá hierarquia consistente ao topo de cada tela
+// sem repetir o que a sidebar/topbar já dizem.
+function moduleSubtitles(vertical) {
+  return {
+    "visao-geral": "Resumo operacional do dia",
+    agenda: "Atendimentos e disponibilidade do dia",
+    leads: "Oportunidades em acompanhamento",
+    clientes: "Base de clientes e histórico",
+    "follow-ups": "Contatos e tarefas pendentes",
+    servicos: `Catálogo de ${vertical.servicePlural?.toLowerCase?.() || "serviços"}`,
+    profissionais: "Equipe e suas agendas",
+    disponibilidade: "Grade de horários da equipe",
+    bloqueios: "Pausas e indisponibilidades",
+    indicadores: "Desempenho do período",
+    configuracoes: "Preferências do negócio"
+  };
+}
+
 function initialModule() {
   const requested = new URLSearchParams(window.location.search).get("m");
   return moduleIds.includes(requested) ? requested : "visao-geral";
@@ -253,6 +271,7 @@ export default function Admin({ services, professionals }) {
 
   const vertical = verticalConfig(tenant.slug);
   const labels = moduleLabels(vertical);
+  const subtitles = moduleSubtitles(vertical);
 
   // O catálogo administrativo inclui inativos; as listas públicas recebidas por
   // prop só têm ativos e servem de fallback até a primeira carga.
@@ -365,20 +384,20 @@ export default function Admin({ services, professionals }) {
     onCatalogChange: () => loadCatalog().catch(() => {})
   };
 
-  const identity = (
-    <>
-      {session?.name && <span className="panel-topbar-user">{session.name}</span>}
-      {isCloudflare
-        ? <span className="panel-topbar-user">{session?.email}</span>
-        : <button className="panel-ghost-dark" type="button" onClick={handleLogout}>Sair</button>}
-    </>
-  );
+  const profileActions = isCloudflare
+    ? null
+    : <button className="panel-sidebar-logout" type="button" onClick={handleLogout}>Sair</button>;
 
   return (
     <PanelShell
       brand={tenant.name}
-      subtitle="Painel operacional"
-      identity={identity}
+      brandMark={tenant.logo?.mark || tenant.name.charAt(0)}
+      subtitle="Painel admin"
+      currentLabel={labels[module]}
+      pageSubtitle={subtitles[module]}
+      profileName={session?.name}
+      profileMeta={isCloudflare ? session?.email : "Administrador"}
+      profileActions={profileActions}
       labels={labels}
       current={module}
       onSelect={(id) => navigate(id)}
