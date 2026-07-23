@@ -627,3 +627,45 @@ A7 (`c5d1c83a`, `7c95b80d`, `65a2c0b1`, `0cad1350`); nenhum comando de staging f
 executado nesta sessão.
 
 **AGENDAFÁCIL FINALIZADO, PUBLICADO E CONGELADO.**
+
+## A8 — Correção visual e comercial das superfícies públicas (2026-07-23) — VALIDADO EM STAGING
+
+Reabertura só das superfícies **públicas** de Studio Cut e Lumière para elevar a
+apresentação comercial. Escopo respeitado: painéis administrativos, APIs, D1,
+schema, migrations, Access, regras de booking, isolamento por tenant, SOR ONE,
+Render, Neon e URLs não foram tocados. O D1 permanece intocado — nomes de
+profissionais são apresentados via override só-frontend; o catálogo semeado
+segue com os nomes originais.
+
+Entregue: navbar responsiva por vertical (links âncora, CTA destacado, drawer
+mobile acessível com scroll lock, Escape e foco controlado); faixa de
+diferenciais; galeria; avaliações demonstrativas; seção de espaço com localização
+e horários; contato compacto com chips e formulário em disclosure; honeypot de
+fato invisível (0×0, fora de foco); grade de serviços sem célula vazia; retratos
+4:5 com nome, especialidade e bio; imagens locais royalty-free (Unsplash,
+licença registrada em `frontend/public/ASSETS_LICENSES.md`), isoladas por vertical
+via `publicDir`, sem hotlink; favicon e fontes por vertical injetados em runtime
+(Barlow/Inter no Studio Cut, Cormorant/Manrope na Lumière); nota de demonstração
+no rodapé. Identidades mantidas distintas (brutalista escuro × editorial creme).
+
+Arquitetura: a camada de apresentação só-frontend vive em export nomeado
+`presentation` de cada `demos/<slug>.js`, fora do contrato do Client Pack. O
+`default` segue projeção fiel do pack (gate de paridade intacto) e o deployment
+fixado por vertical mantém a apresentação da outra demo fora do bundle.
+
+Gates verdes: tsc, 152/152 vitest, 7/7 Access, 43/43 client-pack,
+`check:bundles:verticals` sem vazamento (inclusive os novos nomes de
+profissionais), quatro builds Vite de 73 módulos, `git diff --check` limpo.
+
+Staging: republicados **apenas os Workers públicos**. Studio Cut public
+`9ce9b615-433c-49e0-b654-4683fb0455a2`; Lumière public
+`90f1d882-6c36-4894-8bbd-63fb3455559e`. Workers administrativos de staging não
+foram republicados. Smoke em staging com D1 real: `/api/live` 200, catálogo e
+profissionais 200, assets locais 200 `image/jpeg`, isolamento cross-tenant 404,
+booking renderizado e interativo, nenhuma chamada ao Render. Verificação de
+render nas duas verticais (desktop e mobile 375): título/favicon/fontes por
+vertical corretos, nav e drawer funcionais, honeypot invisível, sem overflow
+horizontal, console limpo.
+
+Pendência real: produção **não** foi tocada — aguarda aprovação explícita para
+promover os Workers públicos. Não congelar antes disso.
