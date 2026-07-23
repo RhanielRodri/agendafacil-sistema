@@ -39,17 +39,52 @@ function setCanonical(href) {
   canonical.setAttribute("href", href);
 }
 
-function setFavicon(mark, background, foreground) {
-  let icon = document.querySelector('link[rel="icon"]');
-
-  if (!icon) {
-    icon = document.createElement("link");
-    icon.setAttribute("rel", "icon");
-    document.head.appendChild(icon);
+function ensureLink(rel, extra = {}) {
+  const selectorParts = [`link[rel="${rel}"]`];
+  let link = document.querySelector(selectorParts.join(""));
+  if (!link) {
+    link = document.createElement("link");
+    link.setAttribute("rel", rel);
+    Object.entries(extra).forEach(([key, value]) => link.setAttribute(key, value));
+    document.head.appendChild(link);
   }
+  return link;
+}
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="${background}"/><text x="32" y="41" fill="${foreground}" font-family="Arial,sans-serif" font-size="25" font-weight="700" text-anchor="middle">${mark}</text></svg>`;
-  icon.setAttribute("href", `data:image/svg+xml,${encodeURIComponent(svg)}`);
+// O favicon vive como SVG data-URI: um por vertical, sem arquivo físico e sem
+// risco de 404 ou de vazamento cross-tenant no bundle. O mesmo desenho serve de
+// apple-touch-icon. `variant` diferencia a linguagem: monograma reto e
+// geométrico no Studio Cut, marca serifada e circular na Lumière.
+function faviconSvg(mark, background, foreground, variant) {
+  if (variant === "serif") {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="${background}"/><circle cx="32" cy="32" r="21" fill="none" stroke="${foreground}" stroke-width="1.5" opacity="0.55"/><text x="32" y="43" fill="${foreground}" font-family="Georgia,'Times New Roman',serif" font-size="34" font-style="italic" text-anchor="middle">${mark}</text></svg>`;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="${background}"/><rect x="6" y="6" width="52" height="52" fill="none" stroke="${foreground}" stroke-width="2"/><text x="32" y="42" fill="${foreground}" font-family="'Arial Narrow',Arial,sans-serif" font-size="26" font-weight="800" letter-spacing="1" text-anchor="middle">${mark}</text></svg>`;
+}
+
+function setFavicon(mark, background, foreground, variant) {
+  const href = `data:image/svg+xml,${encodeURIComponent(faviconSvg(mark, background, foreground, variant))}`;
+  ensureLink("icon", { type: "image/svg+xml" }).setAttribute("href", href);
+  ensureLink("apple-touch-icon").setAttribute("href", href);
+}
+
+// Fontes por vertical só entram em runtime porque o build Cloudflare compartilha
+// um único index.html: injetar aqui garante que o Studio Cut carregue apenas
+// Barlow/Inter e a Lumière apenas Cormorant/Manrope.
+function setFonts(href) {
+  if (!href) return;
+  const existing = document.querySelector("link[data-vertical-fonts]");
+  if (existing) {
+    if (existing.getAttribute("href") === href) return;
+    existing.remove();
+  }
+  ensureLink("preconnect", { href: "https://fonts.googleapis.com" });
+  ensureLink("preconnect", { href: "https://fonts.gstatic.com", crossorigin: "" });
+  const link = document.createElement("link");
+  link.setAttribute("rel", "stylesheet");
+  link.setAttribute("href", href);
+  link.setAttribute("data-vertical-fonts", "");
+  document.head.appendChild(link);
 }
 
 export function applyMetadata(metadata) {
@@ -65,5 +100,6 @@ export function applyMetadata(metadata) {
   setMeta('meta[property="og:url"]', ["property", "og:url"], canonical);
   setMeta('meta[property="og:site_name"]', ["property", "og:site_name"], metadata.siteName);
   setCanonical(canonical);
-  setFavicon(metadata.mark, metadata.background, metadata.foreground);
+  setFavicon(metadata.mark, metadata.background, metadata.foreground, metadata.faviconVariant);
+  setFonts(metadata.fonts);
 }

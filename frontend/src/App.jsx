@@ -7,6 +7,7 @@ import PlatformLanding from "./pages/PlatformLanding.jsx";
 import ManageAppointment from "./pages/ManageAppointment.jsx";
 import { api } from "./services/api.js";
 import tenant, { adminPath, currentRoute, homePath, isNeutralRoute, surface } from "./config/tenant.js";
+import site from "./config/site.js";
 import { applyMetadata, rootMetadata } from "./utils/metadata.js";
 
 export default function App() {
@@ -43,7 +44,7 @@ export default function App() {
 
     const isAdmin = page === "admin";
     applyMetadata({
-      ...tenant.metadata,
+      ...site.metadata,
       title: isAdmin ? `${tenant.name} | Painel administrativo` : tenant.metadata.title,
       canonical: isAdmin ? `${window.location.origin}${adminPath}` : tenant.metadata.canonical,
       mark: tenant.logo.mark,
