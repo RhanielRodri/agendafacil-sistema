@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import tenant from "../../config/tenant.js";
 import { toId } from "../../utils/id.js";
 import { api } from "../../services/api.js";
-import { buildWaAction } from "../../utils/whatsapp.js";
 import { usePanelData } from "../../utils/usePanelData.js";
+import ManualWhatsapp from "../../components/panel/ManualWhatsapp.jsx";
 import { PanelEmpty, PanelError, PanelLoading, PanelMessage, StatusPill } from "../../components/panel/PanelState.jsx";
 import {
   delayLabel,
@@ -145,10 +145,6 @@ export default function FollowUps({ users, params, onNavigate, onSessionExpired 
                     <strong>{followUp.client?.name || "Cliente"}</strong>
                     <span>
                       {maskPhone(followUp.client?.phone || "")}
-                      {(() => {
-                        const wa = buildWaAction({ phone: followUp.client?.phone, kind: "reminder", context: { cliente: followUp.client?.name || "", negocio: tenant?.name || "" } });
-                        return wa ? <> · <a className="wa-link" href={wa.url} target="_blank" rel="noreferrer">WhatsApp</a></> : null;
-                      })()}
                     </span>
                     <div className="panel-tags">
                       <span className="panel-tag">{followUpTypeLabels[followUp.type] || followUp.type}</span>
@@ -228,6 +224,15 @@ export default function FollowUps({ users, params, onNavigate, onSessionExpired 
                       Cliente
                     </button>
                   </div>
+
+                  <ManualWhatsapp
+                    phone={followUp.client?.phone}
+                    clientId={followUp.clientId}
+                    leadId={followUp.leadId}
+                    initialTemplate="reminder"
+                    context={{ cliente: followUp.client?.name || "", negocio: tenant?.name || "" }}
+                    onChanged={reload}
+                  />
 
                   {chainingId === followUp.id && (
                     <form

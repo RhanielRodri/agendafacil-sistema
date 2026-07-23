@@ -7,6 +7,17 @@
 
 export const TEMPLATE_KINDS = ["confirmation", "reminder", "return", "reschedule", "quote", "initialContact"];
 
+export const TEMPLATE_LABELS = {
+  confirmation: "Confirmação",
+  reminder: "Lembrete",
+  return: "Retorno",
+  reschedule: "Reagendamento",
+  quote: "Orçamento",
+  initialContact: "Primeiro contato"
+};
+
+export const WHATSAPP_OPT_OUT_MARKER = "NÃO CONTATAR (opt-out registrado)";
+
 export const DEFAULT_TEMPLATES = {
   confirmation: "Olá {cliente}! Seu horário na {negocio} está confirmado: {servico} em {data} às {hora}.",
   reminder: "Olá {cliente}! Lembrete: {servico} na {negocio} amanhã, {data} às {hora}.",
@@ -53,4 +64,14 @@ export function buildWaAction({ phone, kind = "confirmation", context = {}, temp
   const message = renderTemplate(template, context);
   const url = waMeUrl(phone, message);
   return url ? { url, message } : null;
+}
+
+export function whatsappHistoryNote(kind, templateKind) {
+  if (kind === "optOut") return `WhatsApp manual — ${WHATSAPP_OPT_OUT_MARKER}.`;
+  const label = TEMPLATE_LABELS[templateKind] || templateKind;
+  return `WhatsApp manual — contato realizado com o template ${label}.`;
+}
+
+export function hasWhatsappOptOut(history = []) {
+  return history.some((event) => String(event?.metadata?.content || "").includes(WHATSAPP_OPT_OUT_MARKER));
 }

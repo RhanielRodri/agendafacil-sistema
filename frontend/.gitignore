@@ -1,2 +1,3 @@
 .vercel
 .env*
+src/config/demos/fixture-neutra.js

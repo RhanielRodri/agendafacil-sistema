@@ -23,7 +23,8 @@ export function compileFrontendConfig(pack) {
     process: pack.content.process,
     space: pack.content.space,
     copy: pack.content.copy,
-    footer: pack.content.footer
+    footer: pack.content.footer,
+    whatsapp: pack.whatsapp
   };
 }
 

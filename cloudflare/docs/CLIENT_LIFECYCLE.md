@@ -42,11 +42,13 @@ Todos os comandos abaixo rodam a partir de `cloudflare/`.
 3. `npm run client -- plan <slug>` e confira os números (serviços, profissionais,
    associações, agenda).
 4. `npm run client -- provision <slug> --env local --apply` para materializar
-   `seed/generated/<slug>.sql` e `frontend/src/config/demos/<slug>.js`.
+   `seed/generated/<slug>.sql`, `frontend/src/config/demos/<slug>.js` e os configs
+   `wrangler.local.<slug>.public.jsonc` / `wrangler.local.<slug>.admin.jsonc`.
    Commite o `demos/<slug>.js` (é o runtime do tenant); o seed gerado é ignorado
-   pelo Git.
-5. Crie as configs wrangler do tenant (público/admin, `TENANT_SLUG=<slug>`,
-   binding D1) a partir das existentes; configure Access (item abaixo).
+   pelo Git. Os configs Wrangler também são ignorados e usam placeholders de
+   Access que não autenticam até serem substituídos.
+5. Revise os configs gerados. A CLI recusa sobrescrever conteúdo incompatível e
+   aceita reexecução idempotente de configs compatíveis.
 6. Aplique o seed no D1 do ambiente com wrangler e rode o smoke.
 
 **Tempo observado** para preparar um pack válido a partir do template e provisionar
@@ -73,6 +75,15 @@ Access + smoke em staging: mais ~20–30 min manuais.
 - Local: `npm run client -- smoke <slug>` (contrato, seed escopado, config).
 - Ambiente: abra público e painel do tenant, confira booking, um serviço, um
   profissional e o link de WhatsApp num agendamento. Sem republicar produção.
+
+## WhatsApp manual
+
+- O painel oferece os templates definidos em `whatsapp.templates` no Client Pack.
+- A pessoa abre o `wa.me`, revisa e envia fora do sistema; não existe envio
+  automático, fila, cron ou Cloud API.
+- Depois do contato, registra o evento no histórico e pode criar o próximo
+  follow-up. “Não contatar” grava um opt-out no mesmo histórico e bloqueia novas
+  ações de WhatsApp quando a ficha é reaberta.
 
 ## Produção
 

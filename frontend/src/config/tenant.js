@@ -1,9 +1,11 @@
 import studioCut from "./demos/studio-cut.js";
 import lumiere from "./demos/lumiere.js";
+import clientPackTenant from "virtual:client-pack-tenant";
 
 export const businesses = {
   "studio-cut": studioCut,
-  lumiere
+  lumiere,
+  ...(clientPackTenant?.slug ? { [clientPackTenant.slug]: clientPackTenant } : {})
 };
 
 // Deployment fixado em uma vertical: a raiz é a landing (ou o painel) daquela
@@ -11,7 +13,7 @@ export const businesses = {
 // valor seja dobrado no build.
 export const fixedTenantSlug = import.meta.env.VITE_CF_TENANT === "studio-cut"
   ? "studio-cut"
-  : import.meta.env.VITE_CF_TENANT === "lumiere" ? "lumiere" : "";
+  : import.meta.env.VITE_CF_TENANT === "lumiere" ? "lumiere" : clientPackTenant?.slug || "";
 
 // `full` mantém o comportamento único do build atual (Vercel). Em Cloudflare a
 // mesma aplicação é publicada duas vezes: o Public Worker só expõe as rotas

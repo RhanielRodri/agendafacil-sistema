@@ -16,7 +16,7 @@ const cloudflareTargets = {
 // dimensões porque `--mode` é o único canal que o Vite passa igual nos três
 // sistemas operacionais.
 const tenantSlugs = ["studio-cut", "lumiere"];
-const CLOUDFLARE_MODE = /^cf-(public|admin)(?:-(studio-cut|lumiere))?$/;
+const CLOUDFLARE_MODE = /^cf-(public|admin)(?:-([a-z0-9](?:[a-z0-9-]*[a-z0-9])?))?$/;
 
 function singleTenantPlugin(slug) {
   const removed = tenantSlugs.filter((value) => value !== slug);
@@ -24,6 +24,9 @@ function singleTenantPlugin(slug) {
     name: "agendafacil-single-tenant",
     enforce: "pre",
     resolveId(source) {
+      if (source === "virtual:client-pack-tenant") {
+        return resolve(process.cwd(), `src/config/demos/${slug || "absent"}.js`);
+      }
       if (removed.some((value) => source.endsWith(`/demos/${value}.js`))) {
         return resolve(process.cwd(), "src/config/demos/absent.js");
       }
@@ -41,7 +44,7 @@ export default defineConfig(({ mode }) => {
     const outDir = tenantSlug ? `../cloudflare/dist/${tenantSlug}/${surface}` : cloudflareTargets[surface];
 
     return {
-      plugins: [react(), ...(tenantSlug ? [singleTenantPlugin(tenantSlug)] : [])],
+      plugins: [react(), singleTenantPlugin(tenantSlug)],
       // O destino é decidido aqui, e não por arquivo `.env`, porque essa
       // configuração precisa ser versionada junto com o Worker que a consome.
       define: {
@@ -61,7 +64,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    plugins: [react()],
+    plugins: [react(), singleTenantPlugin("")],
     build: {
       rollupOptions: {
         input: {

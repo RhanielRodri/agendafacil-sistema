@@ -8,7 +8,16 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const utilPath = resolve(__dirname, "..", "..", "frontend", "src", "utils", "whatsapp.js");
-const { normalizeWaPhone, renderTemplate, waMeUrl, buildWaAction, DEFAULT_TEMPLATES, TEMPLATE_KINDS } =
+const {
+  normalizeWaPhone,
+  renderTemplate,
+  waMeUrl,
+  buildWaAction,
+  DEFAULT_TEMPLATES,
+  TEMPLATE_KINDS,
+  whatsappHistoryNote,
+  hasWhatsappOptOut
+} =
   await import(pathToFileURL(utilPath).href);
 
 test("normaliza telefone para wa.me com código do país", () => {
@@ -44,4 +53,12 @@ test("templates padrão espelham o pack neutro (sem drift)", async () => {
   const template = JSON.parse(await readFile(resolve(__dirname, "..", "client-packs", "template.json"), "utf8"));
   assert.deepEqual(DEFAULT_TEMPLATES, template.whatsapp.templates);
   assert.deepEqual(TEMPLATE_KINDS, Object.keys(template.whatsapp.templates));
+});
+
+test("registro manual diferencia contato e opt-out persistente", () => {
+  const contact = whatsappHistoryNote("contact", "confirmation");
+  const optOut = whatsappHistoryNote("optOut", "confirmation");
+  assert.match(contact, /contato realizado/);
+  assert.equal(hasWhatsappOptOut([{ metadata: { content: contact } }]), false);
+  assert.equal(hasWhatsappOptOut([{ metadata: { content: optOut } }]), true);
 });

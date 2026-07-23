@@ -22,3 +22,4 @@ backups/
 .env.production
 wrangler.staging.*.jsonc
 wrangler.production.*.jsonc
+wrangler.local.*.jsonc

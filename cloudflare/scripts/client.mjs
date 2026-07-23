@@ -6,7 +6,7 @@
 //
 // Códigos de saída: 0 sucesso · 1 erro de validação/operação · 2 erro de uso.
 
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { validatePack, isPublishable } from "../client-packs/schema.mjs";
@@ -146,6 +146,113 @@ async function writeArtifact(absPath, contents, apply) {
   return { path: absPath, written: true };
 }
 
+export function renderWranglerConfig(pack, env, surface) {
+  const slug = pack.tenant.slug;
+  const local = env === "local";
+  const config = {
+    "$schema": "node_modules/wrangler/config-schema.json",
+    name: `agendafacil-${env}-${slug}-${surface}`,
+    main: `${surface}-worker/src/index.ts`,
+    compatibility_date: "2026-07-21",
+    d1_databases: [{
+      binding: "DB",
+      database_name: local ? `agendafacil-${slug}-local` : `replace-with-${env}-${slug}-d1-name`,
+      database_id: local ? "local-development-only" : `replace-with-${env}-${slug}-d1-id`,
+      migrations_dir: "migrations"
+    }],
+    vars: {
+      TENANT_SLUG: slug,
+      ...(surface === "admin" ? {
+        ACCESS_TEAM_DOMAIN: "not-configured.invalid",
+        ACCESS_POLICY_AUD: "not-configured"
+      } : {})
+    },
+    assets: {
+      directory: `./dist/${slug}/${surface}`,
+      binding: "ASSETS",
+      not_found_handling: "single-page-application",
+      run_worker_first: true
+    }
+  };
+  return `${JSON.stringify(config, null, 2)}\n`;
+}
+
+function compatibleWranglerConfig(current, expected, env, surface) {
+  try {
+    const actual = JSON.parse(current);
+    const wanted = JSON.parse(expected);
+    const actualDb = actual.d1_databases?.find((item) => item.binding === "DB");
+    const wantedDb = wanted.d1_databases[0];
+    const base = actual.name === wanted.name
+      && actual.main === wanted.main
+      && actual.vars?.TENANT_SLUG === wanted.vars.TENANT_SLUG
+      && actual.assets?.directory === wanted.assets.directory
+      && actual.assets?.binding === "ASSETS"
+      && actualDb?.migrations_dir === wantedDb.migrations_dir;
+    if (!base) return false;
+    if (env === "local") {
+      if (actualDb.database_name !== wantedDb.database_name || actualDb.database_id !== wantedDb.database_id) return false;
+    } else if (!String(actualDb.database_name || "").includes(env) || !actualDb.database_id) {
+      return false;
+    }
+    if (surface === "admin" && (!actual.vars?.ACCESS_TEAM_DOMAIN || !actual.vars?.ACCESS_POLICY_AUD)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function inspectGeneratedConfig(path, contents, env, surface) {
+  try {
+    const current = await readFile(path, "utf8");
+    const compatible = compatibleWranglerConfig(current, contents, env, surface);
+    return { path, exists: true, conflict: !compatible, unchanged: compatible };
+  } catch (error) {
+    if (error?.code === "ENOENT") return { path, exists: false, conflict: false, unchanged: false };
+    throw error;
+  }
+}
+
+async function findWorkerNameConflicts(expected, baseDir) {
+  const entries = await readdir(baseDir, { withFileTypes: true });
+  const conflicts = [];
+  for (const entry of entries) {
+    if (!entry.isFile() || !/^wrangler.*\.jsonc$/.test(entry.name)) continue;
+    const path = join(baseDir, entry.name);
+    const raw = await readFile(path, "utf8");
+    const name = raw.match(/"name"\s*:\s*"([^"]+)"/)?.[1];
+    for (const item of expected) {
+      if (name === item.name && path !== item.path) conflicts.push({ name, path });
+    }
+  }
+  return conflicts;
+}
+
+export async function planWranglerConfigs(pack, env, apply = false, baseDir = CF_DIR) {
+  const slug = pack.tenant.slug;
+  const configs = ["public", "admin"].map((surface) => {
+    const path = join(baseDir, `wrangler.${env}.${slug}.${surface}.jsonc`);
+    return { surface, path, name: `agendafacil-${env}-${slug}-${surface}`, contents: renderWranglerConfig(pack, env, surface) };
+  });
+  const inspected = await Promise.all(configs.map(async (item) => ({
+    ...item,
+    ...await inspectGeneratedConfig(item.path, item.contents, env, item.surface)
+  })));
+  const nameConflicts = await findWorkerNameConflicts(configs, baseDir);
+  const conflicts = inspected.filter((item) => item.conflict).map((item) => ({ name: item.name, path: item.path })).concat(nameConflicts);
+  if (conflicts.length > 0) {
+    const error = new Error(`conflito de config Wrangler: ${conflicts.map((item) => `${item.name} em ${item.path}`).join("; ")}`);
+    error.conflicts = conflicts;
+    throw error;
+  }
+  if (apply) {
+    for (const item of inspected) {
+      if (!item.exists) await writeArtifact(item.path, item.contents, true);
+    }
+  }
+  return inspected.map(({ contents, ...item }) => ({ ...item, written: apply && !item.exists }));
+}
+
 // Passos Cloudflare (nunca executados aqui): plano textual e checagem de
 // conflito staging↔produção. AUDs/identidades vêm do tooling de Access, nunca
 // do pack; produção jamais reaproveita config de staging.
@@ -183,6 +290,7 @@ async function cmdProvision({ positional, flags }) {
   const frontModule = renderFrontendModule(pack);
   const seedPath = join(CF_DIR, "seed", "generated", `${slug}.sql`);
   const frontPath = join(FRONT_CONFIG_DIR, "demos", `${slug}.js`);
+  const wranglerConfigs = await planWranglerConfigs(pack, flags.env, flags.apply && flags.env === "local");
 
   // Escrita local materializa os artefatos; remota apenas planeja (o deploy é
   // sempre manual e explícito, fora desta CLI).
@@ -193,12 +301,13 @@ async function cmdProvision({ positional, flags }) {
 
   const data = {
     command: "provision", pack: path, slug, env: flags.env, apply: flags.apply,
-    artifacts: { seed: seedArt, frontendConfig: frontArt }, cloudflare: cf
+    artifacts: { seed: seedArt, frontendConfig: frontArt, wranglerConfigs }, cloudflare: cf
   };
   const lines = [
     `PROVISION  ${slug} — ambiente ${flags.env}${flags.apply ? " (apply)" : " (dry-run)"}`,
     `  seed: ${seedArt.written ? "escrito" : "geraria"} ${seedPath}`,
     `  config front: ${frontArt.written ? "escrito" : "geraria"} ${frontPath}`,
+    ...wranglerConfigs.map((item) => `  wrangler ${item.surface}: ${item.written ? "escrito" : item.unchanged ? "inalterado" : "geraria"} ${item.path}`),
     `  Cloudflare:`,
     ...cf.steps.map((s) => `    - ${s}`),
     ...cf.warnings.map((w) => `    ! ${w}`)
