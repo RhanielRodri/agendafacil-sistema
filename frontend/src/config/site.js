@@ -15,7 +15,11 @@ const site = tenant
       professionals: presentation?.professionals || null,
       hero: { ...tenant.hero, ...(presentation?.hero || {}) },
       space: { ...tenant.space, ...(presentation?.space || {}) },
-      metadata: { ...tenant.metadata, ...(presentation?.metadata || {}) }
+      metadata: {
+        ...tenant.metadata,
+        fonts: presentation?.fonts,
+        faviconVariant: presentation?.faviconVariant
+      }
     }
   : tenant;
 
