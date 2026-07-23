@@ -73,4 +73,83 @@ const lumiere = {
   }
 };
 
+// Camada de apresentação só-frontend (ver nota em studio-cut.js). Export
+// nomeado, fora do contrato do pack e do bundle da outra vertical.
+export const presentation = {
+  faviconVariant: "serif",
+  fonts: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap",
+  nav: [
+    { label: "Início", href: "#topo" },
+    { label: "Tratamentos", href: "#servicos" },
+    { label: "Profissionais", href: "#profissionais" },
+    { label: "Experiência", href: "#galeria" },
+    { label: "Avaliações", href: "#avaliacoes" },
+    { label: "Contato", href: "#contato" }
+  ],
+  hero: {
+    sub: "Cuidados faciais e corporais com atendimento individual. Reserve um momento pensado para segurança, conforto e resultado natural.",
+    secondaryCta: "Ver tratamentos",
+    highlights: ["Atendimento individual", "Avaliação personalizada", "Seg a Sáb"],
+    image: "/assets/hero.jpg",
+    imageAlt: "Profissional em atendimento estético na Lumière",
+    badge: "Avaliações disponíveis esta semana"
+  },
+  differentials: {
+    items: [
+      { title: "Profissionais qualificadas", text: "Equipe preparada para cada tipo de cuidado." },
+      { title: "Atendimento personalizado", text: "Cada avaliação considera o seu momento." },
+      { title: "Tecnologia adequada", text: "Recursos escolhidos para conforto e segurança." },
+      { title: "Ambiente acolhedor", text: "Um espaço tranquilo do início ao fim." }
+    ]
+  },
+  gallery: {
+    eyebrow: "Experiência",
+    title: "O ambiente e o cuidado",
+    items: [
+      { src: "/assets/gallery/4.jpg", alt: "Recepção acolhedora da clínica", label: "Espaço" },
+      { src: "/assets/gallery/3.jpg", alt: "Sala de atendimento", label: "Salas" },
+      { src: "/assets/gallery/1.jpg", alt: "Procedimento facial em andamento", label: "Procedimentos" },
+      { src: "/assets/gallery/5.jpg", alt: "Cuidado facial detalhado", label: "Atendimento" },
+      { src: "/assets/gallery/2.jpg", alt: "Detalhe de produtos e cuidado", label: "Detalhes" }
+    ]
+  },
+  reviews: {
+    eyebrow: "Avaliações",
+    title: "Quem já se cuidou na Lumière",
+    note: "Depoimentos demonstrativos, para ilustrar a experiência.",
+    items: [
+      { name: "A. C.", role: "Limpeza de pele", rating: 5, text: "Atendimento atencioso do começo ao fim. Saí com a pele renovada e me senti segura." },
+      { name: "M. F.", role: "Avaliação facial", rating: 5, text: "Explicaram cada etapa com calma. Resultado natural, exatamente como eu queria." },
+      { name: "P. R.", role: "Cuidado corporal", rating: 5, text: "Ambiente tranquilo e profissionais que realmente escutam. Agendei pelo site em minutos." }
+    ]
+  },
+  space: {
+    image: "/assets/space.jpg",
+    location: "Praia da Costa · Vila Velha, ES",
+    hours: ["Seg a Sex · 9h às 19h", "Sábado · 9h às 14h"]
+  },
+  professionals: {
+    "professional-lumiere-1": {
+      name: "Marina Costa",
+      specialty: "Cuidados faciais e avaliação",
+      bio: "Especialista em protocolos faciais e avaliação personalizada de pele.",
+      photo: "/assets/professionals/lumiere-1.jpg"
+    },
+    "professional-lumiere-2": {
+      name: "Camila Ribeiro",
+      specialty: "Procedimentos corporais",
+      bio: "Focada em resultado natural e no conforto durante todo o atendimento.",
+      photo: "/assets/professionals/lumiere-2.jpg"
+    }
+  },
+  contact: {
+    title: "Prefere conversar antes de reservar?",
+    description: "Solicite uma avaliação ou conte qual cuidado procura. Retornamos com atenção.",
+    actions: [
+      { label: "Solicitar avaliação", source: "EVALUATION" },
+      { label: "Tirar uma dúvida", source: "CONTACT" }
+    ]
+  }
+};
+
 export default lumiere;
