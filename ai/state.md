@@ -1,6 +1,6 @@
 ---
 project: AgendaFácil
-updated_at: 2026-07-22
+updated_at: 2026-07-23
 review_at: 2026-07-25
 status: frozen
 current_phase: AGENDAFACIL_FINALIZADO_E_CONGELADO
@@ -577,3 +577,53 @@ Versões de staging publicadas:
 
 Sem push ou alteração de produção, schema, APIs centrais, Render/Neon ou SOR ONE.
 AgendaFácil encerrado no escopo contratado: **AGENDAFÁCIL FINALIZADO E CONGELADO**.
+
+## A7 — Publicação produtiva (2026-07-23) — AGENDAFÁCIL FINALIZADO, PUBLICADO E CONGELADO
+
+A A7 foi promovida para produção a partir do HEAD `35df72b`, cujo runtime é
+idêntico à baseline validada `3491857` — o intervalo `3491857..35df72b` altera
+apenas este arquivo, sem diff de código. Nenhum dos dez commits publicados toca
+`backend/`, `prisma` ou `render.yaml`, então o push não introduz migration ou
+schema em Neon.
+
+`main` foi enviada em fast-forward `480fc10..35df72b`; `origin/main` e `HEAD`
+estão em `35df72badbaa276979efde5615ae8895e05f4694`, com Git 0/0 e árvore limpa.
+
+Os quatro Workers produtivos foram promovidos:
+
+| Worker | Version ID |
+| --- | --- |
+| `studio-cut-public` | `580b2f5d-846b-400b-b54e-147ae77dab29` |
+| `studio-cut-admin` | `c7c2bcfa-54d7-462a-9c13-a09506b497a6` |
+| `lumiere-public` | `4b9c7ab9-a1d6-460d-8101-de45eff1f9e3` |
+| `lumiere-admin` | `0dc36bf9-f380-4ad2-9169-dcca31b45a7c` |
+
+D1, schema, Access, policies, AUDs, SOR ONE, Render e Neon não foram tocados. Os
+configs produtivos apontam para `agendafacil-production-db`, `TENANT_SLUG` por
+vertical e AUDs distintos entre Studio Cut e Lumière.
+
+Gates verdes antes do deploy: tsc, 152/152 vitest, 7/7 Access, 43/43 client-pack,
+`check:bundles:verticals` sem vazamento, `npm audit --omit=dev` zero em Cloudflare
+e frontend, `git diff --check` limpo, quatro builds Vite de 73 módulos e quatro
+`production:dryrun`.
+
+Smoke produtivo público real nas duas verticais: landing 200, `/api/live` 200,
+catálogo, profissionais e settings 200, disponibilidade real (14 e 18 slots em
+dias abertos, 0 em dias fechados), isolamento cross-tenant 404 nas duas direções,
+headers `max-age=0, must-revalidate` e console limpo. Client Pack projetado ao
+vivo: Studio Cut com barbeiro/serviço e Lumière com procedimento/profissional.
+Os dois painéis administrativos falham fechados: toda rota anônima responde 302
+para o Cloudflare Access, `no-store`, sem formulário de senha, com o AUD próprio
+de cada vertical.
+
+O walkthrough administrativo autenticado produtivo não foi reexecutado nesta
+promoção — o desafio por código de e-mail do Access é passo humano e as ações de
+escrita tocariam o D1 produtivo. Esse fluxo já foi validado em staging no commit
+de runtime idêntico `3491857`, com as ações manuais de WhatsApp, registro de
+contato, opt-out e próximo follow-up, e na produção anterior da CF3.
+
+Staging preservado: as quatro versions de staging seguem idênticas ao registro da
+A7 (`c5d1c83a`, `7c95b80d`, `65a2c0b1`, `0cad1350`); nenhum comando de staging foi
+executado nesta sessão.
+
+**AGENDAFÁCIL FINALIZADO, PUBLICADO E CONGELADO.**
