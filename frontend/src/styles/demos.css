@@ -328,6 +328,71 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* Com o drawer aberto o ✕ é o único fechamento visível: a barra de ações precisa
+   ficar acima da gaveta (z-index 95), senão o botão some sob ela e só o scrim
+   fecha o menu. */
+:root[data-demo="lumiere"] .navbar-actions {
+  position: relative;
+  z-index: 96;
+}
+
+/* O consentimento é uma linha de caixa + frase, não um campo de texto: a regra
+   genérica `input { width: 100%; appearance: none }` de booking.css transformava
+   a caixa num retângulo de 44px sem marca de seleção. */
+:root[data-demo="lumiere"] .relationship-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+}
+
+:root[data-demo="lumiere"] .relationship-consent input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  appearance: auto;
+  accent-color: var(--accent);
+}
+
+/* O hero empilha a partir de 900px — o mesmo ponto em que o menu vira drawer.
+   Entre 721 e 900 a coluna de texto ficava com ~370px para uma display serifada
+   de 56px+, apertando headline e subtítulo. */
+@media (max-width: 900px) {
+  :root[data-demo="lumiere"] .hero {
+    grid-template-columns: 1fr;
+  }
+
+  :root[data-demo="lumiere"] .hero-content {
+    order: 1;
+    padding-inline: 5vw;
+  }
+
+  :root[data-demo="lumiere"] .hero-image {
+    order: 2;
+    min-height: 380px;
+    margin: 0 5vw 32px;
+    border-radius: 160px 160px 20px 20px;
+  }
+}
+
+/* O resumo do agendamento (serviço, profissional, data/hora e TOTAL) só existia
+   na coluna lateral do desktop. Abaixo de 1024px ele reaparece como bloco no
+   fluxo, logo após a etapa atual — nenhuma informação de preço fica oculta. */
+@media (max-width: 1023px) {
+  :root[data-demo="lumiere"] .booking-sidebar {
+    display: block;
+  }
+
+  :root[data-demo="lumiere"] .summary-sticky {
+    position: static;
+  }
+}
+
 @media (max-width: 720px) {
   :root[data-demo="studio-cut"] .services-grid,
   :root[data-demo="lumiere"] .services-grid {
@@ -349,19 +414,18 @@
     font-size: 19px;
   }
 
-  :root[data-demo="lumiere"] .hero {
-    grid-template-columns: 1fr;
+  /* Alvo de toque cheio nos horários. */
+  :root[data-demo="lumiere"] .slot {
+    min-height: 44px;
   }
+}
 
-  :root[data-demo="lumiere"] .hero-content {
-    order: 1;
-    padding-inline: 5vw;
-  }
-
-  :root[data-demo="lumiere"] .hero-image {
-    order: 2;
-    min-height: 380px;
-    margin: 0 5vw 32px;
-    border-radius: 160px 160px 20px 20px;
+/* Os nomes das etapas (Serviço · Horário · Dados) sumiam abaixo de 640px,
+   deixando só os números. Voltam menores, ainda em uma linha. */
+@media (max-width: 639px) {
+  :root[data-demo="lumiere"] .step-label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.02em;
   }
 }

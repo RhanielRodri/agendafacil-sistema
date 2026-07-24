@@ -1134,6 +1134,63 @@ button.panel-stat:hover { background: var(--surface-light-2); }
   font-weight: 600;
 }
 
+/* O WhatsApp manual reaproveita `.panel-row-actions`, que abaixo de 900px recebe
+   `grid-area: actions`. Dentro do `.wa-manual-body` esse nome não existe, então o
+   navegador criava uma coluna implícita: prévia e botões saíam do cartão (~70px
+   fora da tela a 360px). Aqui a ficha volta a ser uma coluna só, em toda largura. */
+:root[data-demo="lumiere"] .wa-manual-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+:root[data-demo="lumiere"] .wa-manual-body > * {
+  grid-area: auto;
+  min-width: 0;
+}
+
+/* === ALVOS DE TOQUE (largura de drawer) ===
+   Abaixo de 1024px o painel é operado no dedo: os controles da casca e os
+   atalhos densos ganham altura mínima confortável, sem mudar tipografia. */
+@media (max-width: 1023px) {
+  :root[data-demo="lumiere"] .panel-drawer-trigger {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  :root[data-demo="lumiere"] .panel-drawer .panel-nav-item {
+    padding-block: 12px;
+  }
+
+  :root[data-demo="lumiere"] .panel-drawer-close {
+    min-height: 44px;
+    padding-inline: 16px;
+  }
+
+  :root[data-demo="lumiere"] .wa-manual summary {
+    padding: 10px 0;
+  }
+
+  :root[data-demo="lumiere"] .panel-chip {
+    min-height: 40px;
+  }
+
+  :root[data-demo="lumiere"] .panel-btn-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
+}
+
+/* A data do dia é informação de operação: em vez de sumir abaixo de 640px, ela
+   encolhe e continua na barra — o breadcrumb já trunca com reticências. */
+@media (max-width: 640px) {
+  :root[data-demo="lumiere"] .panel-topbar-date {
+    display: block;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+}
+
 /* Respiro extra só no desktop (no mobile mantém o padding compacto da base). */
 @media (min-width: 1024px) {
   :root[data-demo="lumiere"] .panel-main { padding: 30px 36px 52px; }
