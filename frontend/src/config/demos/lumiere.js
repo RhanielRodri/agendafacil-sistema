@@ -79,6 +79,12 @@ const lumiere = {
 // nomeado, fora do contrato do pack e do bundle da outra vertical.
 export const presentation = {
   faviconVariant: "serif",
+  // O símbolo do favicon (variante serifada) vira a marca oficial: header e
+  // sidebar reutilizam o mesmo vetor. Wordmark curto "Lumière" no header e na
+  // sidebar do painel, com "Painel Admin" como sublinha da operação.
+  brandSymbol: true,
+  wordmark: "Lumière",
+  panelSubtitle: "Painel Admin",
   fonts: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap",
   nav: [
     { label: "Início", href: "#topo" },

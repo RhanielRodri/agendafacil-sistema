@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import tenant from "../config/site.js";
+import BrandMark from "./BrandMark.jsx";
 
 function scrollToHash(href) {
   const id = href.replace(/^#/, "");
@@ -67,8 +68,10 @@ export default function Navbar({ onNavigate }) {
   return (
     <header className={`navbar${scrolled ? " scrolled" : ""}`} id="topo">
       <button className="navbar-brand" onClick={goHome} aria-label={`${tenant.name} — início`}>
-        <span className="navbar-brand-mark" aria-hidden="true">{tenant.logo.mark}</span>
-        <span className="navbar-brand-name">{tenant.name}</span>
+        {tenant.brandSymbol
+          ? <BrandMark className="navbar-brand-mark" size={36} />
+          : <span className="navbar-brand-mark" aria-hidden="true">{tenant.logo.mark}</span>}
+        <span className="navbar-brand-name">{tenant.wordmark || tenant.name}</span>
       </button>
 
       <nav className="navbar-links" aria-label="Seções do site">

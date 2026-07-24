@@ -14,6 +14,9 @@ const site = tenant
       contact: presentation?.contact || null,
       professionals: presentation?.professionals || null,
       treatmentPhotos: presentation?.treatmentPhotos || null,
+      wordmark: presentation?.wordmark || null,
+      panelSubtitle: presentation?.panelSubtitle || null,
+      brandSymbol: presentation?.brandSymbol || false,
       hero: { ...tenant.hero, ...(presentation?.hero || {}) },
       space: { ...tenant.space, ...(presentation?.space || {}) },
       metadata: {

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { api, apiMode } from "../services/api.js";
 import tenant, { adminPath } from "../config/tenant.js";
+import site from "../config/site.js";
 import { verticalConfig } from "../config/verticals.js";
 import PanelShell, { moduleGroups } from "../components/panel/PanelShell.jsx";
+import BrandMark from "../components/BrandMark.jsx";
 import Overview from "./admin/Overview.jsx";
 import Agenda from "./admin/Agenda.jsx";
 import Leads from "./admin/Leads.jsx";
@@ -390,9 +392,12 @@ export default function Admin({ services, professionals }) {
 
   return (
     <PanelShell
-      brand={tenant.name}
-      brandMark={tenant.logo?.mark || tenant.name.charAt(0)}
-      subtitle="Painel admin"
+      brand={site.wordmark || tenant.name}
+      brandMark={site.brandSymbol
+        ? <BrandMark className="panel-sidebar-mark-img" size={38} />
+        : (tenant.logo?.mark || tenant.name.charAt(0))}
+      symbol={site.brandSymbol}
+      subtitle={site.panelSubtitle || "Painel admin"}
       currentLabel={labels[module]}
       pageSubtitle={subtitles[module]}
       profileName={session?.name}

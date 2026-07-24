@@ -53,6 +53,21 @@
   font-size: 1.05rem;
   font-weight: 600;
   line-height: 1;
+  overflow: hidden;
+}
+
+/* Quando a marca é o símbolo vetorial (mesmo asset do favicon), o frame some e a
+   imagem preenche o selo — sem borda/preenchimento duplicando o desenho. */
+.panel-sidebar-mark.is-symbol {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.panel-sidebar-mark.is-symbol .brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
 }
 
 .panel-sidebar-logo-text {

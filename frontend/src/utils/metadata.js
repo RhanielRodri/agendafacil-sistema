@@ -55,15 +55,23 @@ function ensureLink(rel, extra = {}) {
 // risco de 404 ou de vazamento cross-tenant no bundle. O mesmo desenho serve de
 // apple-touch-icon. `variant` diferencia a linguagem: monograma reto e
 // geométrico no Studio Cut, marca serifada e circular na Lumière.
-function faviconSvg(mark, background, foreground, variant) {
+export function faviconSvg(mark, background, foreground, variant) {
   if (variant === "serif") {
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="${background}"/><circle cx="32" cy="32" r="21" fill="none" stroke="${foreground}" stroke-width="1.5" opacity="0.55"/><text x="32" y="43" fill="${foreground}" font-family="Georgia,'Times New Roman',serif" font-size="34" font-style="italic" text-anchor="middle">${mark}</text></svg>`;
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="${background}"/><rect x="6" y="6" width="52" height="52" fill="none" stroke="${foreground}" stroke-width="2"/><text x="32" y="42" fill="${foreground}" font-family="'Arial Narrow',Arial,sans-serif" font-size="26" font-weight="800" letter-spacing="1" text-anchor="middle">${mark}</text></svg>`;
 }
 
+// O símbolo oficial da marca é literalmente o mesmo vetor do favicon: o header
+// público e a sidebar do painel consomem este data-URI, então aba do navegador,
+// site e admin exibem exatamente o mesmo desenho, sem PNG ampliado nem redesenho.
+export function markDataUri(logo, variant) {
+  if (!logo) return "";
+  return `data:image/svg+xml,${encodeURIComponent(faviconSvg(logo.mark, logo.background, logo.foreground, variant))}`;
+}
+
 function setFavicon(mark, background, foreground, variant) {
-  const href = `data:image/svg+xml,${encodeURIComponent(faviconSvg(mark, background, foreground, variant))}`;
+  const href = markDataUri({ mark, background, foreground }, variant);
   ensureLink("icon", { type: "image/svg+xml" }).setAttribute("href", href);
   ensureLink("apple-touch-icon").setAttribute("href", href);
 }

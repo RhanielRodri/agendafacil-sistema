@@ -66,10 +66,10 @@ function NavGroups({ labels, current, onSelect, scope }) {
   );
 }
 
-function SidebarLogo({ brand, brandMark, subtitle }) {
+function SidebarLogo({ brand, brandMark, subtitle, symbol }) {
   return (
     <div className="panel-sidebar-logo">
-      <span className="panel-sidebar-mark" aria-hidden="true">{brandMark}</span>
+      <span className={`panel-sidebar-mark${symbol ? " is-symbol" : ""}`} aria-hidden="true">{brandMark}</span>
       <span className="panel-sidebar-logo-text">
         <strong>{brand}</strong>
         <small>{subtitle}</small>
@@ -83,7 +83,7 @@ function todayLabel() {
 }
 
 export default function PanelShell({
-  brand, brandMark, subtitle, breadcrumbRoot = "Admin",
+  brand, brandMark, subtitle, symbol = false, breadcrumbRoot = "Admin",
   currentLabel, pageSubtitle, profileName, profileMeta, profileActions,
   labels, current, onSelect, children
 }) {
@@ -148,7 +148,7 @@ export default function PanelShell({
   return (
     <div className="panel-shell">
       <aside className="panel-sidebar" aria-label="Módulos do painel">
-        <SidebarLogo brand={brand} brandMark={brandMark} subtitle={subtitle} />
+        <SidebarLogo brand={brand} brandMark={brandMark} subtitle={subtitle} symbol={symbol} />
         <nav className="panel-sidebar-nav" aria-label="Navegação do painel">
           <NavGroups labels={labels} current={current} onSelect={select} scope="sidebar" />
         </nav>
@@ -171,7 +171,7 @@ export default function PanelShell({
         aria-hidden={drawerOpen ? undefined : "true"}
         {...(drawerOpen ? { role: "dialog", "aria-modal": "true" } : {})}
       >
-        <SidebarLogo brand={brand} brandMark={brandMark} subtitle={subtitle} />
+        <SidebarLogo brand={brand} brandMark={brandMark} subtitle={subtitle} symbol={symbol} />
         <button className="panel-drawer-close" type="button" onClick={() => {
           setDrawerOpen(false);
           triggerRef.current?.focus();
