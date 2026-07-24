@@ -54,7 +54,7 @@ function moduleSubtitles(vertical) {
     disponibilidade: "Grade de horários da equipe",
     bloqueios: "Pausas e indisponibilidades",
     indicadores: "Desempenho do período",
-    configuracoes: "Preferências do negócio"
+    configuracoes: "Dados públicos, regras de agendamento e mensagens do negócio"
   };
 }
 

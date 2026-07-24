@@ -357,6 +357,64 @@ button.panel-stat:hover { background: var(--surface-light-2); }
 
 .panel-btn-link:hover { color: var(--text-on-light); }
 
+/* Avatar de inicial na lista de clientes: substitui o antigo UUID cru na coluna
+   de identidade, deixando nome/telefone como informação principal. */
+.panel-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface-light-2);
+  border: 1px solid var(--border-light-strong);
+  color: var(--text-on-light);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* === MAIS AÇÕES (menu de linha) ===
+   Só a Lumière renderiza o disclosure; o popover é `position: fixed` (ancorado ao
+   gatilho) para não ser recortado pelo overflow controlado da `.panel-list`. */
+.panel-row-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.panel-row-more-caret { font-size: 0.7em; line-height: 1; }
+
+.panel-row-menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background: var(--surface-light);
+  border: 1px solid var(--border-light-strong);
+  border-radius: calc(var(--panel-radius) * 0.7);
+  box-shadow: 0 8px 26px -8px rgba(20, 14, 10, 0.28);
+}
+
+.panel-row-menu-item {
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--text-on-light);
+  border-radius: calc(var(--panel-radius) * 0.5);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.panel-row-menu-item:hover { background: var(--surface-light-2); }
+.panel-row-menu-item.is-danger { color: var(--status-cancelled); }
+.panel-row-menu-item:disabled { opacity: 0.45; cursor: not-allowed; }
+
 /* === CONTROLES COMPARTILHADOS ===
    Uma base única para todo input/select/textarea do painel. `booking.css` aplica
    `input, select { width: 100% }` nas páginas públicas; aqui a base do painel
@@ -1198,6 +1256,107 @@ button.panel-stat:hover { background: var(--surface-light-2); }
   :root[data-demo="lumiere"] .panel-stat { padding: 15px 18px; }
   :root[data-demo="lumiere"] .panel-attention-item { padding: 14px 16px; }
   :root[data-demo="lumiere"] .panel-detail-head { padding: 16px; }
-  :root[data-demo="lumiere"] .panel-empty { padding: 40px 22px; }
   :root[data-demo="lumiere"] .panel-pagination { padding: 12px 16px; }
+}
+
+/* === INTERRUPTORES (Horários e Configurações) ===
+   Os booleanos de operação (dia aberto/fechado, intervalo ativo, aceitar
+   agendamento, etc.) viram switch com estado ligado/desligado legível pela cor e
+   pela posição do botão. As listas de múltipla escolha (`.panel-checklist`)
+   continuam caixas de seleção — alvo diferente, intenção diferente. É só pintura:
+   o controle continua sendo um `<input type="checkbox">`, então função, teclado e
+   estado do formulário não mudam. */
+:root[data-demo="lumiere"] .panel-week-day input[type="checkbox"],
+:root[data-demo="lumiere"] .panel-field > span > input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 40px;
+  height: 22px;
+  /* booking.css aplica `input { min-height: 44px }` globalmente; sem sobrescrever,
+     o switch fica alto e vira uma pílula vertical. */
+  min-height: 22px;
+  border-radius: 999px;
+  background: var(--border-light-strong);
+  border: 1px solid var(--border-light-strong);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+:root[data-demo="lumiere"] .panel-week-day input[type="checkbox"]::after,
+:root[data-demo="lumiere"] .panel-field > span > input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(20, 14, 10, 0.25);
+  transition: left var(--dur-fast) var(--ease);
+}
+
+:root[data-demo="lumiere"] .panel-week-day input[type="checkbox"]:checked,
+:root[data-demo="lumiere"] .panel-field > span > input[type="checkbox"]:checked {
+  background: var(--panel-accent);
+  border-color: var(--panel-accent);
+}
+
+:root[data-demo="lumiere"] .panel-week-day input[type="checkbox"]:checked::after,
+:root[data-demo="lumiere"] .panel-field > span > input[type="checkbox"]:checked::after {
+  left: 20px;
+}
+
+:root[data-demo="lumiere"] .panel-week-day input[type="checkbox"]:disabled,
+:root[data-demo="lumiere"] .panel-field > span > input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === INDICADORES — HIERARQUIA ===
+   Sem novas métricas: só reforça a leitura. Os números-síntese ficam maiores e
+   mais escuros e cada subtítulo ganha um filete dourado curto, como as fichas. */
+:root[data-demo="lumiere"] .panel-detail-facts div strong {
+  font-size: 0.98rem;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-demo="lumiere"] .panel-subhead {
+  position: relative;
+  padding-bottom: 8px;
+  margin-top: 22px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-on-light);
+}
+
+:root[data-demo="lumiere"] .panel-subhead::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 26px;
+  height: 2px;
+  background: var(--panel-accent);
+}
+
+/* === ESTADOS VAZIOS COMPACTOS ===
+   Quando há pouco conteúdo, o vazio não precisa ocupar a tela toda: bloco
+   contido, com respiro suficiente para ler sem virar um painel gigante. */
+:root[data-demo="lumiere"] .panel-empty {
+  padding: 24px 20px;
+}
+
+:root[data-demo="lumiere"] .panel-empty strong { font-size: 1.15rem; }
+
+/* === LARGURA EM MONITORES GRANDES ===
+   Acima de ~1680px a leitura de linhas longas cansa. A coluna de conteúdo ganha
+   um teto e centraliza; as tabelas mantêm o scroll horizontal controlado dentro
+   desse teto, então nada é cortado. */
+@media (min-width: 1680px) {
+  :root[data-demo="lumiere"] .panel-main {
+    max-width: 1440px;
+    margin-inline: auto;
+  }
 }

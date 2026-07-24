@@ -123,7 +123,9 @@ export default function Clients({ params, onNavigate, onSessionExpired }) {
             {items.map((client) => (
               <div className="panel-row" key={client.id}>
                 <div className="panel-row-time">
-                  #{client.id}
+                  <span className="panel-avatar" aria-hidden="true">
+                    {(client.name || "?").trim().charAt(0).toUpperCase()}
+                  </span>
                 </div>
                 <div className="panel-row-main">
                   <strong>{client.name}</strong>

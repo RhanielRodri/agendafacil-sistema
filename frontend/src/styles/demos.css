@@ -153,7 +153,9 @@
   --border-light: #ece4d6;
   --border-light-strong: #ddcfbb;
   --text-on-light: #2c2420;
-  --text-on-light-muted: #8a7c6d;
+  /* Taupe operacional um degrau mais escuro: #8a7c6d dava ~3.6:1 sobre o branco
+     (falha AA em texto pequeno). #6f6153 sobe para ~5.4:1 sem sair da paleta. */
+  --text-on-light-muted: #6f6153;
 
   --panel-sidebar-bg: #241c17;
   --panel-sidebar-surface: #33291f;

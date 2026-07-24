@@ -105,6 +105,25 @@ A policy do Access decide quem entra no painel. A membership no D1 decide qual
 tenant essa pessoa enxerga. As duas camadas são independentes de propósito: passar
 pelo Access sem membership resulta em `403`, e é assim que deve ser.
 
+### Branding da tela de login (neutro, compartilhado)
+
+A tela de código do Access (One-Time PIN) é servida pela Cloudflare e pertence à
+**organização** Zero Trust — é a mesma para todas as verticais e para staging e
+produção. Por isso o branding é neutro **AgendaFácil / SOR ONE**, nunca a
+identidade de uma vertical. O desenho (fundo claro, título "Acesso seguro ao
+painel" e a instrução do código por e-mail) vive em
+`scripts/configure-access-branding.mjs`; o logo neutro está em
+`scripts/access-branding/agendafacil-sor-one.svg`.
+
+```bash
+npm run access:brand         # dry-run: imprime o login_design que seria enviado
+npm run access:brand:apply   # aplica (afeta a organização inteira, inclusive produção)
+```
+
+O `apply` é uma ação humana e única: muta a organização compartilhada, então fica
+fora do fluxo de deploy por vertical. Para o logo, defina `ACCESS_BRAND_LOGO_URL`
+com a URL pública do SVG ou envie-o pelo painel Zero Trust.
+
 ## Verificação mínima após publicar
 
 | Verificação | Esperado |

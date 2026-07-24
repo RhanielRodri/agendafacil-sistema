@@ -9,6 +9,7 @@ import {
   PanelLoading,
   PanelMessage
 } from "../../components/panel/PanelState.jsx";
+import RowActions from "../../components/panel/RowActions.jsx";
 import { formatMinutes, pageInfo, pageItems } from "../../utils/panel.js";
 import { formatCurrency } from "../../utils/format.js";
 
@@ -277,24 +278,24 @@ export default function Services({ vertical, onNavigate, onSessionExpired, onCat
                     {service.active ? "Ativo" : "Inativo"}
                   </span>
                 </div>
-                <div className="panel-row-actions">
-                  <button className="panel-btn" type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label="Subir na ordem">↑</button>
-                  <button className="panel-btn" type="button" onClick={() => move(index, 1)} disabled={index === items.length - 1} aria-label="Descer na ordem">↓</button>
-                  <button className="panel-btn" type="button" onClick={() => startEdit(service)}>Editar</button>
-                  <button
-                    className="panel-btn"
-                    type="button"
-                    onClick={() => action.run(
-                      (confirm) => api.setAdminServiceActive(service.id, !service.active, confirm),
-                      `${vertical.serviceNoun} ${service.active ? "inativado" : "reativado"}.`
-                    )}
-                  >
-                    {service.active ? "Inativar" : "Reativar"}
-                  </button>
-                  <button className="panel-btn-link" type="button" onClick={() => openDependencies(service)}>
-                    Dependências
-                  </button>
-                </div>
+                <RowActions
+                  primary={[
+                    { key: "up", label: "↑", ariaLabel: "Subir na ordem", disabled: index === 0, onClick: () => move(index, -1) },
+                    { key: "down", label: "↓", ariaLabel: "Descer na ordem", disabled: index === items.length - 1, onClick: () => move(index, 1) },
+                    { key: "edit", label: "Editar", onClick: () => startEdit(service) }
+                  ]}
+                  secondary={[
+                    {
+                      key: "toggle",
+                      label: service.active ? "Inativar" : "Reativar",
+                      onClick: () => action.run(
+                        (confirm) => api.setAdminServiceActive(service.id, !service.active, confirm),
+                        `${vertical.serviceNoun} ${service.active ? "inativado" : "reativado"}.`
+                      )
+                    },
+                    { key: "deps", label: "Dependências", onClick: () => openDependencies(service) }
+                  ]}
+                />
               </div>
             ))}
           </div>

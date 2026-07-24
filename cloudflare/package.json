@@ -14,6 +14,8 @@
     "check:bundles": "node scripts/check-bundles.mjs",
     "access:configure": "node scripts/configure-access.mjs",
     "access:verify": "node scripts/configure-access.mjs --check",
+    "access:brand": "node scripts/configure-access-branding.mjs",
+    "access:brand:apply": "node scripts/configure-access-branding.mjs --apply",
     "access:test": "node --test scripts/configure-access.test.mjs",
     "client": "node scripts/client.mjs",
     "client:test": "node --test scripts/client-pack.test.mjs scripts/client-compile.test.mjs scripts/client-seed.test.mjs scripts/client-backup.test.mjs scripts/client-whatsapp.test.mjs scripts/client-lifecycle.test.mjs scripts/client-provision.test.mjs",

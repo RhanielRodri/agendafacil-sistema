@@ -9,6 +9,7 @@ import {
   PanelLoading,
   PanelMessage
 } from "../../components/panel/PanelState.jsx";
+import RowActions from "../../components/panel/RowActions.jsx";
 import { formatMinutes, pageInfo, pageItems } from "../../utils/panel.js";
 
 function emptyForm() {
@@ -278,40 +279,34 @@ export default function Professionals({ vertical, services, onNavigate, onSessio
                     {professional.active ? "Ativo" : "Inativo"}
                   </span>
                 </div>
-                <div className="panel-row-actions">
-                  <button className="panel-btn" type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label="Subir na ordem">↑</button>
-                  <button className="panel-btn" type="button" onClick={() => move(index, 1)} disabled={index === items.length - 1} aria-label="Descer na ordem">↓</button>
-                  <button className="panel-btn" type="button" onClick={() => { setEditing(professional.id); setForm(toForm(professional)); }}>
-                    Editar
-                  </button>
-                  <button
-                    className="panel-btn"
-                    type="button"
-                    onClick={() => setLinking({ id: professional.id, name: professional.name, serviceIds: [...professional.serviceIds] })}
-                  >
-                    {vertical.servicePlural}
-                  </button>
-                  <button
-                    className="panel-btn"
-                    type="button"
-                    onClick={() => onNavigate("disponibilidade", { professionalId: professional.id })}
-                  >
-                    Agenda
-                  </button>
-                  <button
-                    className="panel-btn"
-                    type="button"
-                    onClick={() => action.run(
-                      (confirm) => api.setAdminProfessionalActive(professional.id, !professional.active, confirm),
-                      professional.active ? "Profissional inativado." : "Profissional reativado."
-                    )}
-                  >
-                    {professional.active ? "Inativar" : "Reativar"}
-                  </button>
-                  <button className="panel-btn-link" type="button" onClick={() => openDependencies(professional)}>
-                    Dependências
-                  </button>
-                </div>
+                <RowActions
+                  primary={[
+                    { key: "up", label: "↑", ariaLabel: "Subir na ordem", disabled: index === 0, onClick: () => move(index, -1) },
+                    { key: "down", label: "↓", ariaLabel: "Descer na ordem", disabled: index === items.length - 1, onClick: () => move(index, 1) },
+                    { key: "edit", label: "Editar", onClick: () => { setEditing(professional.id); setForm(toForm(professional)); } }
+                  ]}
+                  secondary={[
+                    {
+                      key: "services",
+                      label: vertical.servicePlural,
+                      onClick: () => setLinking({ id: professional.id, name: professional.name, serviceIds: [...professional.serviceIds] })
+                    },
+                    {
+                      key: "agenda",
+                      label: "Agenda",
+                      onClick: () => onNavigate("disponibilidade", { professionalId: professional.id })
+                    },
+                    {
+                      key: "toggle",
+                      label: professional.active ? "Inativar" : "Reativar",
+                      onClick: () => action.run(
+                        (confirm) => api.setAdminProfessionalActive(professional.id, !professional.active, confirm),
+                        professional.active ? "Profissional inativado." : "Profissional reativado."
+                      )
+                    },
+                    { key: "deps", label: "Dependências", onClick: () => openDependencies(professional) }
+                  ]}
+                />
               </div>
             ))}
           </div>
