@@ -257,7 +257,7 @@ export default function Professionals({ vertical, services, onNavigate, onSessio
             </div>
             {items.map((professional, index) => (
               <div className={`panel-row${professional.active ? "" : " panel-row--muted"}`} key={professional.id}>
-                <div className="panel-row-time">#{professional.id}</div>
+                <div className="panel-row-time">{(pagination.page - 1) * pagination.limit + index + 1}º</div>
                 <div className="panel-row-main">
                   <strong>{professional.name}</strong>
                   <span>{professional.specialty || "Sem especialidade registrada"}</span>
