@@ -218,7 +218,7 @@ export default function Availability({ professionals, params, onSessionExpired }
           <span className="panel-toolbar-spacer" />
           <strong className="panel-week-total">{formatMinutes(weekMinutes)} por semana</strong>
           <button
-            className="panel-btn"
+            className="panel-btn-primary"
             type="button"
             onClick={() => { setEditingId(null); setIntervalForm(emptyInterval(selectedId, 1)); }}
           >
@@ -288,14 +288,25 @@ export default function Availability({ professionals, params, onSessionExpired }
           </PanelEmpty>
         ) : (
           <div className="panel-list">
+            <div className="panel-list-head" aria-hidden="true">
+              <span>Início</span>
+              <span>Dia</span>
+              <span>Duração</span>
+              <span />
+              <span>Situação</span>
+              <span />
+            </div>
             {schedules.map((schedule) => (
               <div className={`panel-row${schedule.active ? "" : " panel-row--muted"}`} key={schedule.id}>
                 <div className="panel-row-time">{schedule.startTime}<small>{schedule.endTime}</small></div>
                 <div className="panel-row-main">
                   <strong>{weekDays[schedule.dayOfWeek]}</strong>
-                  <span>{formatMinutes(minutesBetween(schedule.startTime, schedule.endTime))}</span>
+                  <span>{schedule.startTime} às {schedule.endTime}</span>
                 </div>
-                <div className="panel-row-cell" />
+                <div className="panel-row-cell">
+                  <strong>{formatMinutes(minutesBetween(schedule.startTime, schedule.endTime))}</strong>
+                  <span>janela de trabalho</span>
+                </div>
                 <div className="panel-row-cell" />
                 <div className="panel-row-status">
                   <span className={`panel-status ${schedule.active ? "confirmed" : "cancelled"}`}>

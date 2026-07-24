@@ -117,6 +117,13 @@ export default function FollowUps({ users, params, onNavigate, onSessionExpired 
             {item.label}
           </button>
         ))}
+      </div>
+
+      <div className="panel-toolbar">
+        <strong className="panel-week-total">
+          {buckets.find((item) => item.id === bucket)?.label}
+          {data ? ` · ${pagination.total} registro(s)` : ""}
+        </strong>
         <span className="panel-toolbar-spacer" />
         <button className="panel-btn" type="button" onClick={reload}>Atualizar</button>
       </div>
@@ -133,6 +140,14 @@ export default function FollowUps({ users, params, onNavigate, onSessionExpired 
       ) : (
         <>
           <div className="panel-list">
+            <div className="panel-list-head" aria-hidden="true">
+              <span>Vence</span>
+              <span>Cliente</span>
+              <span>Contexto</span>
+              <span>Responsável</span>
+              <span>Situação</span>
+              <span />
+            </div>
             {items.map((followUp) => {
               const delay = followUp.status === "OPEN" ? delayLabel(followUp.dueAt) : null;
               return (

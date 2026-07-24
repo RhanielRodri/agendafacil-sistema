@@ -21,6 +21,7 @@ export default function Blocks({ professionals, onSessionExpired }) {
   const [professionalFilter, setProfessionalFilter] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
+  const [creating, setCreating] = useState(false);
 
   const { state, data, error, reload } = usePanelData(
     () => api.getScheduleBlocks({ scope, professionalId: professionalFilter }),
@@ -49,11 +50,19 @@ export default function Blocks({ professionals, onSessionExpired }) {
       if (ok) {
         setForm(emptyForm());
         setEditingId(null);
+        setCreating(false);
       }
     });
   }
 
+  function closeForm() {
+    setEditingId(null);
+    setCreating(false);
+    setForm(emptyForm());
+  }
+
   const blocks = Array.isArray(data) ? data : [];
+  const formOpen = creating || editingId !== null;
 
   return (
     <>
@@ -66,87 +75,6 @@ export default function Blocks({ professionals, onSessionExpired }) {
           onCancel={action.dismissConflict}
         />
       )}
-
-      <section className="panel-block">
-        <div className="panel-block-head">
-          <h2>{editingId ? "Editar bloqueio" : "Novo bloqueio"}</h2>
-          <p>O motivo fica só no painel — nenhuma rota pública devolve esse texto</p>
-        </div>
-        <form className="panel-form-grid" onSubmit={submit}>
-          <label className="panel-field">
-            Data
-            <input
-              type="date"
-              value={form.date}
-              onChange={(event) => setForm({ ...form, date: event.target.value })}
-              required
-            />
-          </label>
-          <label className="panel-field">
-            Aplicar a
-            <select
-              value={form.professionalId}
-              onChange={(event) => setForm({ ...form, professionalId: event.target.value })}
-            >
-              <option value="">Todo o negócio</option>
-              {professionals.map((professional) => (
-                <option key={professional.id} value={professional.id}>{professional.name}</option>
-              ))}
-            </select>
-          </label>
-          <label className="panel-field">
-            <span>
-              <input
-                type="checkbox"
-                checked={form.allDay}
-                onChange={(event) => setForm({ ...form, allDay: event.target.checked })}
-              /> Dia inteiro
-            </span>
-          </label>
-          {!form.allDay && (
-            <>
-              <label className="panel-field">
-                Início
-                <input
-                  type="time"
-                  value={form.startTime}
-                  onChange={(event) => setForm({ ...form, startTime: event.target.value })}
-                  required
-                />
-              </label>
-              <label className="panel-field">
-                Fim
-                <input
-                  type="time"
-                  value={form.endTime}
-                  onChange={(event) => setForm({ ...form, endTime: event.target.value })}
-                  required
-                />
-              </label>
-            </>
-          )}
-          <label className="panel-field" style={{ gridColumn: "span 2" }}>
-            Motivo interno
-            <input
-              type="text"
-              maxLength="200"
-              value={form.reason}
-              onChange={(event) => setForm({ ...form, reason: event.target.value })}
-              placeholder="Pausa, folga, manutenção…"
-            />
-          </label>
-          <div className="panel-form-actions">
-            <button className="panel-btn-primary" type="submit" disabled={action.busy}>
-              {editingId ? "Salvar bloqueio" : "Criar bloqueio"}
-            </button>
-            {editingId && (
-              <button className="panel-btn" type="button" onClick={() => { setEditingId(null); setForm(emptyForm()); }}>
-                Cancelar
-              </button>
-            )}
-          </div>
-        </form>
-      </section>
 
       <div className="panel-toolbar">
         <label className="panel-field">
@@ -168,7 +96,93 @@ export default function Blocks({ professionals, onSessionExpired }) {
         </label>
         <span className="panel-toolbar-spacer" />
         <button className="panel-btn" type="button" onClick={reload}>Atualizar</button>
+        <button
+          className="panel-btn-primary"
+          type="button"
+          onClick={() => { setEditingId(null); setForm(emptyForm()); setCreating(true); }}
+        >
+          Novo bloqueio
+        </button>
       </div>
+
+      {formOpen && (
+        <section className="panel-block">
+          <div className="panel-block-head">
+            <h2>{editingId ? "Editar bloqueio" : "Novo bloqueio"}</h2>
+            <p>O motivo fica só no painel — nenhuma rota pública devolve esse texto</p>
+          </div>
+          <form className="panel-form-grid" onSubmit={submit}>
+            <label className="panel-field">
+              Data
+              <input
+                type="date"
+                value={form.date}
+                onChange={(event) => setForm({ ...form, date: event.target.value })}
+                required
+              />
+            </label>
+            <label className="panel-field">
+              Aplicar a
+              <select
+                value={form.professionalId}
+                onChange={(event) => setForm({ ...form, professionalId: event.target.value })}
+              >
+                <option value="">Todo o negócio</option>
+                {professionals.map((professional) => (
+                  <option key={professional.id} value={professional.id}>{professional.name}</option>
+                ))}
+              </select>
+            </label>
+            <label className="panel-field">
+              <span>
+                <input
+                  type="checkbox"
+                  checked={form.allDay}
+                  onChange={(event) => setForm({ ...form, allDay: event.target.checked })}
+                /> Dia inteiro
+              </span>
+            </label>
+            {!form.allDay && (
+              <>
+                <label className="panel-field">
+                  Início
+                  <input
+                    type="time"
+                    value={form.startTime}
+                    onChange={(event) => setForm({ ...form, startTime: event.target.value })}
+                    required
+                  />
+                </label>
+                <label className="panel-field">
+                  Fim
+                  <input
+                    type="time"
+                    value={form.endTime}
+                    onChange={(event) => setForm({ ...form, endTime: event.target.value })}
+                    required
+                  />
+                </label>
+              </>
+            )}
+            <label className="panel-field" style={{ gridColumn: "span 2" }}>
+              Motivo interno
+              <input
+                type="text"
+                maxLength="200"
+                value={form.reason}
+                onChange={(event) => setForm({ ...form, reason: event.target.value })}
+                placeholder="Pausa, folga, manutenção…"
+              />
+            </label>
+            <div className="panel-form-actions">
+              <button className="panel-btn-primary" type="submit" disabled={action.busy}>
+                {editingId ? "Salvar bloqueio" : "Criar bloqueio"}
+              </button>
+              <button className="panel-btn" type="button" onClick={closeForm}>Cancelar</button>
+            </div>
+          </form>
+        </section>
+      )}
 
       {state === "loading" && !data && <PanelLoading rows={4} label="Carregando bloqueios…" />}
       {state === "error" && <PanelError onRetry={reload}>{error}</PanelError>}
@@ -176,15 +190,23 @@ export default function Blocks({ professionals, onSessionExpired }) {
       {data && (blocks.length === 0 ? (
         <PanelEmpty
           title="Nenhum bloqueio no período"
-          actionLabel={professionalFilter || scope !== "future" ? "Limpar filtros" : undefined}
+          actionLabel={professionalFilter || scope !== "future" ? "Limpar filtros" : "Criar bloqueio"}
           onAction={professionalFilter || scope !== "future"
             ? () => { setScope("future"); setProfessionalFilter(""); }
-            : undefined}
+            : () => { setEditingId(null); setForm(emptyForm()); setCreating(true); }}
         >
           Bloqueios tiram horários da disponibilidade sem cancelar nada que já esteja marcado.
         </PanelEmpty>
       ) : (
         <div className="panel-list">
+          <div className="panel-list-head" aria-hidden="true">
+            <span>Data</span>
+            <span>Abrangência</span>
+            <span>Motivo interno</span>
+            <span />
+            <span />
+            <span />
+          </div>
           {blocks.map((block) => (
             <div className="panel-row" key={block.id}>
               <div className="panel-row-time">

@@ -131,7 +131,7 @@ export default function Services({ vertical, onNavigate, onSessionExpired, onCat
           placeholder={`Buscar ${vertical.servicePlural.toLowerCase()}`}
           style={{ flex: "1 1 200px" }}
         />
-        <button className="panel-btn-primary" type="submit">Buscar</button>
+        <button className="panel-btn" type="submit">Buscar</button>
         <label className="panel-field">
           Situação
           <select
@@ -144,8 +144,10 @@ export default function Services({ vertical, onNavigate, onSessionExpired, onCat
           </select>
         </label>
         <span className="panel-toolbar-spacer" />
-        <button className="panel-btn" type="button" onClick={startCreate}>Novo {vertical.serviceNoun.toLowerCase()}</button>
         <button className="panel-btn" type="button" onClick={reload}>Atualizar</button>
+        <button className="panel-btn-primary" type="button" onClick={startCreate}>
+          Novo {vertical.serviceNoun.toLowerCase()}
+        </button>
       </form>
 
       {editing !== null && (
@@ -247,6 +249,14 @@ export default function Services({ vertical, onNavigate, onSessionExpired, onCat
       ) : (
         <>
           <div className="panel-list">
+            <div className="panel-list-head" aria-hidden="true">
+              <span>Duração</span>
+              <span>{vertical.serviceNoun}</span>
+              <span>Preço</span>
+              <span>Uso</span>
+              <span>Situação</span>
+              <span />
+            </div>
             {items.map((service, index) => (
               <div className={`panel-row${service.active ? "" : " panel-row--muted"}`} key={service.id}>
                 <div className="panel-row-time">{formatMinutes(service.duration)}</div>

@@ -121,7 +121,7 @@ export default function Professionals({ vertical, services, onNavigate, onSessio
           placeholder={`Buscar ${vertical.professionalPlural.toLowerCase()}`}
           style={{ flex: "1 1 200px" }}
         />
-        <button className="panel-btn-primary" type="submit">Buscar</button>
+        <button className="panel-btn" type="submit">Buscar</button>
         <label className="panel-field">
           Situação
           <select value={activeFilter} onChange={(event) => { setPage(1); setActiveFilter(event.target.value); }}>
@@ -131,14 +131,14 @@ export default function Professionals({ vertical, services, onNavigate, onSessio
           </select>
         </label>
         <span className="panel-toolbar-spacer" />
+        <button className="panel-btn" type="button" onClick={reload}>Atualizar</button>
         <button
-          className="panel-btn"
+          className="panel-btn-primary"
           type="button"
           onClick={() => { setEditing("new"); setForm(emptyForm()); }}
         >
           Novo {vertical.professionalNoun.toLowerCase()}
         </button>
-        <button className="panel-btn" type="button" onClick={reload}>Atualizar</button>
       </form>
 
       {editing !== null && (
@@ -247,6 +247,14 @@ export default function Professionals({ vertical, services, onNavigate, onSessio
       ) : (
         <>
           <div className="panel-list">
+            <div className="panel-list-head" aria-hidden="true">
+              <span>Ordem</span>
+              <span>{vertical.professionalNoun}</span>
+              <span>{vertical.servicePlural}</span>
+              <span>Carga semanal</span>
+              <span>Situação</span>
+              <span />
+            </div>
             {items.map((professional, index) => (
               <div className={`panel-row${professional.active ? "" : " panel-row--muted"}`} key={professional.id}>
                 <div className="panel-row-time">#{professional.id}</div>

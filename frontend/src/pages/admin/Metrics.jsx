@@ -36,6 +36,17 @@ function Figure({ label, value, hint }) {
   );
 }
 
+// Leitura rápida do período: os mesmos números que já estão no detalhe, na
+// mesma faixa de cartões usada na visão geral.
+function Stat({ label, value, tone = "" }) {
+  return (
+    <div className="panel-stat">
+      <span className="panel-stat-label">{label}</span>
+      <span className={`panel-stat-value ${tone}`}>{value}</span>
+    </div>
+  );
+}
+
 export default function Metrics({ vertical, onSessionExpired }) {
   const [period, setPeriod] = useState("30d");
   const [from, setFrom] = useState(shiftIsoDay(todayIso(), -13));
@@ -48,6 +59,7 @@ export default function Metrics({ vertical, onSessionExpired }) {
   );
 
   const highlights = vertical.metricHighlights || [];
+  const sourcesWithLeads = (data?.leads?.bySource || []).filter((row) => row.created > 0);
 
   return (
     <>
@@ -93,6 +105,45 @@ export default function Metrics({ vertical, onSessionExpired }) {
 
           <section className="panel-block">
             <div className="panel-block-head">
+              <h2>Resumo do período</h2>
+              <p>Leitura rápida — cada bloco abaixo abre o detalhe</p>
+            </div>
+            <div className="panel-stats">
+              <Stat
+                label="Agendamentos"
+                value={data.appointments.total}
+                tone={data.appointments.total ? "" : "is-zero"}
+              />
+              <Stat
+                label="Comparecimento"
+                value={percent(data.appointments.attendanceRate)}
+                tone={data.appointments.attendanceRate ? "confirmed" : "is-zero"}
+              />
+              <Stat
+                label="Ocupação"
+                value={percent(data.capacity.occupancyRate)}
+                tone={data.capacity.occupancyRate ? "" : "is-zero"}
+              />
+              <Stat
+                label="Leads criados"
+                value={data.leads.created}
+                tone={data.leads.created ? "" : "is-zero"}
+              />
+              <Stat
+                label="Conversão"
+                value={percent(data.leads.conversionRate)}
+                tone={data.leads.conversionRate ? "" : "is-zero"}
+              />
+              <Stat
+                label="Follow-ups vencidos"
+                value={data.followUps.overdue}
+                tone={data.followUps.overdue ? "cancelled" : "is-zero"}
+              />
+            </div>
+          </section>
+
+          <section className="panel-block">
+            <div className="panel-block-head">
               <h2>Agendamentos</h2>
               <p>Comparecimento é medido sobre o que já foi encerrado</p>
             </div>
@@ -123,20 +174,63 @@ export default function Metrics({ vertical, onSessionExpired }) {
             </div>
 
             {(highlights.includes("occupancyByProfessional") || vertical.showOccupancy) && (
+              data.capacity.byProfessional.length === 0 ? (
+                <p className="panel-hint">Nenhum profissional ativo com agenda no período.</p>
+              ) : (
+                <div className="panel-list">
+                  <div className="panel-list-head" aria-hidden="true">
+                    <span>Ocupação</span>
+                    <span>Profissional</span>
+                    <span>Tempo livre</span>
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  {data.capacity.byProfessional.map((row) => (
+                    <div className="panel-row" key={row.professionalId}>
+                      <div className="panel-row-time">{percent(row.occupancyRate)}</div>
+                      <div className="panel-row-main">
+                        <strong>{row.name}</strong>
+                        <span>{duration(row.bookedMinutes)} ocupados de {duration(row.openMinutes)}</span>
+                      </div>
+                      <div className="panel-row-cell">
+                        <strong>{duration(row.freeMinutes)}</strong>
+                        <span>livre</span>
+                      </div>
+                      <div className="panel-row-cell" />
+                      <div className="panel-row-status" />
+                      <div className="panel-row-actions" />
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+
+            <h3 className="panel-subhead">
+              {vertical.servicePlural} por tempo ocupado
+            </h3>
+            {data.capacity.byService.length === 0 ? (
+              <p className="panel-hint">Nada agendado no período.</p>
+            ) : (
               <div className="panel-list">
-                {data.capacity.byProfessional.length === 0 && (
-                  <div className="panel-row"><span>Nenhum profissional ativo com agenda no período.</span></div>
-                )}
-                {data.capacity.byProfessional.map((row) => (
-                  <div className="panel-row" key={row.professionalId}>
-                    <div className="panel-row-time">{percent(row.occupancyRate)}</div>
+                <div className="panel-list-head" aria-hidden="true">
+                  <span>Participação</span>
+                  <span>{vertical.serviceNoun}</span>
+                  <span>Tempo agendado</span>
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                {data.capacity.byService.slice(0, 8).map((row) => (
+                  <div className="panel-row" key={row.serviceId}>
+                    <div className="panel-row-time">{percent(row.shareOfBookedTime)}</div>
                     <div className="panel-row-main">
                       <strong>{row.name}</strong>
-                      <span>{duration(row.bookedMinutes)} ocupados de {duration(row.openMinutes)}</span>
+                      <span>{row.appointments} agendamento(s)</span>
                     </div>
                     <div className="panel-row-cell">
-                      <strong>{duration(row.freeMinutes)}</strong>
-                      <span>livre</span>
+                      <strong>{duration(row.bookedMinutes)}</strong>
+                      <span>duração agendada</span>
                     </div>
                     <div className="panel-row-cell" />
                     <div className="panel-row-status" />
@@ -145,31 +239,6 @@ export default function Metrics({ vertical, onSessionExpired }) {
                 ))}
               </div>
             )}
-
-            <h3 className="panel-subhead">
-              {vertical.servicePlural} por tempo ocupado
-            </h3>
-            <div className="panel-list">
-              {data.capacity.byService.length === 0 && (
-                <div className="panel-row"><span>Nada agendado no período.</span></div>
-              )}
-              {data.capacity.byService.slice(0, 8).map((row) => (
-                <div className="panel-row" key={row.serviceId}>
-                  <div className="panel-row-time">{percent(row.shareOfBookedTime)}</div>
-                  <div className="panel-row-main">
-                    <strong>{row.name}</strong>
-                    <span>{row.appointments} agendamento(s)</span>
-                  </div>
-                  <div className="panel-row-cell">
-                    <strong>{duration(row.bookedMinutes)}</strong>
-                    <span>duração agendada</span>
-                  </div>
-                  <div className="panel-row-cell" />
-                  <div className="panel-row-status" />
-                  <div className="panel-row-actions" />
-                </div>
-              ))}
-            </div>
           </section>
 
           <section className="panel-block">
@@ -193,27 +262,36 @@ export default function Metrics({ vertical, onSessionExpired }) {
             </div>
 
             <h3 className="panel-subhead">Conversão por origem</h3>
-            <div className="panel-list">
-              {data.leads.bySource.filter((row) => row.created > 0).length === 0 && (
-                <div className="panel-row"><span>Nenhum lead criado no período.</span></div>
-              )}
-              {data.leads.bySource.filter((row) => row.created > 0).map((row) => (
-                <div className="panel-row" key={row.source}>
-                  <div className="panel-row-time">{percent(row.conversionRate)}</div>
-                  <div className="panel-row-main">
-                    <strong>{leadSourceLabels[row.source] || row.source}</strong>
-                    <span>{row.created} criado(s)</span>
-                  </div>
-                  <div className="panel-row-cell">
-                    <strong>{row.converted}</strong>
-                    <span>convertido(s)</span>
-                  </div>
-                  <div className="panel-row-cell" />
-                  <div className="panel-row-status" />
-                  <div className="panel-row-actions" />
+            {sourcesWithLeads.length === 0 ? (
+              <p className="panel-hint">Nenhum lead criado no período.</p>
+            ) : (
+              <div className="panel-list">
+                <div className="panel-list-head" aria-hidden="true">
+                  <span>Conversão</span>
+                  <span>Origem</span>
+                  <span>Convertidos</span>
+                  <span />
+                  <span />
+                  <span />
                 </div>
-              ))}
-            </div>
+                {sourcesWithLeads.map((row) => (
+                  <div className="panel-row" key={row.source}>
+                    <div className="panel-row-time">{percent(row.conversionRate)}</div>
+                    <div className="panel-row-main">
+                      <strong>{leadSourceLabels[row.source] || row.source}</strong>
+                      <span>{row.created} criado(s)</span>
+                    </div>
+                    <div className="panel-row-cell">
+                      <strong>{row.converted}</strong>
+                      <span>convertido(s)</span>
+                    </div>
+                    <div className="panel-row-cell" />
+                    <div className="panel-row-status" />
+                    <div className="panel-row-actions" />
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           <section className="panel-block">
