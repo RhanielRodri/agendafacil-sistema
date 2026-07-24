@@ -5,6 +5,21 @@ import LeadCapture from "../components/LeadCapture.jsx";
 import { formatCurrency } from "../utils/format.js";
 import tenant from "../config/site.js";
 
+// Chave estável para casar serviço → foto: minúsculo e sem acento, então a
+// ordem ou a acentuação vinda da API não quebram o vínculo.
+function normalizeName(name) {
+  return (name || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim();
+}
+
+function treatmentPhoto(service) {
+  const map = tenant.treatmentPhotos;
+  return map ? map[normalizeName(service.name)] || null : null;
+}
+
 function professionalProfile(professional) {
   const override = tenant.professionals?.[professional.id] || {};
   return {
@@ -111,23 +126,45 @@ function ServicesSection({ services, loading, error, selectedServiceId, onSelect
       )}
       {!loading && !error && services.length > 0 && (
         <div className="grid services-grid">
-          {services.map((service, index) => (
-            <button
-              className={selectedServiceId === String(service.id) ? "service-card selected" : "service-card"}
-              key={service.id}
-              type="button"
-              onClick={() => onSelect(service.id)}
-            >
-              <div className="service-card-num">{String(index + 1).padStart(2, "0")}</div>
-              <h3>{service.name}</h3>
-              <p>{service.description}</p>
-              <div className="service-card-footer">
-                <strong>{formatCurrency(service.price) || "Sob consulta"}</strong>
-                <span>{service.duration} min</span>
-              </div>
-              <span className="service-card-cta" aria-hidden="true">Agendar →</span>
-            </button>
-          ))}
+          {services.map((service, index) => {
+            const photo = treatmentPhoto(service);
+            const classes = ["service-card"];
+            if (selectedServiceId === String(service.id)) classes.push("selected");
+            if (photo) classes.push("has-photo");
+            const body = (
+              <>
+                <div className="service-card-num">{String(index + 1).padStart(2, "0")}</div>
+                <h3>{service.name}</h3>
+                <p>{service.description}</p>
+                <div className="service-card-footer">
+                  <strong>{formatCurrency(service.price) || "Sob consulta"}</strong>
+                  <span>{service.duration} min</span>
+                </div>
+                <span className="service-card-cta" aria-hidden="true">Agendar →</span>
+              </>
+            );
+            return (
+              <button
+                className={classes.join(" ")}
+                key={service.id}
+                type="button"
+                onClick={() => onSelect(service.id)}
+              >
+                {photo && (
+                  <div className="service-card-photo">
+                    <img
+                      src={photo.src}
+                      alt={photo.alt}
+                      width={photo.width}
+                      height={photo.height}
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+                {photo ? <div className="service-card-body">{body}</div> : body}
+              </button>
+            );
+          })}
         </div>
       )}
     </section>
@@ -287,13 +324,30 @@ function SpaceSection() {
           </dl>
         )}
       </div>
-      <div className="studio-photo">
-        <img src={tenant.space.image} alt={tenant.space.imageAlt} width="1400" height="1000" loading="lazy" />
-        <div className="studio-caption">
-          <strong>{tenant.name}</strong>
-          <span>{tenant.city} · {tenant.schedule}</span>
+      {tenant.space.compose ? (
+        <div className="space-editorial">
+          {tenant.space.compose.map((shot, index) => (
+            <figure className={`space-shot space-shot-${index}`} key={shot.src}>
+              <img
+                src={shot.src}
+                alt={shot.alt}
+                width={shot.width}
+                height={shot.height}
+                loading="lazy"
+              />
+              {shot.label && <figcaption>{shot.label}</figcaption>}
+            </figure>
+          ))}
         </div>
-      </div>
+      ) : (
+        <div className="studio-photo">
+          <img src={tenant.space.image} alt={tenant.space.imageAlt} width="1400" height="1000" loading="lazy" />
+          <div className="studio-caption">
+            <strong>{tenant.name}</strong>
+            <span>{tenant.city} · {tenant.schedule}</span>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -399,7 +453,7 @@ export default function Home({ services, professionals, loading, error, onSucces
   };
 
   const order = tenant.slug === "lumiere"
-    ? ["differentials", "details", "space", "services", "professionals", "gallery", "reviews", "process", "booking", "contact"]
+    ? ["differentials", "details", "services", "space", "reviews", "process", "booking", "contact"]
     : ["differentials", "services", "professionals", "gallery", "reviews", "process", "space", "booking", "contact"];
 
   return (

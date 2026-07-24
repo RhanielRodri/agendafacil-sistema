@@ -251,6 +251,12 @@
   filter: saturate(0.72) brightness(0.94);
 }
 
+/* Hero da Lumière é foto paisagem (3:2) dentro do arco vertical: o recorte
+   central foca o rosto/atendimento em vez das bordas da cena. */
+:root[data-demo="lumiere"] .hero-image img {
+  object-position: center 38%;
+}
+
 :root[data-demo="lumiere"] .hero-image-badge {
   border: 0;
   border-radius: 999px;

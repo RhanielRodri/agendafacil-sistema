@@ -1,14 +1,21 @@
 # Licenças de imagens — demos públicas
 
-Todas as imagens são fotografias royalty-free do Unsplash, baixadas e
-armazenadas localmente em cada bundle por vertical. Não há hotlink em runtime.
+Todas as imagens são fotografias royalty-free do Unsplash ou do Pexels, baixadas
+e armazenadas localmente em cada bundle por vertical. Não há hotlink em runtime.
 
-**Licença:** Unsplash License (https://unsplash.com/license) — uso comercial e
-não comercial permitido, sem necessidade de atribuição. As fotos são material de
-**demonstração**; não representam clientes, profissionais ou resultados reais.
+**Licenças:**
+- Unsplash License (https://unsplash.com/license) — uso comercial e não comercial
+  permitido, sem necessidade de atribuição.
+- Pexels License (https://www.pexels.com/license/) — uso comercial e não comercial
+  permitido, sem necessidade de atribuição.
 
-Formato: JPEG progressivo (ambiente sem encoder WebP/AVIF disponível).
-Origem de cada arquivo pelo ID do Unsplash (`https://unsplash.com/photos/<id>`):
+Mesmo sem exigência de atribuição, o autor é registrado abaixo. As fotos são
+material de **demonstração**; não representam clientes, profissionais ou
+resultados reais.
+
+Formato: JPEG progressivo (ambiente sem encoder WebP/AVIF disponível), servido
+com compressão do CDN de origem. Origem do Unsplash pelo ID
+(`https://unsplash.com/photos/<id>`); origem do Pexels pela URL original.
 
 ## Studio Cut (`public/studio-cut/assets/`)
 
@@ -26,14 +33,21 @@ Origem de cada arquivo pelo ID do Unsplash (`https://unsplash.com/photos/<id>`):
 
 ## Lumière (`public/lumiere/assets/`)
 
+Fotos de cena (hero, tratamentos e ambientes) — **Pexels**, autor e URL original:
+
+| Arquivo | Autor | Uso | URL original |
+| --- | --- | --- | --- |
+| `lumiere-hero.jpg` | Gustavo Fring | Hero — cuidado facial | https://www.pexels.com/photo/close-up-of-woman-getting-a-facial-7446675/ |
+| `tratamento-limpeza.jpg` | Anna Shvets | Galeria — limpeza de pele | https://www.pexels.com/photo/cosmetologist-applying-facial-mask-on-customer-face-in-spa-salon-5069494/ |
+| `tratamento-harmonizacao.jpg` | Anna Shvets | Galeria — avaliação/harmonização facial | https://www.pexels.com/photo/a-woman-consulting-with-a-cosmetologist-doctor-4586740/ |
+| `tratamento-drenagem.jpg` | Gustavo Fring | Galeria — drenagem linfática | https://www.pexels.com/photo/a-close-up-shot-of-a-person-s-legs-being-massaged-5888062/ |
+| `ambiente-sala.jpg` | Yusuf Çelik | Espaço — sala de procedimento | https://www.pexels.com/photo/treatment-room-in-a-private-clinic-16571735/ |
+| `ambiente-espera.jpg` | Yusuf Çelik | Galeria — recepção/espera | https://www.pexels.com/photo/lights-in-room-16571736/ |
+| `ambiente-detalhe.jpg` | Anna Keibalo | Galeria — preparação da sala | https://www.pexels.com/photo/beautician-prepares-salon-bed-for-beauty-treatment-17891757/ |
+
+Retratos de profissionais — **Unsplash** (mantidos da correção anterior):
+
 | Arquivo | Unsplash ID | Uso |
 | --- | --- | --- |
-| `hero.jpg` | `photo-1540555700478-4be289fbecef` | Hero — estética |
-| `space.jpg` | `photo-1629909613654-28e377c37b09` | Espaço da clínica |
 | `professionals/lumiere-1.jpg` | `photo-1594824476967-48c8b964273f` | Retrato profissional |
 | `professionals/lumiere-2.jpg` | `photo-1594744803329-e58b31de8bf5` | Retrato profissional |
-| `gallery/1.jpg` | `photo-1571019613454-1cb2f99b2d8b` | Galeria — procedimento |
-| `gallery/2.jpg` | `photo-1559599101-f09722fb4948` | Galeria — cuidado |
-| `gallery/3.jpg` | `photo-1512316609839-ce289d3eba0a` | Galeria — detalhe |
-| `gallery/4.jpg` | `photo-1573497019940-1c28c88b4f3e` | Galeria — ambiente |
-| `gallery/5.jpg` | `photo-1616394584738-fc6e612e71b9` | Galeria — atendimento facial |

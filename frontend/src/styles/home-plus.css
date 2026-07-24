@@ -409,3 +409,103 @@
   :root[data-demo="lumiere"] .gallery-item:first-child { grid-column: span 2; grid-row: auto; }
   .space-facts { gap: 20px; }
 }
+
+/* === A9 — VITRINE DE TRATAMENTOS COM FOTO ===
+   Só entra quando o serviço tem foto mapeada (classe `has-photo`), então o
+   Studio Cut, que não mapeia fotos, mantém o card de texto puro intacto. */
+.service-card.has-photo {
+  padding: 0;
+  overflow: hidden;
+}
+
+.service-card-photo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.service-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform var(--dur-base) var(--ease);
+}
+
+.service-card.has-photo:hover .service-card-photo img,
+.service-card.has-photo:focus-visible .service-card-photo img {
+  transform: scale(1.04);
+}
+
+.service-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 22px 20px;
+}
+
+.service-card-body p { flex: 1; }
+
+:root[data-demo="lumiere"] .service-card-photo img { filter: saturate(0.8) brightness(0.98); }
+
+/* === A9 — ESPAÇO COMO COMPOSIÇÃO EDITORIAL ===
+   Sala em destaque à esquerda, recepção e detalhe empilhados à direita. A
+   proporção fixa do container resolve a altura das duas linhas 1fr. */
+.space-editorial {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  grid-auto-rows: 1fr;
+  gap: 14px;
+  aspect-ratio: 16 / 9;
+}
+
+.space-shot {
+  position: relative;
+  margin: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.space-shot img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: cover;
+  display: block;
+}
+
+.space-shot-0 { grid-row: span 2; }
+
+.space-shot figcaption {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  padding: 5px 12px;
+  background: rgba(48, 39, 34, 0.62);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 999px;
+}
+
+:root[data-demo="lumiere"] .space-shot img { filter: saturate(0.78) brightness(0.96); }
+
+@media (max-width: 720px) {
+  .space-editorial {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: auto;
+    aspect-ratio: auto;
+    gap: 10px;
+  }
+
+  .space-shot img { height: auto; aspect-ratio: 4 / 5; }
+  .space-shot-0 { grid-column: 1 / -1; grid-row: auto; }
+  .space-shot-0 img { aspect-ratio: 3 / 2; }
+}

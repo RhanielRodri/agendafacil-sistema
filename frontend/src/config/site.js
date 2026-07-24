@@ -13,6 +13,7 @@ const site = tenant
       reviews: presentation?.reviews || null,
       contact: presentation?.contact || null,
       professionals: presentation?.professionals || null,
+      treatmentPhotos: presentation?.treatmentPhotos || null,
       hero: { ...tenant.hero, ...(presentation?.hero || {}) },
       space: { ...tenant.space, ...(presentation?.space || {}) },
       metadata: {

@@ -13,7 +13,9 @@ const lumiere = {
     title: "Lumière Estética | Cuidados em Vila Velha",
     description: "Agende seu horário para cuidados faciais e corporais na Lumière Estética.",
     themeColor: "#faf8f5",
-    image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+    // Open Graph aponta para o asset local do próprio bundle (URL absoluta, como
+    // exigem os crawlers). Sem hotlink para CDN externo em runtime.
+    image: "https://lumiere-public.sor-os-demos.workers.dev/assets/lumiere-hero.jpg",
     canonical: "https://lumiere-public.sor-os-demos.workers.dev"
   },
   hero: {
@@ -23,8 +25,8 @@ const lumiere = {
     primaryCta: "Agendar avaliação",
     secondaryCta: "Conhecer tratamentos",
     highlights: ["Atendimento individual", "Cuidados faciais e corporais", "Seg a Sáb"],
-    image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Ambiente de cuidado da Lumière Estética",
+    image: "/assets/lumiere-hero.jpg",
+    imageAlt: "Cuidado facial em atendimento na Lumière",
     badge: "Consulte a agenda abaixo"
   },
   details: {
@@ -41,7 +43,7 @@ const lumiere = {
     title: "Do cuidado escolhido ao horário reservado",
     items: [
       { number: "01", title: "Escolha o tratamento", text: "Consulte as opções disponíveis para cuidados faciais e corporais." },
-      { number: "02", title: "Selecione a profissional", text: "Veja a equipe e escolha com quem deseja realizar o atendimento." },
+      { number: "02", title: "Veja os detalhes", text: "Duração, valor e o que esperar aparecem antes de confirmar." },
       { number: "03", title: "Reserve o horário", text: "Defina data, horário e dados de contato para enviar sua solicitação." }
     ]
   },
@@ -49,8 +51,8 @@ const lumiere = {
     eyebrow: "A clínica",
     title: "Leveza e atenção em cada etapa",
     description: ["Um ambiente voltado para cuidado, conforto e atendimento individual.", "A escolha do tratamento e do horário acontece de forma simples e transparente."],
-    image: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1400&q=80",
-    imageAlt: "Espaço de atendimento da Lumière Estética"
+    image: "/assets/ambiente-sala.jpg",
+    imageAlt: "Sala de procedimento da Lumière Estética"
   },
   copy: {
     servicesEyebrow: "Tratamentos",
@@ -90,8 +92,8 @@ export const presentation = {
     sub: "Cuidados faciais e corporais com atendimento individual. Reserve um momento pensado para segurança, conforto e resultado natural.",
     secondaryCta: "Ver tratamentos",
     highlights: ["Atendimento individual", "Avaliação personalizada", "Seg a Sáb"],
-    image: "/assets/hero.jpg",
-    imageAlt: "Profissional em atendimento estético na Lumière",
+    image: "/assets/lumiere-hero.jpg",
+    imageAlt: "Cuidado facial em atendimento na Lumière",
     badge: "Avaliações disponíveis esta semana"
   },
   differentials: {
@@ -102,16 +104,28 @@ export const presentation = {
       { title: "Ambiente acolhedor", text: "Um espaço tranquilo do início ao fim." }
     ]
   },
-  gallery: {
-    eyebrow: "Experiência",
-    title: "O ambiente e o cuidado",
-    items: [
-      { src: "/assets/gallery/4.jpg", alt: "Recepção acolhedora da clínica", label: "Espaço" },
-      { src: "/assets/gallery/3.jpg", alt: "Sala de atendimento", label: "Salas" },
-      { src: "/assets/gallery/1.jpg", alt: "Procedimento facial em andamento", label: "Procedimentos" },
-      { src: "/assets/gallery/5.jpg", alt: "Cuidado facial detalhado", label: "Atendimento" },
-      { src: "/assets/gallery/2.jpg", alt: "Detalhe de produtos e cuidado", label: "Detalhes" }
-    ]
+  // Cada tratamento ganha a foto correta na vitrine pública. A chave é o nome do
+  // serviço normalizado (minúsculo, sem acento) — casa com o que a API devolve,
+  // independentemente da ordem. Serviço sem foto mapeada cai no card sem imagem.
+  treatmentPhotos: {
+    "limpeza de pele": {
+      src: "/assets/tratamento-limpeza.jpg",
+      alt: "Limpeza de pele facial em andamento na Lumière",
+      width: 1200,
+      height: 1800
+    },
+    "harmonizacao facial": {
+      src: "/assets/tratamento-harmonizacao.jpg",
+      alt: "Avaliação para harmonização facial na Lumière",
+      width: 1200,
+      height: 800
+    },
+    "drenagem linfatica": {
+      src: "/assets/tratamento-drenagem.jpg",
+      alt: "Sessão de drenagem linfática corporal na Lumière",
+      width: 1200,
+      height: 800
+    }
   },
   reviews: {
     eyebrow: "Avaliações",
@@ -123,10 +137,19 @@ export const presentation = {
       { name: "P. R.", role: "Cuidado corporal", rating: 5, text: "Ambiente tranquilo e profissionais que realmente escutam. Agendei pelo site em minutos." }
     ]
   },
+  // O espaço vira uma composição editorial: a sala de procedimento como imagem
+  // principal, recepção e um detalhe do preparo como apoio. Uma clínica só,
+  // apresentada de forma coerente — sem galeria solta repetindo tratamentos.
   space: {
-    image: "/assets/space.jpg",
+    image: "/assets/ambiente-sala.jpg",
+    imageAlt: "Sala de procedimento da Lumière Estética",
     location: "Praia da Costa · Vila Velha, ES",
-    hours: ["Seg a Sex · 9h às 19h", "Sábado · 9h às 14h"]
+    hours: ["Seg a Sex · 9h às 19h", "Sábado · 9h às 14h"],
+    compose: [
+      { src: "/assets/ambiente-sala.jpg", alt: "Sala de procedimento preparada para atendimento", label: "Sala de atendimento", width: 1400, height: 2100 },
+      { src: "/assets/ambiente-espera.jpg", alt: "Recepção acolhedora da Lumière", label: "Recepção", width: 1400, height: 2100 },
+      { src: "/assets/ambiente-detalhe.jpg", alt: "Detalhe do preparo da sala antes do atendimento", label: "No detalhe", width: 1200, height: 1762 }
+    ]
   },
   professionals: {
     "professional-lumiere-1": {
