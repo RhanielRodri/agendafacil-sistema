@@ -217,6 +217,12 @@
   text-transform: none;
 }
 
+/* Com quatro seções no header, os links têm folga para respirar: gap um pouco
+   mais generoso que o compartilhado, mantendo o alinhamento à direita. */
+:root[data-demo="lumiere"] .navbar-links {
+  gap: clamp(22px, 2.6vw, 38px);
+}
+
 /* O símbolo do favicon vira selo: quadrado de cantos suaves, sem o disco/letra
    desenhados em CSS. A borda arredondada só recorta os cantos do vetor dourado. */
 :root[data-demo="lumiere"] .navbar-brand-mark.brand-mark {

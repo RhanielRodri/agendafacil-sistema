@@ -89,8 +89,6 @@ export const presentation = {
   nav: [
     { label: "Início", href: "#topo" },
     { label: "Tratamentos", href: "#servicos" },
-    { label: "Profissionais", href: "#profissionais" },
-    { label: "Experiência", href: "#galeria" },
     { label: "Avaliações", href: "#avaliacoes" },
     { label: "Contato", href: "#contato" }
   ],
