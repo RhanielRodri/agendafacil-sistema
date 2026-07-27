@@ -96,6 +96,7 @@ describe("catálogo público CF1B", () => {
       "addressLine",
       "bookingEnabled",
       "cancellationPolicy",
+      "changeMinAdvanceMinutes",
       "confirmationMessage",
       "maxFutureDays",
       "publicName",

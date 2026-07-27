@@ -25,8 +25,11 @@ const advanceOptions = [
   { value: 30, label: "30 minutos" },
   { value: 60, label: "1 hora" },
   { value: 180, label: "3 horas" },
+  { value: 240, label: "4 horas" },
   { value: 720, label: "12 horas" },
-  { value: 1440, label: "1 dia" }
+  { value: 1440, label: "1 dia" },
+  { value: 2880, label: "2 dias" },
+  { value: 10080, label: "7 dias" }
 ];
 
 function toForm(settings) {
@@ -38,6 +41,7 @@ function toForm(settings) {
     timezone: settings.timezone,
     slotDurationMinutes: settings.slotDurationMinutes,
     minAdvanceMinutes: settings.minAdvanceMinutes,
+    changeMinAdvanceMinutes: settings.changeMinAdvanceMinutes,
     maxFutureDays: settings.maxFutureDays,
     cancellationPolicy: settings.cancellationPolicy || "",
     confirmationMessage: settings.confirmationMessage || "",
@@ -68,6 +72,7 @@ export default function Settings({ tenantId, onSessionExpired }) {
       timezone: form.timezone,
       slotDurationMinutes: Number(form.slotDurationMinutes),
       minAdvanceMinutes: Number(form.minAdvanceMinutes),
+      changeMinAdvanceMinutes: Number(form.changeMinAdvanceMinutes),
       maxFutureDays: Number(form.maxFutureDays),
       cancellationPolicy: form.cancellationPolicy || null,
       confirmationMessage: form.confirmationMessage || null,
@@ -153,6 +158,17 @@ export default function Settings({ tenantId, onSessionExpired }) {
               <select
                 value={form.minAdvanceMinutes}
                 onChange={(event) => setForm({ ...form, minAdvanceMinutes: event.target.value })}
+              >
+                {advanceOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+            <label className="panel-field">
+              Prazo para cancelar ou remarcar
+              <select
+                value={form.changeMinAdvanceMinutes}
+                onChange={(event) => setForm({ ...form, changeMinAdvanceMinutes: event.target.value })}
               >
                 {advanceOptions.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>

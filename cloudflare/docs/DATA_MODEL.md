@@ -8,7 +8,7 @@
 | `services` | `Service` | `price` vira `price_cents` inteiro |
 | `professionals` | `Professional` | contato interno permanece administrativo |
 | `professional_services` | `ProfessionalService` | FKs compostas impedem associação cross-tenant |
-| `tenant_settings` | `TenantSettings` | uma linha por tenant |
+| `tenant_settings` | `TenantSettings` | uma linha por tenant; prazo mínimo de cancelamento/remarcação padrão de 240 minutos |
 | `business_hours` | `BusinessHours` | dia fechado aceita `00:00–00:00` |
 | `professional_schedules` | `ProfessionalSchedule` | múltiplas janelas preservam pausas |
 | `schedule_blocks` | `ScheduleBlock` | bloqueio geral ou por profissional |
@@ -87,7 +87,7 @@ Não há trigger de negócio no D1 nesta fase. Atualização de `updated_at`, hi
 
 ## Transações
 
-Operações com múltiplas escritas usam `DB.batch`. Nenhum fluxo atômico é implementado como chamadas independentes. Para reservas, cada statement do batch é preparado antes da chamada; falha de constraint desfaz o lote. Erros `SQLITE_CONSTRAINT` de slots são mapeados para HTTP 409.
+Operações com múltiplas escritas usam `DB.batch`. Nenhum fluxo atômico é implementado como chamadas independentes. Para reservas e remarcações, cada statement do batch é preparado antes da chamada; falha de constraint desfaz o lote. A remarcação usa atualização condicional do mesmo agendamento e a unicidade de `appointment_slots` para impedir corrida, duplicação ou conflito. Erros `SQLITE_CONSTRAINT` de slots são mapeados para HTTP 409.
 
 ## Índices orientados às consultas atuais
 

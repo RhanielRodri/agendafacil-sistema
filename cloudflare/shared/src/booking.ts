@@ -1,5 +1,13 @@
-import { calculateD1Availability, minutesToTime, requireDate, requirePublicId, timeToMinutes } from "./availability";
+import {
+  calculateD1Availability,
+  minutesToTime,
+  requireDate,
+  requirePublicId,
+  timeToMinutes,
+  zonedDateTimeToEpoch
+} from "./availability";
 import { HttpError } from "./http";
+import { publicTerminology } from "./public-catalog";
 
 interface BookingInput {
   tenantId: string;
@@ -36,6 +44,13 @@ interface AppointmentRow {
   service_name: string;
   service_duration: number;
   professional_name: string;
+  tenant_name: string;
+  public_name: string | null;
+  public_phone: string | null;
+  public_whatsapp: string | null;
+  address_line: string | null;
+  timezone: string | null;
+  change_min_advance_minutes: number | null;
 }
 
 interface TokenRow extends AppointmentRow {
@@ -65,7 +80,7 @@ export interface PublicBookingPayload {
 
 function isConstraintError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return message.includes("SQLITE_CONSTRAINT") || message.includes("UNIQUE constraint failed");
+  return message.includes("SQLITE_CONSTRAINT") || /constraint failed/i.test(message);
 }
 
 async function sha256(value: string): Promise<string> {
@@ -336,23 +351,71 @@ async function loadAppointment(db: D1Database, tenantId: string, appointmentId: 
   const appointment = await db.prepare(`
     SELECT appointments.*, services.name AS service_name,
       services.duration_minutes AS service_duration,
-      professionals.name AS professional_name
+      professionals.name AS professional_name,
+      tenants.name AS tenant_name,
+      settings.public_name,
+      settings.public_phone,
+      settings.public_whatsapp,
+      settings.address_line,
+      settings.timezone,
+      settings.change_min_advance_minutes
     FROM appointments
     JOIN services ON services.tenant_id = appointments.tenant_id AND services.id = appointments.service_id
     JOIN professionals ON professionals.tenant_id = appointments.tenant_id AND professionals.id = appointments.professional_id
+    JOIN tenants ON tenants.slug = appointments.tenant_id
+    LEFT JOIN tenant_settings settings ON settings.tenant_id = appointments.tenant_id
     WHERE appointments.tenant_id = ? AND appointments.id = ?
   `).bind(tenantId, appointmentId).first<AppointmentRow>();
   if (!appointment) throw new HttpError(404, "NOT_FOUND", "Recurso não encontrado");
   return appointment;
 }
 
+function actionCapabilities(appointment: AppointmentRow, now = new Date()) {
+  const minAdvanceMinutes = appointment.change_min_advance_minutes ?? 240;
+  const statusAllowed = ["PENDING", "CONFIRMED"].includes(appointment.status);
+  const timezone = appointment.timezone ?? "America/Sao_Paulo";
+  const appointmentEpoch = zonedDateTimeToEpoch(
+    appointment.appointment_date,
+    appointment.start_time,
+    timezone
+  );
+  const deadlineAllowed = appointmentEpoch - now.getTime() >= minAdvanceMinutes * 60_000;
+  const allowed = statusAllowed && deadlineAllowed;
+  const reason = !statusAllowed
+    ? "STATUS_BLOCKED"
+    : !deadlineAllowed
+      ? "MIN_ADVANCE_NOT_MET"
+      : null;
+  const message = reason === "STATUS_BLOCKED"
+    ? "Este agendamento está encerrado e não permite alterações."
+    : reason === "MIN_ADVANCE_NOT_MET"
+      ? `Alterações são permitidas até ${minAdvanceMinutes} minutos antes do horário.`
+      : null;
+  return {
+    minAdvanceMinutes,
+    cancel: { allowed, requiresConfirmation: true, reason, message },
+    reschedule: { allowed, requiresConfirmation: true, reason, message }
+  };
+}
+
 function publicSummary(appointment: AppointmentRow) {
+  const terminology = publicTerminology(appointment.tenant_id);
   return {
     service: { name: appointment.service_name, duration: appointment.service_duration },
     professional: { id: appointment.professional_id, name: appointment.professional_name },
     date: appointment.appointment_date,
     time: appointment.start_time,
-    status: appointment.status
+    status: appointment.status,
+    business: {
+      name: appointment.public_name ?? appointment.tenant_name,
+      address: appointment.address_line,
+      contact: {
+        phone: appointment.public_phone,
+        whatsapp: appointment.public_whatsapp
+      }
+    },
+    terminology,
+    capabilities: actionCapabilities(appointment)
   };
 }
 
@@ -390,11 +453,20 @@ async function resolveToken(
     SELECT tokens.id AS token_id, tokens.expires_at, tokens.used_at, tokens.revoked_at,
       appointments.*, services.name AS service_name,
       services.duration_minutes AS service_duration,
-      professionals.name AS professional_name
+      professionals.name AS professional_name,
+      tenants.name AS tenant_name,
+      settings.public_name,
+      settings.public_phone,
+      settings.public_whatsapp,
+      settings.address_line,
+      settings.timezone,
+      settings.change_min_advance_minutes
     FROM appointment_access_tokens tokens
     JOIN appointments ON appointments.tenant_id = tokens.tenant_id AND appointments.id = tokens.appointment_id
     JOIN services ON services.tenant_id = appointments.tenant_id AND services.id = appointments.service_id
     JOIN professionals ON professionals.tenant_id = appointments.tenant_id AND professionals.id = appointments.professional_id
+    JOIN tenants ON tenants.slug = appointments.tenant_id
+    LEFT JOIN tenant_settings settings ON settings.tenant_id = appointments.tenant_id
     WHERE tokens.tenant_id = ? AND tokens.token_hash = ? AND tokens.purpose = 'MANAGE'
   `).bind(tenantId, tokenHash).first<TokenRow>();
   if (!appointment) return tokenError(404, "TOKEN_INVALID", "Link inválido ou indisponível");
@@ -446,11 +518,24 @@ function cleanReason(value: unknown): string | null {
   return cleanText(value, "Motivo", 1, 300, false);
 }
 
+function requireActionConfirmation(value: unknown): void {
+  if (value !== true) {
+    throw new HttpError(400, "CONFIRMATION_REQUIRED", "Confirme a ação antes de continuar");
+  }
+}
+
+function assertCanChange(appointment: AppointmentRow, action: "cancel" | "reschedule", now = new Date()): void {
+  const capability = actionCapabilities(appointment, now)[action];
+  if (!capability.allowed) {
+    throw new HttpError(409, "ACTION_NOT_ALLOWED", capability.message ?? "Alteração não permitida");
+  }
+}
+
 export async function cancelPublicAppointment(
   db: D1Database,
   tenantId: string,
   rawToken: string,
-  reasonValue: unknown
+  payload: Record<string, unknown>
 ) {
   const { appointment, state } = await resolveToken(db, tenantId, rawToken, true);
   if (appointment.status === "CANCELLED") return publicSummary(appointment);
@@ -459,43 +544,62 @@ export async function cancelPublicAppointment(
     if (state === "revoked") return tokenError(410, "TOKEN_REVOKED", "Este link não está mais ativo");
     return tokenError(410, "TOKEN_USED", "Este link já foi utilizado");
   }
-  if (!["PENDING", "CONFIRMED"].includes(appointment.status)) {
-    throw new HttpError(409, "CONFLICT", "Transição não permitida");
-  }
-  const reason = cleanReason(reasonValue);
+  requireActionConfirmation(payload.confirmed);
+  assertCanChange(appointment, "cancel");
+  const reason = cleanReason(payload.reason);
   const now = new Date().toISOString();
-  await db.batch([
-    db.prepare(`
-      UPDATE appointments
-      SET status = 'CANCELLED', cancellation_reason = ?, updated_at = ?
-      WHERE tenant_id = ? AND id = ? AND status IN ('PENDING', 'CONFIRMED')
-    `).bind(reason, now, tenantId, appointment.id),
-    db.prepare(`
-      INSERT INTO appointment_history_events (
-        id, tenant_id, appointment_id, type, from_status, to_status,
-        metadata_json, actor_type, created_at
-      )
-      SELECT ?, ?, ?, 'CANCELLED', ?, 'CANCELLED', ?, 'CUSTOMER', ?
-      WHERE NOT EXISTS (
-        SELECT 1 FROM appointment_history_events
-        WHERE tenant_id = ? AND appointment_id = ? AND type = 'CANCELLED'
-      )
-    `).bind(
-      crypto.randomUUID(),
-      tenantId,
-      appointment.id,
-      appointment.status,
-      reason ? JSON.stringify({ reason }) : null,
-      now,
-      tenantId,
-      appointment.id
-    ),
-    db.prepare(`
-      UPDATE appointment_access_tokens SET used_at = ?, revoked_at = ?
-      WHERE tenant_id = ? AND appointment_id = ? AND revoked_at IS NULL
-    `).bind(now, now, tenantId, appointment.id),
-    db.prepare("DELETE FROM appointment_slots WHERE tenant_id = ? AND appointment_id = ?").bind(tenantId, appointment.id)
-  ]);
+  try {
+    await db.batch([
+      db.prepare(`
+        INSERT INTO appointment_history_events (
+          id, tenant_id, appointment_id, type, from_status, to_status,
+          metadata_json, actor_type, created_at
+        ) VALUES (
+          ?,
+          (
+            SELECT tenant_id FROM appointments
+            WHERE tenant_id = ? AND id = ? AND status = ?
+              AND professional_id = ? AND appointment_date = ? AND start_time = ?
+          ),
+          ?, 'CANCELLED', ?, 'CANCELLED', ?, 'CUSTOMER', ?
+        )
+      `).bind(
+        crypto.randomUUID(),
+        tenantId,
+        appointment.id,
+        appointment.status,
+        appointment.professional_id,
+        appointment.appointment_date,
+        appointment.start_time,
+        appointment.id,
+        appointment.status,
+        reason ? JSON.stringify({ reason }) : null,
+        now
+      ),
+      db.prepare(`
+        UPDATE appointments
+        SET status = 'CANCELLED', cancellation_reason = ?, updated_at = ?
+        WHERE tenant_id = ? AND id = ? AND status = ?
+          AND professional_id = ? AND appointment_date = ? AND start_time = ?
+      `).bind(
+        reason,
+        now,
+        tenantId,
+        appointment.id,
+        appointment.status,
+        appointment.professional_id,
+        appointment.appointment_date,
+        appointment.start_time
+      ),
+      db.prepare("DELETE FROM appointment_slots WHERE tenant_id = ? AND appointment_id = ?")
+        .bind(tenantId, appointment.id)
+    ]);
+  } catch (error) {
+    if (isConstraintError(error)) {
+      throw new HttpError(409, "CONFLICT", "O agendamento foi alterado. Atualize a página e tente novamente.");
+    }
+    throw error;
+  }
   return publicSummary(await loadAppointment(db, tenantId, appointment.id));
 }
 
@@ -506,9 +610,7 @@ export async function rescheduleAvailability(
   query: URLSearchParams
 ) {
   const { appointment } = await resolveToken(db, tenantId, rawToken);
-  if (!["PENDING", "CONFIRMED"].includes(appointment.status)) {
-    throw new HttpError(409, "CONFLICT", "Agendamento não pode ser reagendado");
-  }
+  assertCanChange(appointment, "reschedule");
   const availabilityQuery = new URLSearchParams({
     date: requireDate(query.get("date")),
     serviceId: appointment.service_id,
@@ -525,9 +627,9 @@ export async function reschedulePublicAppointment(
   payload: Record<string, unknown>
 ) {
   const { appointment } = await resolveToken(db, tenantId, rawToken);
-  if (!["PENDING", "CONFIRMED"].includes(appointment.status)) {
-    throw new HttpError(409, "CONFLICT", "Agendamento não pode ser reagendado");
-  }
+  requireActionConfirmation(payload.confirmed);
+  const now = new Date();
+  assertCanChange(appointment, "reschedule", now);
   const date = requireDate(typeof payload.date === "string" ? payload.date : null);
   const professionalId = requirePublicId(typeof payload.professionalId === "string" ? payload.professionalId : null, "professionalId");
   const time = requireTime(payload.time);
@@ -535,7 +637,7 @@ export async function reschedulePublicAppointment(
     throw new HttpError(400, "INVALID_REQUEST", "Escolha um novo horário ou profissional");
   }
   const query = new URLSearchParams({ date, serviceId: appointment.service_id, professionalId });
-  const availability = await calculateD1Availability(db, tenantId, query, new Date(), appointment.id);
+  const availability = await calculateD1Availability(db, tenantId, query, now, appointment.id);
   const input: BookingInput = {
     tenantId,
     serviceId: appointment.service_id,
@@ -553,16 +655,10 @@ export async function reschedulePublicAppointment(
     throw new HttpError(400, "INVALID_REQUEST", "Horário indisponível");
   }
   const service = await loadService(db, input);
-  const replacementId = crypto.randomUUID();
-  const rawNewToken = randomToken();
-  const tokenHash = await sha256(rawNewToken);
-  const now = new Date();
   const nowIso = now.toISOString();
   const endTime = minutesToTime(timeToMinutes(time) + service.duration_minutes);
   const slots = slotTimes(time, service.duration_minutes, availability.slotMinutes);
   const metadata = JSON.stringify({
-    previousAppointmentId: appointment.id,
-    newAppointmentId: replacementId,
     previousDate: appointment.appointment_date,
     previousTime: appointment.start_time,
     newDate: date,
@@ -571,69 +667,59 @@ export async function reschedulePublicAppointment(
     newProfessionalId: professionalId
   });
   const statements: D1PreparedStatement[] = [
+    db.prepare(`
+      INSERT INTO appointment_history_events (
+        id, tenant_id, appointment_id, type, from_status, to_status,
+        metadata_json, actor_type, created_at
+      ) VALUES (
+        ?,
+        (
+          SELECT tenant_id FROM appointments
+          WHERE tenant_id = ? AND id = ? AND status = ?
+            AND professional_id = ? AND appointment_date = ? AND start_time = ?
+        ),
+        ?, 'RESCHEDULED_TO', ?, ?, ?, 'CUSTOMER', ?
+      )
+    `).bind(
+      crypto.randomUUID(),
+      tenantId,
+      appointment.id,
+      appointment.status,
+      appointment.professional_id,
+      appointment.appointment_date,
+      appointment.start_time,
+      appointment.id,
+      appointment.status,
+      appointment.status,
+      metadata,
+      nowIso
+    ),
     db.prepare("DELETE FROM appointment_slots WHERE tenant_id = ? AND appointment_id = ?").bind(tenantId, appointment.id),
     db.prepare(`
-      INSERT INTO appointments (
-        id, tenant_id, service_id, professional_id, client_id, client_name,
-        client_phone, client_email, appointment_date, start_time, end_time,
-        status, rescheduled_from_id, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)
+      UPDATE appointments
+      SET professional_id = ?, appointment_date = ?, start_time = ?, end_time = ?,
+        cancellation_reason = NULL, updated_at = ?
+      WHERE tenant_id = ? AND id = ? AND status = ?
+        AND professional_id = ? AND appointment_date = ? AND start_time = ?
     `).bind(
-      replacementId,
-      tenantId,
-      appointment.service_id,
       professionalId,
-      appointment.client_id,
-      appointment.client_name,
-      appointment.client_phone,
-      appointment.client_email,
       date,
       time,
       endTime,
-      appointment.id,
       nowIso,
-      nowIso
-    ),
-    db.prepare(`
-      UPDATE appointments
-      SET status = 'CANCELLED', cancellation_reason = 'Reagendado pelo cliente', updated_at = ?
-      WHERE tenant_id = ? AND id = ? AND status IN ('PENDING', 'CONFIRMED')
-    `).bind(nowIso, tenantId, appointment.id),
-    db.prepare(`
-      UPDATE appointment_access_tokens SET used_at = ?, revoked_at = ?
-      WHERE tenant_id = ? AND appointment_id = ? AND revoked_at IS NULL
-    `).bind(nowIso, nowIso, tenantId, appointment.id),
-    db.prepare(`
-      INSERT INTO appointment_history_events (
-        id, tenant_id, appointment_id, type, from_status, to_status, metadata_json, actor_type, created_at
-      ) VALUES (?, ?, ?, 'RESCHEDULED_FROM', ?, 'CANCELLED', ?, 'CUSTOMER', ?)
-    `).bind(crypto.randomUUID(), tenantId, appointment.id, appointment.status, metadata, nowIso),
-    db.prepare(`
-      INSERT INTO appointment_history_events (
-        id, tenant_id, appointment_id, type, to_status, actor_type, created_at
-      ) VALUES (?, ?, ?, 'CREATED', 'PENDING', 'CUSTOMER', ?)
-    `).bind(crypto.randomUUID(), tenantId, replacementId, nowIso),
-    db.prepare(`
-      INSERT INTO appointment_history_events (
-        id, tenant_id, appointment_id, type, to_status, metadata_json, actor_type, created_at
-      ) VALUES (?, ?, ?, 'RESCHEDULED_TO', 'PENDING', ?, 'CUSTOMER', ?)
-    `).bind(crypto.randomUUID(), tenantId, replacementId, metadata, nowIso),
-    db.prepare(`
-      INSERT INTO relationship_history_events (
-        id, tenant_id, client_id, appointment_id, type, actor_type, metadata_json, created_at
-      ) VALUES (?, ?, ?, ?, 'APPOINTMENT_LINKED', 'CUSTOMER', ?, ?)
-    `).bind(crypto.randomUUID(), tenantId, appointment.client_id, replacementId, JSON.stringify({ source: "RESCHEDULE", appointmentId: replacementId }), nowIso),
-    db.prepare(`
-      INSERT INTO appointment_access_tokens (
-        id, tenant_id, appointment_id, token_hash, purpose, expires_at, created_at
-      ) VALUES (?, ?, ?, ?, 'MANAGE', ?, ?)
-    `).bind(crypto.randomUUID(), tenantId, replacementId, tokenHash, tokenExpiry(date, now), nowIso)
+      tenantId,
+      appointment.id,
+      appointment.status,
+      appointment.professional_id,
+      appointment.appointment_date,
+      appointment.start_time
+    )
   ];
   for (const slot of slots) {
     statements.push(db.prepare(`
       INSERT INTO appointment_slots (tenant_id, professional_id, appointment_date, slot_time, appointment_id)
       VALUES (?, ?, ?, ?, ?)
-    `).bind(tenantId, professionalId, date, slot, replacementId));
+    `).bind(tenantId, professionalId, date, slot, appointment.id));
   }
   try {
     await db.batch(statements);
@@ -642,8 +728,8 @@ export async function reschedulePublicAppointment(
     throw error;
   }
   return {
-    ...publicSummary(await loadAppointment(db, tenantId, replacementId)),
-    managementPath: managementPath(tenantId, rawNewToken)
+    ...publicSummary(await loadAppointment(db, tenantId, appointment.id)),
+    managementPath: managementPath(tenantId, rawToken)
   };
 }
 

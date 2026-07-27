@@ -67,7 +67,7 @@ async function handleApi(request: Request, env: PublicEnv): Promise<Response> {
     if (request.method === "POST" && resource === "appointment/cancel") {
       await enforceRateLimit(env.DB, request, tenant.slug, "booking:cancel", 10);
       const payload = await readJsonObject(request);
-      return json(await cancelPublicAppointment(env.DB, tenant.slug, appointmentToken(request), payload.reason));
+      return json(await cancelPublicAppointment(env.DB, tenant.slug, appointmentToken(request), payload));
     }
     if (request.method === "GET" && resource === "appointment/reschedule-availability") {
       await enforceRateLimit(env.DB, request, tenant.slug, "booking:reschedule-read", 30);

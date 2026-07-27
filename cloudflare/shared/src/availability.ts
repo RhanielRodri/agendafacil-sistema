@@ -172,7 +172,7 @@ function timezoneOffsetMs(at: Date, timezone: string): number {
   return represented - Math.floor(at.getTime() / 1000) * 1000;
 }
 
-function zonedDateTimeToEpoch(date: string, time: string, timezone: string): number {
+export function zonedDateTimeToEpoch(date: string, time: string, timezone: string): number {
   const [year, month, day] = date.split("-").map(Number);
   const [hour, minute] = time.split(":").map(Number);
   const intended = Date.UTC(year, month - 1, day, hour, minute);

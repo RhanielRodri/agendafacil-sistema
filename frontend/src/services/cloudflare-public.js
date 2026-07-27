@@ -25,7 +25,7 @@ export const cloudflarePublicApi = {
     request(`${publicBase()}/appointment/cancel`, {
       method: "POST",
       headers: tokenHeaders(token),
-      body: JSON.stringify({ reason })
+      body: JSON.stringify({ reason, confirmed: true })
     }),
   getRescheduleAvailability: ({ token, date, professionalId }) =>
     request(`${publicBase()}/appointment/reschedule-availability${queryString({ date, professionalId })}`, {
@@ -35,7 +35,7 @@ export const cloudflarePublicApi = {
     request(`${publicBase()}/appointment/reschedule`, {
       method: "POST",
       headers: tokenHeaders(token),
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, confirmed: true })
     })
 };
 

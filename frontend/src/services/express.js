@@ -92,7 +92,7 @@ export const expressApi = {
     request(`/public/appointment/cancel?${getBusinessQuery()}`, {
       method: "POST",
       headers: { "X-Appointment-Token": token },
-      body: JSON.stringify({ reason })
+      body: JSON.stringify({ reason, confirmed: true })
     }),
   getRescheduleAvailability: ({ token, date, professionalId }) =>
     request(`/public/appointment/reschedule-availability?date=${encodeURIComponent(date)}&professionalId=${encodeURIComponent(professionalId)}&${getBusinessQuery()}`, {
@@ -102,7 +102,7 @@ export const expressApi = {
     request(`/public/appointment/reschedule?${getBusinessQuery()}`, {
       method: "POST",
       headers: { "X-Appointment-Token": token },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, confirmed: true })
     }),
 
   // Administrativas — tenant derivado da sessão; nada de demoId como autoridade.

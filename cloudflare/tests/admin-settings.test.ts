@@ -7,6 +7,7 @@ interface SettingsPayload {
   publicName: string | null;
   timezone: string;
   slotDurationMinutes: number;
+  changeMinAdvanceMinutes: number;
   bookingEnabled: boolean;
 }
 
@@ -46,6 +47,7 @@ describe("configurações administrativas", () => {
       tenantId: "studio-cut",
       timezone: "America/Sao_Paulo",
       slotDurationMinutes: 30,
+      changeMinAdvanceMinutes: 240,
       bookingEnabled: true
     });
   });
@@ -59,6 +61,10 @@ describe("configurações administrativas", () => {
       method: "PATCH",
       body: { slotDurationMinutes: 7 }
     });
+    const changeDeadline = await adminCall(adminPath("studio-cut", "settings"), {
+      method: "PATCH",
+      body: { changeMinAdvanceMinutes: 10081 }
+    });
     const markup = await adminCall(adminPath("studio-cut", "settings"), {
       method: "PATCH",
       body: { cancellationPolicy: "<b>Sem cancelamento</b>" }
@@ -69,23 +75,34 @@ describe("configurações administrativas", () => {
     });
     const empty = await adminCall(adminPath("studio-cut", "settings"), { method: "PATCH", body: {} });
 
-    expect([timezone.status, slot.status, markup.status, phone.status, empty.status])
-      .toEqual([400, 400, 400, 400, 400]);
+    expect([timezone.status, slot.status, changeDeadline.status, markup.status, phone.status, empty.status])
+      .toEqual([400, 400, 400, 400, 400, 400]);
   });
 
   it("aplica campos válidos sem tocar no outro tenant", async () => {
     const updated = await adminJson<SettingsPayload>(adminPath("studio-cut", "settings"), {
       method: "PATCH",
-      body: { publicName: "Studio Cut Centro", slotDurationMinutes: 15, bookingEnabled: false }
+      body: {
+        publicName: "Studio Cut Centro",
+        slotDurationMinutes: 15,
+        changeMinAdvanceMinutes: 720,
+        bookingEnabled: false
+      }
     });
     const lumiere = await adminJson<SettingsPayload>(adminPath("lumiere", "settings"), { email: EMAIL_LUMIERE });
 
     expect(updated).toMatchObject({
       publicName: "Studio Cut Centro",
       slotDurationMinutes: 15,
+      changeMinAdvanceMinutes: 720,
       bookingEnabled: false
     });
-    expect(lumiere).toMatchObject({ tenantId: "lumiere", slotDurationMinutes: 30, bookingEnabled: true });
+    expect(lumiere).toMatchObject({
+      tenantId: "lumiere",
+      slotDurationMinutes: 30,
+      changeMinAdvanceMinutes: 240,
+      bookingEnabled: true
+    });
   });
 
   it("ignora tenantId enviado no corpo da configuração", async () => {

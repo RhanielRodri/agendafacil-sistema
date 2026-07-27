@@ -232,7 +232,7 @@ async function updateAppointmentStatus(ctx: AdminRequestContext): Promise<Respon
     })
   ];
 
-  if (["COMPLETED", "CANCELLED", "NO_SHOW"].includes(toStatus)) {
+  if (["COMPLETED", "NO_SHOW"].includes(toStatus)) {
     statements.push(ctx.db.prepare(`
       UPDATE appointment_access_tokens SET revoked_at = ?
       WHERE tenant_id = ? AND appointment_id = ? AND revoked_at IS NULL

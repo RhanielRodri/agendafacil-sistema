@@ -43,21 +43,23 @@ Response 201 mantém os campos usados por `Success`: agendamento, serviço, prof
 
 A operação usa um único `DB.batch`: cria ou reutiliza o cliente por telefone normalizado, cria o agendamento, registra `CLIENT_CREATED` quando aplicável, `APPOINTMENT_LINKED`, `CREATED`, token hash e todas as unidades de `appointment_slots`. Uma violação de slot reverte o lote inteiro e retorna 409.
 
-## Gestão por capability token
+## Meu agendamento por capability token
 
 O token é enviado em `X-Appointment-Token`.
 
 | Express original | Cloudflare | Método | Resultado |
 |---|---|---|---|
-| `/api/public/appointment` | `/api/tenants/:slug/appointment` | GET | resumo com serviço, profissional, data, hora e status |
+| `/api/public/appointment` | `/api/tenants/:slug/appointment` | GET | resumo com status, serviço/procedimento, profissional, data, hora, duração, endereço, contato, terminologia e capacidades |
 | `/api/public/appointment/confirm` | `/api/tenants/:slug/appointment/confirm` | POST | confirma `PENDING`, idempotente em `CONFIRMED` |
-| `/api/public/appointment/cancel` | `/api/tenants/:slug/appointment/cancel` | POST | cancela, registra motivo/histórico, revoga token e libera slots |
+| `/api/public/appointment/cancel` | `/api/tenants/:slug/appointment/cancel` | POST | exige `confirmed: true`, cancela, registra motivo/histórico, preserva o token para consulta e libera slots |
 | `/api/public/appointment/reschedule-availability` | `/api/tenants/:slug/appointment/reschedule-availability` | GET | slots do serviço original para `date` e `professionalId` |
-| `/api/public/appointment/reschedule` | `/api/tenants/:slug/appointment/reschedule` | POST | cancela original, cria substituto e devolve novo `managementPath` |
+| `/api/public/appointment/reschedule` | `/api/tenants/:slug/appointment/reschedule` | POST | exige `confirmed: true`, atualiza o mesmo agendamento e preserva token e `managementPath` |
 
 Token malformado, inexistente ou cross-tenant usa a mesma resposta genérica 404. Token expirado, revogado ou usado retorna 410 com o código já consumido pelo frontend. Consulta não expõe ID, telefone, e-mail, hash ou metadados internos.
 
-Cancelamento é atômico e preserva o `Appointment` para auditoria. A segunda chamada retorna o mesmo resumo cancelado sem duplicar histórico. Reagendamento remove os slots antigos e reserva os novos no mesmo lote; conflito reverte toda a operação.
+Cancelamento é atômico e preserva o `Appointment` e o token para exibir o status cancelado. A segunda chamada retorna o mesmo resumo sem duplicar histórico. Remarcação remove os slots antigos, atualiza o mesmo `Appointment`, registra histórico e reserva os novos slots no mesmo lote; qualquer conflito ou mudança concorrente reverte toda a operação.
+
+Cancelar e remarcar só são permitidos para `PENDING` ou `CONFIRMED` e antes do prazo mínimo do tenant. `tenant_settings.change_min_advance_minutes` tem padrão de 240 minutos e é configurável no admin. O resumo retorna `capabilities.cancel` e `capabilities.reschedule` com permissão, confirmação obrigatória e motivo de bloqueio.
 
 ## Disponibilidade
 
@@ -81,8 +83,8 @@ Regras aplicadas:
 
 - criação: 10;
 - consulta: 60;
-- confirmação, cancelamento e reagendamento: 10 por ação;
-- consulta de disponibilidade de reagendamento: 30.
+- confirmação, cancelamento e remarcação: 10 por ação;
+- consulta de disponibilidade de remarcação: 30.
 
 O contador é atômico no D1, expira por janela e remove buckets antigos. Não usa `Map`, memória do isolate, Durable Object, KV ou configuração remota.
 

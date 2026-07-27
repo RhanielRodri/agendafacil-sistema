@@ -41,8 +41,8 @@ export default function Success({ appointment, onBack }) {
           <span>{appointment.clientName}</span>
         </div>
         <div className="success-management">
-          <strong>Guarde seu link de gestão</strong>
-          <p>Ele permite visualizar, confirmar, cancelar ou reagendar sem criar uma conta.</p>
+          <strong>Guarde o link do seu agendamento</strong>
+          <p>Ele permite visualizar, confirmar, cancelar ou remarcar sem criar uma conta.</p>
           <button className="primary-button" type="button" onClick={openManagement}>Abrir meu agendamento</button>
           <button className="secondary-button" type="button" onClick={copyManagementLink}>
             {copied ? "Link copiado" : "Copiar link"}

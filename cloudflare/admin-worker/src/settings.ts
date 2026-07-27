@@ -48,6 +48,7 @@ interface SettingsRow {
   timezone: string;
   slot_duration_minutes: number;
   min_advance_minutes: number;
+  change_min_advance_minutes: number;
   max_future_days: number;
   cancellation_policy: string | null;
   confirmation_message: string | null;
@@ -67,6 +68,7 @@ function settingsPayload(row: SettingsRow | null, tenantId: string) {
     timezone: row?.timezone ?? "America/Sao_Paulo",
     slotDurationMinutes: row?.slot_duration_minutes ?? 30,
     minAdvanceMinutes: row?.min_advance_minutes ?? 0,
+    changeMinAdvanceMinutes: row?.change_min_advance_minutes ?? 240,
     maxFutureDays: row?.max_future_days ?? 90,
     cancellationPolicy: row?.cancellation_policy ?? null,
     confirmationMessage: row?.confirmation_message ?? null,
@@ -131,6 +133,12 @@ async function updateSettings(ctx: AdminRequestContext): Promise<Response> {
   }
   if (Object.hasOwn(body, "minAdvanceMinutes")) {
     assign("min_advance_minutes", parseInteger(body.minAdvanceMinutes, "Antecedência mínima", { min: 0, max: MAX_ADVANCE_MINUTES }));
+  }
+  if (Object.hasOwn(body, "changeMinAdvanceMinutes")) {
+    assign(
+      "change_min_advance_minutes",
+      parseInteger(body.changeMinAdvanceMinutes, "Prazo para cancelar ou remarcar", { min: 0, max: MAX_ADVANCE_MINUTES })
+    );
   }
   if (Object.hasOwn(body, "maxFutureDays")) {
     assign("max_future_days", parseInteger(body.maxFutureDays, "Limite futuro", { min: 1, max: MAX_FUTURE_DAYS }));

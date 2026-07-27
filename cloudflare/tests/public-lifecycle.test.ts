@@ -68,7 +68,11 @@ afterEach(async () => {
     `),
     env.DB.prepare("DELETE FROM appointments WHERE client_name LIKE 'CF1B Cliente%'"),
     env.DB.prepare("DELETE FROM clients WHERE name LIKE 'CF1B Cliente%'"),
-    env.DB.prepare("DELETE FROM public_rate_limits")
+    env.DB.prepare("DELETE FROM public_rate_limits"),
+    env.DB.prepare(`
+      UPDATE tenant_settings SET change_min_advance_minutes = 240
+      WHERE tenant_id IN ('studio-cut', 'lumiere')
+    `)
   ]);
 });
 
@@ -208,7 +212,29 @@ describe("token e lifecycle público CF1B", () => {
     const data = await response.json() as Record<string, unknown>;
 
     expect(response.status).toBe(200);
-    expect(Object.keys(data).sort()).toEqual(["date", "professional", "service", "status", "time"]);
+    expect(Object.keys(data).sort()).toEqual([
+      "business",
+      "capabilities",
+      "date",
+      "professional",
+      "service",
+      "status",
+      "terminology",
+      "time"
+    ]);
+    expect(data).toMatchObject({
+      business: {
+        name: "Studio Cut",
+        address: null,
+        contact: { phone: null, whatsapp: null }
+      },
+      terminology: { serviceSingular: "serviço", professionalSingular: "barbeiro" },
+      capabilities: {
+        minAdvanceMinutes: 240,
+        cancel: { allowed: true, requiresConfirmation: true },
+        reschedule: { allowed: true, requiresConfirmation: true }
+      }
+    });
     expect(data).not.toHaveProperty("clientPhone");
     expect(data).not.toHaveProperty("id");
   });
@@ -264,12 +290,15 @@ describe("token e lifecycle público CF1B", () => {
     const first = await api("studio-cut", "appointment/cancel", {
       method: "POST",
       headers: { "X-Appointment-Token": token },
-      body: JSON.stringify({ reason: "Não poderei comparecer" })
+      body: JSON.stringify({ reason: "Não poderei comparecer", confirmed: true })
     });
     const second = await api("studio-cut", "appointment/cancel", {
       method: "POST",
       headers: { "X-Appointment-Token": token },
-      body: JSON.stringify({ reason: "Repetido" })
+      body: JSON.stringify({ reason: "Repetido", confirmed: true })
+    });
+    const lookup = await api("studio-cut", "appointment", {
+      headers: { "X-Appointment-Token": token }
     });
     const replacement = await create("studio-cut", { date, time: "10:00" });
     const history = await env.DB.prepare(`
@@ -280,8 +309,15 @@ describe("token e lifecycle público CF1B", () => {
       SELECT COUNT(*) AS count FROM appointment_slots WHERE appointment_id = ?
     `).bind(created.data.id).first<{ count: number }>();
 
-    expect([first.status, second.status, replacement.response.status]).toEqual([200, 200, 201]);
+    expect([first.status, second.status, lookup.status, replacement.response.status]).toEqual([200, 200, 200, 201]);
     expect((await first.json() as Record<string, unknown>).status).toBe("CANCELLED");
+    expect((await lookup.json() as Record<string, unknown>)).toMatchObject({
+      status: "CANCELLED",
+      capabilities: {
+        cancel: { allowed: false },
+        reschedule: { allowed: false }
+      }
+    });
     expect(history?.count).toBe(1);
     expect(slots?.count).toBe(0);
   });
@@ -293,7 +329,7 @@ describe("token e lifecycle público CF1B", () => {
     await api("studio-cut", "appointment/cancel", {
       method: "POST",
       headers: { "X-Appointment-Token": tokenFrom(first.data) },
-      body: JSON.stringify({})
+      body: JSON.stringify({ confirmed: true })
     });
     const secondSlots = await env.DB.prepare(`
       SELECT COUNT(*) AS count FROM appointment_slots WHERE appointment_id = ?
@@ -303,30 +339,184 @@ describe("token e lifecycle público CF1B", () => {
     expect(secondSlots?.count).toBe(1);
   });
 
-  it("reagenda, revoga o token antigo e emite novo mecanismo de gestão", async () => {
+  it("remarca o mesmo agendamento, preserva o token e registra o histórico", async () => {
     const created = await create("studio-cut", { date: futureDate(1, 2), time: "09:00" });
-    const oldToken = tokenFrom(created.data);
+    const token = tokenFrom(created.data);
     const newDate = futureDate(1, 3);
     const availability = await api(
       "studio-cut",
       `appointment/reschedule-availability?date=${newDate}&professionalId=professional-studio-1`,
-      { headers: { "X-Appointment-Token": oldToken } }
+      { headers: { "X-Appointment-Token": token } }
     );
     const rescheduled = await api("studio-cut", "appointment/reschedule", {
       method: "POST",
-      headers: { "X-Appointment-Token": oldToken },
-      body: JSON.stringify({ date: newDate, time: "10:00", professionalId: "professional-studio-1" })
+      headers: { "X-Appointment-Token": token },
+      body: JSON.stringify({
+        date: newDate,
+        time: "10:00",
+        professionalId: "professional-studio-1",
+        confirmed: true
+      })
     });
     const data = await rescheduled.json() as Record<string, any>;
-    const oldLookup = await api("studio-cut", "appointment", { headers: { "X-Appointment-Token": oldToken } });
-    const newLookup = await api("studio-cut", "appointment", { headers: { "X-Appointment-Token": tokenFrom(data) } });
+    const lookup = await api("studio-cut", "appointment", { headers: { "X-Appointment-Token": token } });
+    const rows = await env.DB.prepare(`
+      SELECT id, appointment_date, start_time, status
+      FROM appointments WHERE client_name = ?
+    `).bind(created.payload.clientName).all<Record<string, string>>();
+    const history = await env.DB.prepare(`
+      SELECT type, metadata_json FROM appointment_history_events
+      WHERE appointment_id = ? ORDER BY created_at
+    `).bind(created.data.id).all<{ type: string; metadata_json: string | null }>();
 
     expect(availability.status).toBe(200);
     expect(await availability.json()).toContain("10:00");
     expect(rescheduled.status).toBe(201);
-    expect(oldLookup.status).toBe(410);
-    expect(newLookup.status).toBe(200);
-    expect((await newLookup.json() as Record<string, unknown>).date).toBe(newDate);
+    expect(tokenFrom(data)).toBe(token);
+    expect(lookup.status).toBe(200);
+    expect((await lookup.json() as Record<string, unknown>).date).toBe(newDate);
+    expect(rows.results).toEqual([{
+      id: created.data.id,
+      appointment_date: newDate,
+      start_time: "10:00",
+      status: "PENDING"
+    }]);
+    expect(history.results.map((event) => event.type)).toEqual(["CREATED", "RESCHEDULED_TO"]);
+    expect(history.results[1]?.metadata_json).toContain(created.payload.date);
+  });
+
+  it("exige confirmação explícita para cancelar e remarcar", async () => {
+    const created = await create("studio-cut");
+    const token = tokenFrom(created.data);
+    const cancel = await api("studio-cut", "appointment/cancel", {
+      method: "POST",
+      headers: { "X-Appointment-Token": token },
+      body: JSON.stringify({ reason: "Sem confirmação" })
+    });
+    const reschedule = await api("studio-cut", "appointment/reschedule", {
+      method: "POST",
+      headers: { "X-Appointment-Token": token },
+      body: JSON.stringify({
+        date: futureDate(1, 4),
+        time: "10:00",
+        professionalId: "professional-studio-1"
+      })
+    });
+
+    expect([cancel.status, reschedule.status]).toEqual([400, 400]);
+    expect((await cancel.json() as Record<string, any>).error.code).toBe("CONFIRMATION_REQUIRED");
+    expect((await reschedule.json() as Record<string, any>).error.code).toBe("CONFIRMATION_REQUIRED");
+  });
+
+  it("bloqueia capacidades e ações fora do prazo configurado", async () => {
+    const created = await create("studio-cut");
+    const tomorrow = new Date();
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    const date = tomorrow.toISOString().slice(0, 10);
+    await env.DB.batch([
+      env.DB.prepare(`
+        UPDATE tenant_settings SET change_min_advance_minutes = 10080
+        WHERE tenant_id = 'studio-cut'
+      `),
+      env.DB.prepare(`
+        UPDATE appointments SET appointment_date = ?, start_time = '09:00', end_time = '09:30'
+        WHERE id = ?
+      `).bind(date, created.data.id)
+    ]);
+    const token = tokenFrom(created.data);
+    const lookup = await api("studio-cut", "appointment", {
+      headers: { "X-Appointment-Token": token }
+    });
+    const cancel = await api("studio-cut", "appointment/cancel", {
+      method: "POST",
+      headers: { "X-Appointment-Token": token },
+      body: JSON.stringify({ confirmed: true })
+    });
+    const availability = await api(
+      "studio-cut",
+      `appointment/reschedule-availability?date=${futureDate(1, 4)}&professionalId=professional-studio-1`,
+      { headers: { "X-Appointment-Token": token } }
+    );
+    await env.DB.prepare(`
+      UPDATE tenant_settings SET change_min_advance_minutes = 240
+      WHERE tenant_id = 'studio-cut'
+    `).run();
+
+    expect((await lookup.json() as Record<string, any>).capabilities).toMatchObject({
+      minAdvanceMinutes: 10080,
+      cancel: { allowed: false, reason: "MIN_ADVANCE_NOT_MET" },
+      reschedule: { allowed: false, reason: "MIN_ADVANCE_NOT_MET" }
+    });
+    expect([cancel.status, availability.status]).toEqual([409, 409]);
+  });
+
+  it("exibe concluído sem permitir cancelamento ou remarcação", async () => {
+    const created = await create("studio-cut");
+    const token = tokenFrom(created.data);
+    await env.DB.prepare(`
+      UPDATE appointments SET status = 'COMPLETED' WHERE id = ?
+    `).bind(created.data.id).run();
+
+    const lookup = await api("studio-cut", "appointment", {
+      headers: { "X-Appointment-Token": token }
+    });
+    const cancel = await api("studio-cut", "appointment/cancel", {
+      method: "POST",
+      headers: { "X-Appointment-Token": token },
+      body: JSON.stringify({ confirmed: true })
+    });
+    const availability = await api(
+      "studio-cut",
+      `appointment/reschedule-availability?date=${futureDate(1, 4)}&professionalId=professional-studio-1`,
+      { headers: { "X-Appointment-Token": token } }
+    );
+
+    expect(await lookup.json()).toMatchObject({
+      status: "COMPLETED",
+      capabilities: {
+        cancel: { allowed: false, reason: "STATUS_BLOCKED" },
+        reschedule: { allowed: false, reason: "STATUS_BLOCKED" }
+      }
+    });
+    expect([lookup.status, cancel.status, availability.status]).toEqual([200, 409, 409]);
+  });
+
+  it("resolve remarcações concorrentes sem duplicar agendamento ou slot", async () => {
+    const first = await create("studio-cut", { date: futureDate(1, 3), time: "09:00" });
+    const second = await create("studio-cut", { date: futureDate(1, 4), time: "09:00" });
+    const targetDate = futureDate(1, 5);
+    const body = JSON.stringify({
+      date: targetDate,
+      time: "10:00",
+      professionalId: "professional-studio-1",
+      confirmed: true
+    });
+    const responses = await Promise.all([
+      api("studio-cut", "appointment/reschedule", {
+        method: "POST",
+        headers: { "X-Appointment-Token": tokenFrom(first.data) },
+        body
+      }),
+      api("studio-cut", "appointment/reschedule", {
+        method: "POST",
+        headers: { "X-Appointment-Token": tokenFrom(second.data) },
+        body
+      })
+    ]);
+    const appointments = await env.DB.prepare(`
+      SELECT id FROM appointments
+      WHERE tenant_id = 'studio-cut' AND appointment_date = ? AND start_time = '10:00'
+        AND status IN ('PENDING', 'CONFIRMED')
+    `).bind(targetDate).all<{ id: string }>();
+    const slots = await env.DB.prepare(`
+      SELECT appointment_id FROM appointment_slots
+      WHERE tenant_id = 'studio-cut' AND professional_id = 'professional-studio-1'
+        AND appointment_date = ? AND slot_time = '10:00'
+    `).bind(targetDate).all<{ appointment_id: string }>();
+
+    expect(responses.map((response) => response.status).sort()).toEqual([201, 409]);
+    expect(appointments.results).toHaveLength(1);
+    expect(slots.results).toHaveLength(1);
   });
 });
 

@@ -157,7 +157,7 @@ describe("agenda e agendamentos administrativos", () => {
     expect(afterTerminal.status).toBe(409);
   });
 
-  it("cancela de forma atômica: libera slots, revoga token e registra histórico", async () => {
+  it("cancela de forma atômica: libera slots, preserva token e registra histórico", async () => {
     const response = await adminCall(adminPath("studio-cut", "appointments/appointment-studio-2/status"), {
       method: "PATCH",
       body: { status: "CANCELLED", reason: "  Cliente  pediu   cancelamento  " }
@@ -173,7 +173,7 @@ describe("agenda e agendamentos administrativos", () => {
     ]);
     expect(body).toMatchObject({ status: "CANCELLED", cancellationReason: "Cliente pediu cancelamento" });
     expect(slots?.total).toBe(0);
-    expect(token?.revoked_at).not.toBeNull();
+    expect(token?.revoked_at).toBeNull();
     expect(history.results).toHaveLength(1);
     expect(JSON.parse(history.results[0].metadata_json)).toEqual({ reason: "Cliente pediu cancelamento" });
   });

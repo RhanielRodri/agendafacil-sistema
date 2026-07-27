@@ -31,6 +31,7 @@ interface SettingsRow {
   public_whatsapp: string | null;
   address_line: string | null;
   timezone: string;
+  change_min_advance_minutes: number;
   cancellation_policy: string | null;
   confirmation_message: string | null;
   booking_enabled: number;
@@ -111,6 +112,7 @@ export async function listPublicBusinessHours(db: D1Database, tenantId: string) 
 export async function publicSettings(db: D1Database, tenant: Tenant) {
   const row = await db.prepare(`
     SELECT public_name, public_phone, public_whatsapp, address_line, timezone,
+      change_min_advance_minutes,
       cancellation_policy, confirmation_message, booking_enabled, max_future_days
     FROM tenant_settings
     WHERE tenant_id = ?
@@ -121,6 +123,7 @@ export async function publicSettings(db: D1Database, tenant: Tenant) {
     publicWhatsapp: row?.public_whatsapp ?? null,
     addressLine: row?.address_line ?? null,
     timezone: row?.timezone ?? "America/Sao_Paulo",
+    changeMinAdvanceMinutes: row?.change_min_advance_minutes ?? 240,
     cancellationPolicy: row?.cancellation_policy ?? null,
     confirmationMessage: row?.confirmation_message ?? null,
     bookingEnabled: row ? row.booking_enabled === 1 : true,

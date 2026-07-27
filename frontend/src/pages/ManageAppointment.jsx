@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { toId } from "../utils/id.js";
-import StatusBadge from "../components/StatusBadge.jsx";
+import BrandMark from "../components/BrandMark.jsx";
 import StateMessage from "../components/StateMessage.jsx";
+import StatusBadge from "../components/StatusBadge.jsx";
+import site from "../config/site.js";
 import { api } from "../services/api.js";
 import { formatDate, todayInputValue } from "../utils/format.js";
+import { toId } from "../utils/id.js";
 import { professionalDisplayName } from "../utils/presentation.js";
+import { waMeUrl } from "../utils/whatsapp.js";
 
 const tokenMessages = {
   TOKEN_INVALID: "Este link é inválido ou não está disponível.",
@@ -12,6 +15,20 @@ const tokenMessages = {
   TOKEN_REVOKED: "Este link não está mais ativo.",
   TOKEN_USED: "Este link já foi substituído ou utilizado. Use o link mais recente."
 };
+
+function capitalize(value) {
+  return value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : "";
+}
+
+function fallbackCapabilities(status) {
+  const allowed = ["PENDING", "CONFIRMED"].includes(status);
+  const message = allowed ? null : "Este agendamento está encerrado e não permite alterações.";
+  return {
+    minAdvanceMinutes: 240,
+    cancel: { allowed, requiresConfirmation: true, message },
+    reschedule: { allowed, requiresConfirmation: true, message }
+  };
+}
 
 export default function ManageAppointment({ token, professionals, onBack }) {
   const [state, setState] = useState("loading");
@@ -21,6 +38,7 @@ export default function ManageAppointment({ token, professionals, onBack }) {
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState("summary");
   const [reason, setReason] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
   const [date, setDate] = useState(todayInputValue());
   const [professionalId, setProfessionalId] = useState("");
   const [slots, setSlots] = useState([]);
@@ -77,6 +95,12 @@ export default function ManageAppointment({ token, professionals, onBack }) {
     };
   }, [mode, date, professionalId, token]);
 
+  function openMode(nextMode) {
+    setActionError("");
+    setConfirmed(false);
+    setMode(nextMode);
+  }
+
   async function confirmAppointment() {
     setBusy(true);
     setActionError("");
@@ -91,10 +115,15 @@ export default function ManageAppointment({ token, professionals, onBack }) {
 
   async function cancelAppointment(event) {
     event.preventDefault();
+    if (!confirmed) {
+      setActionError("Confirme o cancelamento antes de continuar.");
+      return;
+    }
     setBusy(true);
     setActionError("");
     try {
       setAppointment(await api.cancelManagedAppointment(token, reason));
+      setConfirmed(false);
       setMode("summary");
     } catch (requestError) {
       setActionError(requestError.message);
@@ -109,6 +138,10 @@ export default function ManageAppointment({ token, professionals, onBack }) {
       setActionError("Escolha um horário disponível.");
       return;
     }
+    if (!confirmed) {
+      setActionError("Confirme a remarcação antes de continuar.");
+      return;
+    }
     setBusy(true);
     setActionError("");
     try {
@@ -117,10 +150,14 @@ export default function ManageAppointment({ token, professionals, onBack }) {
         time: slot,
         professionalId: toId(professionalId)
       });
-      window.history.replaceState({}, "", result.managementPath);
-      window.location.reload();
+      setAppointment(result);
+      setProfessionalId(String(result.professional.id));
+      setSlot("");
+      setConfirmed(false);
+      setMode("summary");
     } catch (requestError) {
       setActionError(requestError.message);
+    } finally {
       setBusy(false);
     }
   }
@@ -139,7 +176,11 @@ export default function ManageAppointment({ token, professionals, onBack }) {
     return (
       <main className="manage-page">
         <section className="manage-panel">
-          <span className="eyebrow">Gestão do agendamento</span>
+          <div className="manage-brand">
+            <BrandMark size={42} />
+            <span>{site?.wordmark || site?.name}</span>
+          </div>
+          <span className="eyebrow">Meu agendamento</span>
           <h1>Não foi possível abrir o link</h1>
           <StateMessage type="error" title="Link indisponível">{error}</StateMessage>
           <button className="secondary-button" type="button" onClick={onBack}>Voltar ao início</button>
@@ -148,22 +189,69 @@ export default function ManageAppointment({ token, professionals, onBack }) {
     );
   }
 
-  const canManage = ["PENDING", "CONFIRMED"].includes(appointment.status);
+  const capabilities = appointment.capabilities || fallbackCapabilities(appointment.status);
+  const business = appointment.business || { name: site?.name, address: null, contact: {} };
+  const terminology = appointment.terminology || {
+    serviceSingular: site?.slug === "studio-cut" ? "serviço" : "procedimento",
+    professionalSingular: site?.slug === "studio-cut" ? "barbeiro" : "profissional"
+  };
+  const whatsappUrl = waMeUrl(business.contact?.whatsapp);
+  const phoneUrl = business.contact?.phone
+    ? `tel:${String(business.contact.phone).replace(/[^\d+]/g, "")}`
+    : null;
+  const blockedMessage = capabilities.cancel.message || capabilities.reschedule.message;
 
   return (
     <main className="manage-page">
       <section className="manage-panel">
-        <span className="eyebrow">Gestão do agendamento</span>
+        <div className="manage-brand">
+          <BrandMark size={42} />
+          <span>{business.name}</span>
+        </div>
+        <span className="eyebrow">Meu agendamento</span>
         <div className="manage-title-row">
-          <h1>Seu agendamento</h1>
+          <h1>Meu agendamento</h1>
           <StatusBadge status={appointment.status} />
         </div>
-        <div className="summary-box manage-summary">
-          <strong>{appointment.service.name}</strong>
-          <span>{professionalDisplayName(appointment.professional)}</span>
-          <span>{formatDate(appointment.date)} às {appointment.time}</span>
-          <span>{appointment.service.duration} minutos</span>
-        </div>
+
+        <dl className="manage-details">
+          <div>
+            <dt>Status</dt>
+            <dd><StatusBadge status={appointment.status} /></dd>
+          </div>
+          <div>
+            <dt>{capitalize(terminology.serviceSingular)}</dt>
+            <dd>{appointment.service.name}</dd>
+          </div>
+          <div>
+            <dt>{capitalize(terminology.professionalSingular)}</dt>
+            <dd>{professionalDisplayName(appointment.professional)}</dd>
+          </div>
+          <div>
+            <dt>Data</dt>
+            <dd>{formatDate(appointment.date)}</dd>
+          </div>
+          <div>
+            <dt>Horário</dt>
+            <dd>{appointment.time}</dd>
+          </div>
+          <div>
+            <dt>Duração</dt>
+            <dd>{appointment.service.duration} minutos</dd>
+          </div>
+          <div className="manage-detail-wide">
+            <dt>Endereço</dt>
+            <dd>{business.address || "Consulte o negócio"}</dd>
+          </div>
+          <div className="manage-detail-wide">
+            <dt>Contato</dt>
+            <dd className="manage-contact">
+              {whatsappUrl && <a href={whatsappUrl} target="_blank" rel="noreferrer">WhatsApp</a>}
+              {phoneUrl && <a href={phoneUrl}>{business.contact.phone}</a>}
+              {!whatsappUrl && !phoneUrl && <span>Consulte o negócio</span>}
+            </dd>
+          </div>
+        </dl>
 
         {actionError && (
           <StateMessage type="error" title="Não foi possível concluir">{actionError}</StateMessage>
@@ -176,19 +264,21 @@ export default function ManageAppointment({ token, professionals, onBack }) {
                 {busy ? "Confirmando…" : "Confirmar agendamento"}
               </button>
             )}
-            {canManage && (
-              <>
-                <button className="secondary-button" type="button" onClick={() => setMode("reschedule")}>
-                  Reagendar
-                </button>
-                <button className="danger-button" type="button" onClick={() => setMode("cancel")}>
-                  Cancelar
-                </button>
-              </>
+            {(capabilities.reschedule.allowed || capabilities.cancel.allowed) && (
+              <div className="manage-action-row">
+                {capabilities.reschedule.allowed && (
+                  <button className="secondary-button" type="button" onClick={() => openMode("reschedule")}>
+                    Remarcar
+                  </button>
+                )}
+                {capabilities.cancel.allowed && (
+                  <button className="danger-button" type="button" onClick={() => openMode("cancel")}>
+                    Cancelar
+                  </button>
+                )}
+              </div>
             )}
-            {!canManage && (
-              <p className="manage-terminal">Este agendamento está encerrado e não permite novas alterações.</p>
-            )}
+            {blockedMessage && <p className="manage-terminal">{blockedMessage}</p>}
           </div>
         )}
 
@@ -204,11 +294,20 @@ export default function ManageAppointment({ token, professionals, onBack }) {
                 onChange={(event) => setReason(event.target.value)}
               />
             </label>
+            <label className="manage-confirmation">
+              <input
+                type="checkbox"
+                checked={confirmed}
+                onChange={(event) => setConfirmed(event.target.checked)}
+                required
+              />
+              <span>Confirmo que desejo cancelar este agendamento.</span>
+            </label>
             <div className="manage-form-actions">
-              <button className="danger-button" type="submit" disabled={busy}>
-                {busy ? "Cancelando…" : "Confirmar cancelamento"}
+              <button className="danger-button" type="submit" disabled={busy || !confirmed}>
+                {busy ? "Cancelando…" : "Cancelar agendamento"}
               </button>
-              <button className="secondary-button" type="button" onClick={() => setMode("summary")}>Voltar</button>
+              <button className="secondary-button" type="button" onClick={() => openMode("summary")}>Voltar</button>
             </div>
           </form>
         )}
@@ -217,7 +316,7 @@ export default function ManageAppointment({ token, professionals, onBack }) {
           <form className="manage-form" onSubmit={rescheduleAppointment}>
             <h2>Novo horário</h2>
             <label htmlFor="reschedule-professional">
-              Profissional
+              {capitalize(terminology.professionalSingular)}
               <select
                 id="reschedule-professional"
                 value={professionalId}
@@ -258,11 +357,20 @@ export default function ManageAppointment({ token, professionals, onBack }) {
                 ))}
               </div>
             </fieldset>
+            <label className="manage-confirmation">
+              <input
+                type="checkbox"
+                checked={confirmed}
+                onChange={(event) => setConfirmed(event.target.checked)}
+                required
+              />
+              <span>Confirmo a troca para o novo profissional, data e horário selecionados.</span>
+            </label>
             <div className="manage-form-actions">
-              <button className="primary-button" type="submit" disabled={busy || !slot}>
-                {busy ? "Reagendando…" : "Confirmar novo horário"}
+              <button className="primary-button" type="submit" disabled={busy || !slot || !confirmed}>
+                {busy ? "Remarcando…" : "Remarcar agendamento"}
               </button>
-              <button className="secondary-button" type="button" onClick={() => setMode("summary")}>Voltar</button>
+              <button className="secondary-button" type="button" onClick={() => openMode("summary")}>Voltar</button>
             </div>
           </form>
         )}
