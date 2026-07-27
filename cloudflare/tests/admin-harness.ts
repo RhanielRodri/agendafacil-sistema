@@ -21,9 +21,9 @@ export async function setupAdminAccess(): Promise<void> {
       .bind(IDENTITY_STUDIO, EMAIL_STUDIO, "Operador Studio"),
     env.DB.prepare("INSERT INTO admin_identities (id, email, name, active) VALUES (?, ?, ?, 1)")
       .bind(IDENTITY_LUMIERE, EMAIL_LUMIERE, "Operadora Lumière"),
-    env.DB.prepare("INSERT INTO admin_memberships (identity_id, tenant_id, role, active) VALUES (?, 'studio-cut', 'ADMIN', 1)")
+    env.DB.prepare("INSERT INTO admin_memberships (identity_id, tenant_id, role, active) VALUES (?, 'studio-cut', 'owner', 1)")
       .bind(IDENTITY_STUDIO),
-    env.DB.prepare("INSERT INTO admin_memberships (identity_id, tenant_id, role, active) VALUES (?, 'lumiere', 'ADMIN', 1)")
+    env.DB.prepare("INSERT INTO admin_memberships (identity_id, tenant_id, role, active) VALUES (?, 'lumiere', 'owner', 1)")
       .bind(IDENTITY_LUMIERE)
   ]);
 }

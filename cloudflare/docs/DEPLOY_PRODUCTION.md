@@ -8,7 +8,7 @@ Produção usa o D1 `agendafacil-production-db` e quatro Workers independentes:
 | --- | --- | --- |
 | `studio-cut-public` | pública | `studio-cut` |
 | `studio-cut-admin` | administrativa | `studio-cut` |
-| `lumiere-public` | pública | `lumiere` |
+| `lumiere` | pública | `lumiere` |
 | `lumiere-admin` | administrativa | `lumiere` |
 
 Os arquivos `.env.production` e `wrangler.production.*.jsonc` são ignorados pelo Git. O ambiente não reutiliza D1, aplicação Access, AUD ou configuração de staging. Smart Placement permanece desativado.
@@ -47,7 +47,7 @@ npm run production:deploy:public
 As URLs públicas são:
 
 - `https://studio-cut-public.sor-os-demos.workers.dev`
-- `https://lumiere-public.sor-os-demos.workers.dev`
+- `https://lumiere.sor-os-demos.workers.dev`
 
 ## Access e bootstrap
 

@@ -1,3 +1,5 @@
+import type { AdminModule, AdminRole } from "./rbac";
+
 export interface Tenant {
   id: string;
   slug: string;
@@ -30,5 +32,7 @@ export interface AdminIdentity {
 export interface AdminContext {
   identity: AdminIdentity;
   tenant: Tenant;
-  role: "ADMIN";
+  role: AdminRole;
+  permissions: AdminModule[];
+  professionalId: string | null;
 }

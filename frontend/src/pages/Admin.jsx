@@ -3,7 +3,7 @@ import { api, apiMode } from "../services/api.js";
 import tenant, { adminPath } from "../config/tenant.js";
 import site from "../config/site.js";
 import { verticalConfig } from "../config/verticals.js";
-import PanelShell, { moduleGroups } from "../components/panel/PanelShell.jsx";
+import PanelShell from "../components/panel/PanelShell.jsx";
 import BrandMark from "../components/BrandMark.jsx";
 import Overview from "./admin/Overview.jsx";
 import Agenda from "./admin/Agenda.jsx";
@@ -16,12 +16,16 @@ import Availability from "./admin/Availability.jsx";
 import Blocks from "./admin/Blocks.jsx";
 import Metrics from "./admin/Metrics.jsx";
 import Settings from "./admin/Settings.jsx";
+import Team from "./admin/Team.jsx";
+import {
+  adminModuleIds,
+  allowedModuleIds,
+  roleLabels
+} from "../utils/adminRbac.js";
 
 // Constante de build: no destino Cloudflare os ramos de senha e sessão própria
 // viram código morto e saem do bundle administrativo.
 const isCloudflare = apiMode === "cloudflare";
-
-const moduleIds = moduleGroups.flatMap((group) => group.modules);
 
 // O rótulo muda por vertical; o identificador na URL, não.
 function moduleLabels(vertical) {
@@ -36,7 +40,8 @@ function moduleLabels(vertical) {
     disponibilidade: "Horários",
     bloqueios: "Bloqueios",
     indicadores: "Indicadores",
-    configuracoes: "Configurações"
+    configuracoes: "Configurações",
+    equipe: "Equipe e acessos"
   };
 }
 
@@ -54,13 +59,14 @@ function moduleSubtitles(vertical) {
     disponibilidade: "Grade de horários da equipe",
     bloqueios: "Pausas e indisponibilidades",
     indicadores: "Desempenho do período",
-    configuracoes: "Dados públicos, regras de agendamento e mensagens do negócio"
+    configuracoes: "Dados públicos, regras de agendamento e mensagens do negócio",
+    equipe: "Usuários, papéis, permissões e histórico de acesso"
   };
 }
 
 function initialModule() {
   const requested = new URLSearchParams(window.location.search).get("m");
-  return moduleIds.includes(requested) ? requested : "visao-geral";
+  return adminModuleIds.includes(requested) ? requested : "visao-geral";
 }
 
 // ─── Telas de sessão (fundo escuro, card centralizado) ──────────────────────
@@ -258,6 +264,20 @@ function UnavailableScreen({ onRetry }) {
   );
 }
 
+function NoModulesScreen({ onLogout }) {
+  return (
+    <AdminScreen>
+      <AdminScreenHeader />
+      <div className="admin-screen-divider" />
+      <h2 className="admin-screen-title">Sem módulos liberados</h2>
+      <p className="admin-screen-message">
+        Seu acesso está ativo, mas ainda não possui permissões para operar este painel.
+      </p>
+      <button className="admin-screen-btn" type="button" onClick={onLogout}>Sair</button>
+    </AdminScreen>
+  );
+}
+
 // ─── Painel ─────────────────────────────────────────────────────────────────
 
 export default function Admin({ services, professionals }) {
@@ -268,6 +288,8 @@ export default function Admin({ services, professionals }) {
   const [foreignTenant, setForeignTenant] = useState(null);
   const [memberships, setMemberships] = useState([]);
   const [module, setModule] = useState(initialModule);
+  const [allowedModules, setAllowedModules] = useState([]);
+  const [rbac, setRbac] = useState(null);
   const [params, setParams] = useState({});
   const [expiredNotice, setExpiredNotice] = useState("");
 
@@ -277,12 +299,17 @@ export default function Admin({ services, professionals }) {
 
   // O catálogo administrativo inclui inativos; as listas públicas recebidas por
   // prop só têm ativos e servem de fallback até a primeira carga.
-  async function loadCatalog() {
+  async function loadCatalog(permissions = null) {
+    const mayLoadServices = permissions === null || permissions.includes("services");
+    const mayLoadProfessionals = permissions === null || permissions.includes("professionals");
     const [servicePage, professionalPage] = await Promise.all([
-      api.getAdminServices({ limit: 50 }),
-      api.getAdminProfessionals({ limit: 50 })
+      mayLoadServices ? api.getAdminServices({ limit: 50 }) : null,
+      mayLoadProfessionals ? api.getAdminProfessionals({ limit: 50 }) : null
     ]);
-    setCatalog({ services: servicePage.items, professionals: professionalPage.items });
+    setCatalog({
+      services: servicePage?.items || [],
+      professionals: professionalPage?.items || []
+    });
   }
 
   const safeServices = catalog?.services || (Array.isArray(services) ? services : []);
@@ -291,10 +318,36 @@ export default function Admin({ services, professionals }) {
   async function bootstrapAccess() {
     try {
       const context = await api.adminContext();
+      const permissions = context.permissions || [];
+      const nextAllowedModules = allowedModuleIds(permissions);
+      const requestedModule = initialModule();
+      const nextModule = nextAllowedModules.includes(requestedModule)
+        ? requestedModule
+        : nextAllowedModules[0];
       setSession({ ...context.identity, tenantId: context.tenant.slug });
       setMemberships(context.memberships || []);
-      setUsers(await api.getAdminUsers());
-      await loadCatalog();
+      setRbac({
+        role: context.role,
+        permissions,
+        professionalId: context.professionalId || null
+      });
+      setAllowedModules(nextAllowedModules);
+      if (!nextAllowedModules.length) {
+        setStatus("no-modules");
+        return;
+      }
+      setModule(nextModule);
+      if (nextModule !== requestedModule) {
+        window.history.replaceState({}, "", `${adminPath}?m=${nextModule}`);
+      }
+      const mayLoadUsers = context.role === "owner"
+        || permissions.includes("leads")
+        || permissions.includes("follow_ups");
+      const [nextUsers] = await Promise.all([
+        mayLoadUsers ? api.getAdminUsers() : Promise.resolve([]),
+        loadCatalog(permissions)
+      ]);
+      setUsers(nextUsers);
       setStatus("ready");
     } catch (failure) {
       if (failure.status === 401) {
@@ -329,6 +382,27 @@ export default function Admin({ services, professionals }) {
           return;
         }
         setSession(me);
+        setRbac({
+          role: "owner",
+          permissions: [
+            "overview",
+            "agenda",
+            "clients",
+            "leads",
+            "follow_ups",
+            "services",
+            "professionals",
+            "scheduling",
+            "metrics",
+            "settings"
+          ],
+          professionalId: null
+        });
+        setAllowedModules(adminModuleIds.filter((id) => id !== "equipe"));
+        if (initialModule() === "equipe") {
+          setModule("visao-geral");
+          window.history.replaceState({}, "", `${adminPath}?m=visao-geral`);
+        }
         setUsers(await api.getAdminUsers());
         await loadCatalog();
         setExpiredNotice("");
@@ -344,6 +418,7 @@ export default function Admin({ services, professionals }) {
   }, []);
 
   function navigate(nextModule, nextParams = {}) {
+    if (!allowedModules.includes(nextModule)) return;
     setModule(nextModule);
     setParams(nextParams);
     window.history.replaceState({}, "", `${adminPath}?m=${nextModule}`);
@@ -367,9 +442,18 @@ export default function Admin({ services, professionals }) {
     });
   }
 
+  // Logout real do Access: a própria borda encerra a sessão no endpoint
+  // /cdn-cgi/access/logout, limpa o cookie CF_Authorization e força nova
+  // autenticação por código na próxima visita. Sem mexer em estado React
+  // nem apagar cookie na mão.
+  function handleAccessLogout() {
+    window.location.assign("/cdn-cgi/access/logout");
+  }
+
   if (status === "loading") return <LoadingScreen />;
   if (status === "access-expired") return <AccessExpiredScreen />;
   if (status === "no-membership") return <NoMembershipScreen memberships={memberships} />;
+  if (status === "no-modules") return <NoModulesScreen onLogout={handleAccessLogout} />;
   if (!isCloudflare && status === "unauthenticated") return <LoginScreen onSuccess={bootstrap} notice={expiredNotice} />;
   if (!isCloudflare && status === "foreign") return <ForeignTenantScreen tenantId={foreignTenant} onLogout={handleLogout} />;
   if (status === "unavailable") return <UnavailableScreen onRetry={bootstrap} />;
@@ -380,14 +464,16 @@ export default function Admin({ services, professionals }) {
     services: safeServices,
     professionals: safeProfessionals,
     users,
+    rbac,
+    canAccess: (id) => allowedModules.includes(id),
     params,
     onNavigate: navigate,
     onSessionExpired: handleSessionExpired,
-    onCatalogChange: () => loadCatalog().catch(() => {})
+    onCatalogChange: () => loadCatalog(isCloudflare ? rbac?.permissions || [] : null).catch(() => {})
   };
 
   const profileActions = isCloudflare
-    ? null
+    ? <button className="panel-sidebar-logout" type="button" onClick={handleAccessLogout}>Sair</button>
     : <button className="panel-sidebar-logout" type="button" onClick={handleLogout}>Sair</button>;
 
   return (
@@ -401,10 +487,13 @@ export default function Admin({ services, professionals }) {
       currentLabel={labels[module]}
       pageSubtitle={subtitles[module]}
       profileName={session?.name}
-      profileMeta={isCloudflare ? session?.email : "Administrador"}
+      profileMeta={isCloudflare
+        ? `${session?.email}${rbac?.role ? ` · ${roleLabels[rbac.role] || rbac.role}` : ""}`
+        : "Administrador"}
       profileActions={profileActions}
       labels={labels}
       current={module}
+      allowedModules={allowedModules}
       onSelect={(id) => navigate(id)}
     >
       <div key={`${module}:${JSON.stringify(params)}`}>
@@ -419,6 +508,7 @@ export default function Admin({ services, professionals }) {
         {module === "bloqueios" && <Blocks {...moduleProps} />}
         {module === "indicadores" && <Metrics {...moduleProps} />}
         {module === "configuracoes" && <Settings {...moduleProps} />}
+        {module === "equipe" && <Team {...moduleProps} />}
       </div>
     </PanelShell>
   );

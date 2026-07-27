@@ -5,6 +5,7 @@ import { api } from "../../services/api.js";
 import { usePanelData } from "../../utils/usePanelData.js";
 import ManualWhatsapp from "../../components/panel/ManualWhatsapp.jsx";
 import { PanelEmpty, PanelError, PanelLoading, PanelMessage, StatusPill } from "../../components/panel/PanelState.jsx";
+import RowActions from "../../components/panel/RowActions.jsx";
 import {
   followUpTypeLabels,
   formatDateTime,
@@ -17,9 +18,59 @@ import {
 } from "../../utils/panel.js";
 import { relationshipHistoryLabels } from "../../utils/relationshipHistory.js";
 
-export default function Clients({ params, onNavigate, onSessionExpired }) {
+const dependencyLabels = {
+  appointments: "Agendamentos",
+  leads: "Leads",
+  followUps: "Follow-ups",
+  history: "Eventos no histórico"
+};
+
+function DeleteClientPanel({ candidate, conflict, busy, onConfirm, onCancel }) {
+  if (!candidate) return null;
+  const dependencies = conflict
+    ? Object.entries(conflict).filter(([, total]) => total > 0)
+    : [];
+
+  return (
+    <div className="panel-conflict" role="alertdialog" aria-label={`Excluir ${candidate.name}`}>
+      <strong>
+        {conflict
+          ? `${candidate.name} não pode ser excluído`
+          : `Excluir definitivamente ${candidate.name}?`}
+      </strong>
+      <p>
+        {conflict
+          ? "Este cadastro precisa ser preservado porque possui dados vinculados."
+          : "Esta ação é permanente e só será concluída se o cadastro não tiver agendamentos nem histórico."}
+      </p>
+      {dependencies.length > 0 && (
+        <ul>
+          {dependencies.map(([key, total]) => (
+            <li key={key}>
+              <strong>{dependencyLabels[key] || key}</strong>
+              <span>{total} registro(s) vinculado(s)</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="panel-conflict-actions">
+        {!conflict && (
+          <button className="panel-btn-danger" type="button" disabled={busy} onClick={onConfirm}>
+            {busy ? "Excluindo…" : "Excluir definitivamente"}
+          </button>
+        )}
+        <button className="panel-btn" type="button" onClick={onCancel}>
+          {conflict ? "Entendi" : "Cancelar"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function Clients({ params, onNavigate, onSessionExpired, canAccess }) {
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("active");
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState(toId(params.clientId));
   const [detail, setDetail] = useState(null);
@@ -27,10 +78,19 @@ export default function Clients({ params, onNavigate, onSessionExpired }) {
   const [history, setHistory] = useState([]);
   const [note, setNote] = useState("");
   const [message, setMessage] = useState(null);
+  const [busyId, setBusyId] = useState(null);
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [deleteConflict, setDeleteConflict] = useState(null);
+  const lifecycleEnabled = typeof api.archiveClient === "function";
 
   const { state, data, error, reload } = usePanelData(
-    () => api.getClients({ search, page, limit: 20 }),
-    [search, page],
+    () => api.getClients({
+      search,
+      page,
+      limit: 20,
+      ...(lifecycleEnabled ? { status: statusFilter } : {})
+    }),
+    [search, statusFilter, page],
     onSessionExpired
   );
 
@@ -77,6 +137,64 @@ export default function Clients({ params, onNavigate, onSessionExpired }) {
     setSearch(searchDraft.trim());
   }
 
+  function closeDetail() {
+    setDetail(null);
+    setSelectedId(null);
+    setDetailState("idle");
+  }
+
+  async function changeArchiveState(client, archived) {
+    setBusyId(client.id);
+    setMessage(null);
+    try {
+      if (archived) {
+        await api.archiveClient(client.id);
+      } else {
+        await api.restoreClient(client.id);
+      }
+      if (selectedId === client.id) closeDetail();
+      setMessage({
+        type: "success",
+        text: archived ? `${client.name} foi arquivado.` : `${client.name} foi restaurado.`
+      });
+      await reload();
+    } catch (failure) {
+      if (failure.status === 401) onSessionExpired?.();
+      setMessage({ type: "error", text: failure.message });
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  function askDelete(client) {
+    setDeleteCandidate(client);
+    setDeleteConflict(null);
+    setMessage(null);
+  }
+
+  async function confirmDelete() {
+    if (!deleteCandidate) return;
+    setBusyId(deleteCandidate.id);
+    try {
+      await api.deleteClient(deleteCandidate.id);
+      if (selectedId === deleteCandidate.id) closeDetail();
+      setMessage({ type: "success", text: `${deleteCandidate.name} foi excluído definitivamente.` });
+      setDeleteCandidate(null);
+      setDeleteConflict(null);
+      await reload();
+    } catch (failure) {
+      if (failure.status === 401) onSessionExpired?.();
+      if (failure.status === 409 && failure.dependencies) {
+        setDeleteConflict(failure.dependencies);
+      } else {
+        setMessage({ type: "error", text: failure.message });
+        setDeleteCandidate(null);
+      }
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   const today = todayIso();
   const upcoming = detail?.appointments.filter((appointment) => appointment.date.slice(0, 10) >= today) || [];
   const past = detail?.appointments.filter((appointment) => appointment.date.slice(0, 10) < today) || [];
@@ -85,6 +203,13 @@ export default function Clients({ params, onNavigate, onSessionExpired }) {
   return (
     <>
       <PanelMessage message={message} onDismiss={() => setMessage(null)} />
+      <DeleteClientPanel
+        candidate={deleteCandidate}
+        conflict={deleteConflict}
+        busy={busyId === deleteCandidate?.id}
+        onConfirm={confirmDelete}
+        onCancel={() => { setDeleteCandidate(null); setDeleteConflict(null); }}
+      />
 
       <form className="panel-toolbar" onSubmit={applySearch}>
         <label className="sr-only" htmlFor="client-search">Buscar cliente por nome ou telefone</label>
@@ -102,6 +227,28 @@ export default function Clients({ params, onNavigate, onSessionExpired }) {
             Limpar
           </button>
         )}
+        {lifecycleEnabled && (
+          <div className="panel-segmented" role="group" aria-label="Situação dos clientes">
+            {[
+              ["active", "Ativos"],
+              ["archived", "Arquivados"],
+              ["all", "Todos"]
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={statusFilter === value}
+                onClick={() => {
+                  setStatusFilter(value);
+                  setPage(1);
+                  closeDetail();
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
         <span className="panel-toolbar-spacer" />
         <button className="panel-btn" type="button" onClick={reload}>Atualizar</button>
       </form>
@@ -111,17 +258,23 @@ export default function Clients({ params, onNavigate, onSessionExpired }) {
 
       {data && (items.length === 0 ? (
         <PanelEmpty
-          title={search ? "Sem resultados" : "Nenhum cliente cadastrado"}
+          title={search
+            ? "Sem resultados"
+            : statusFilter === "archived" ? "Nenhum cliente arquivado" : "Nenhum cliente cadastrado"}
           actionLabel={search ? "Limpar busca" : undefined}
           onAction={search ? () => { setSearchDraft(""); setSearch(""); } : undefined}
         >
-          {search ? "Nenhum cliente corresponde a essa busca." : "Clientes aparecem aqui após o primeiro agendamento ou lead."}
+          {search
+            ? "Nenhum cliente corresponde a essa busca."
+            : statusFilter === "archived"
+              ? "Cadastros arquivados aparecerão aqui."
+              : "Clientes aparecem aqui após o primeiro agendamento ou lead."}
         </PanelEmpty>
       ) : (
         <>
           <div className="panel-list">
             {items.map((client) => (
-              <div className="panel-row" key={client.id}>
+              <div className={`panel-row${client.archived ? " panel-row--muted" : ""}`} key={client.id}>
                 <div className="panel-row-time">
                   <span className="panel-avatar" aria-hidden="true">
                     {(client.name || "?").trim().charAt(0).toUpperCase()}
@@ -139,12 +292,42 @@ export default function Clients({ params, onNavigate, onSessionExpired }) {
                   <strong>Último contato</strong>
                   <span>{formatDateTime(client.lastContactAt)}</span>
                 </div>
-                <div className="panel-row-status" />
-                <div className="panel-row-actions">
-                  <button className="panel-btn-primary" type="button" onClick={() => openClient(client.id)}>
-                    Abrir ficha
-                  </button>
+                <div className="panel-row-status">
+                  {client.archived && <span className="panel-tag">Arquivado</span>}
                 </div>
+                <RowActions
+                  primary={[
+                    {
+                      key: "open",
+                      label: "Abrir ficha",
+                      className: "panel-btn-primary",
+                      onClick: () => openClient(client.id)
+                    }
+                  ]}
+                  secondary={lifecycleEnabled ? [
+                    client.archived
+                      ? {
+                          key: "restore",
+                          label: "Restaurar",
+                          onClick: () => changeArchiveState(client, false),
+                          disabled: busyId === client.id
+                        }
+                      : {
+                          key: "archive",
+                          label: "Arquivar",
+                          onClick: () => changeArchiveState(client, true),
+                          disabled: busyId === client.id
+                        },
+                    {
+                      key: "delete",
+                      label: "Excluir",
+                      className: "panel-btn-danger",
+                      danger: true,
+                      onClick: () => askDelete(client),
+                      disabled: busyId === client.id
+                    }
+                  ] : []}
+                />
               </div>
             ))}
           </div>
@@ -177,7 +360,7 @@ export default function Clients({ params, onNavigate, onSessionExpired }) {
                 {detail.phone}{detail.email ? ` · ${detail.email}` : ""}
               </p>
             </div>
-            <button className="panel-btn" type="button" onClick={() => { setDetail(null); setSelectedId(null); setDetailState("idle"); }}>
+            <button className="panel-btn" type="button" onClick={closeDetail}>
               Fechar ficha
             </button>
           </div>
@@ -243,9 +426,11 @@ export default function Clients({ params, onNavigate, onSessionExpired }) {
                     <span>
                       {leadStatusLabels[lead.status]} · {leadSourceLabels[lead.source]}
                     </span>
-                    <button className="panel-btn-link" type="button" onClick={() => onNavigate("leads", { leadId: lead.id })}>
-                      Abrir lead
-                    </button>
+                    {canAccess?.("leads") && (
+                      <button className="panel-btn-link" type="button" onClick={() => onNavigate("leads", { leadId: lead.id })}>
+                        Abrir lead
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

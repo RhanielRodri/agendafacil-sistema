@@ -115,7 +115,16 @@ async function defaultOwnerIdentity(db: D1Database, tenantId: string): Promise<s
     SELECT m.identity_id AS id
     FROM admin_memberships m
     JOIN admin_identities i ON i.id = m.identity_id
-    WHERE m.tenant_id = ? AND m.active = 1 AND i.active = 1 AND m.role = 'ADMIN'
+    WHERE m.tenant_id = ? AND m.active = 1 AND i.active = 1
+      AND (
+        m.role = 'owner'
+        OR EXISTS (
+          SELECT 1 FROM admin_membership_permissions permission
+          WHERE permission.tenant_id = m.tenant_id
+            AND permission.identity_id = m.identity_id
+            AND permission.module = 'leads'
+        )
+      )
     ORDER BY m.identity_id
     LIMIT 1
   `).bind(tenantId).first<{ id: string }>();

@@ -28,7 +28,7 @@ function toForm(service) {
   };
 }
 
-export default function Services({ vertical, onNavigate, onSessionExpired, onCatalogChange }) {
+export default function Services({ vertical, onNavigate, onSessionExpired, onCatalogChange, canAccess }) {
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("");
@@ -333,7 +333,9 @@ export default function Services({ vertical, onNavigate, onSessionExpired, onCat
                 <div><span>Exclusão</span><strong>{dependencies.removable ? "Sem vínculos" : "Bloqueada por histórico"}</strong></div>
               </div>
               <div className="panel-form-actions">
-                <button className="panel-btn" type="button" onClick={() => onNavigate("agenda")}>Abrir agenda</button>
+                {canAccess?.("agenda") && (
+                  <button className="panel-btn" type="button" onClick={() => onNavigate("agenda")}>Abrir agenda</button>
+                )}
                 <button className="panel-btn" type="button" onClick={() => setDependencies(null)}>Fechar</button>
               </div>
             </>

@@ -57,7 +57,7 @@ function config(name, slug, surface, audience) {
 const targets = {
   "wrangler.production.studio-cut.public.jsonc": config("studio-cut-public", "studio-cut", "public"),
   "wrangler.production.studio-cut.admin.jsonc": config("studio-cut-admin", "studio-cut", "admin", env.STUDIO_CUT_ACCESS_POLICY_AUD),
-  "wrangler.production.lumiere.public.jsonc": config("lumiere-public", "lumiere", "public"),
+  "wrangler.production.lumiere.public.jsonc": config("lumiere", "lumiere", "public"),
   "wrangler.production.lumiere.admin.jsonc": config("lumiere-admin", "lumiere", "admin", env.LUMIERE_ACCESS_POLICY_AUD)
 };
 

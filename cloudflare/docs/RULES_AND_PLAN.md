@@ -44,6 +44,10 @@
 - Identidade com duas memberships pode acessar ambos.
 - Tenant em body, query ou header é ignorado.
 - Não existe senha, PBKDF2, `AdminPassword`, `AdminSession` ou sessão própria.
+- Toda rota administrativa declara o módulo exigido e o backend rejeita ausência de permissão.
+- `professional` acessa somente agendamentos vinculados ao seu `professional_id`.
+- O último owner ativo não pode ser rebaixado, desativado ou removido.
+- Mudanças de role, permissões e ativação são gravadas em auditoria tenant-scoped.
 
 ## Cobertura de fundação CF1A
 

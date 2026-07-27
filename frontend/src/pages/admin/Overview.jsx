@@ -12,7 +12,7 @@ import {
 
 // Os atalhos no fim levam de volta para as filas que a vertical prioriza.
 // Nenhum valor é calculado aqui: tudo o que aparece vem do Worker.
-export default function Overview({ vertical, onNavigate, onSessionExpired }) {
+export default function Overview({ vertical, onNavigate, onSessionExpired, canAccess }) {
   const [message, setMessage] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const { state, data, error, reload } = usePanelData(() => api.getOverview(), [], onSessionExpired);
@@ -95,6 +95,7 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
               key={stat.key}
               className="panel-stat"
               type="button"
+              disabled={!canAccess?.("agenda")}
               onClick={() => onNavigate("agenda", stat.key === "total" ? {} : { status: stat.key })}
             >
               <span className="panel-stat-label">{stat.label}</span>
@@ -112,7 +113,7 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
         <div className="panel-attention">
           {vertical.attentionOrder
             .map((key) => [key, attentionItems[key]])
-            .filter(([, item]) => item)
+            .filter(([, item]) => item && canAccess?.(item.target.module))
             .map(([key, item]) => (
               <button
                 key={key}
@@ -130,9 +131,11 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
       <section className="panel-block">
         <div className="panel-block-head">
           <h2>Próximos atendimentos</h2>
-          <button className="panel-btn-link" type="button" onClick={() => onNavigate("agenda", {})}>
-            Ver agenda completa
-          </button>
+          {canAccess?.("agenda") && (
+            <button className="panel-btn-link" type="button" onClick={() => onNavigate("agenda", {})}>
+              Ver agenda completa
+            </button>
+          )}
         </div>
         {data.upcoming.length === 0 ? (
           <PanelEmpty title="Nada em aberto para hoje">
@@ -166,7 +169,7 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
                     <StatusPill status={appointment.status} />
                   </div>
                   <div className="panel-row-actions">
-                    {primary && (
+                    {primary && canAccess?.("agenda") && (
                       <button
                         className="panel-btn-primary"
                         type="button"
@@ -176,13 +179,15 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
                         {primary.label}
                       </button>
                     )}
-                    <button
-                      className="panel-btn"
-                      type="button"
-                      onClick={() => onNavigate("agenda", { date: appointment.date, focus: appointment.id })}
-                    >
-                      Abrir
-                    </button>
+                    {canAccess?.("agenda") && (
+                      <button
+                        className="panel-btn"
+                        type="button"
+                        onClick={() => onNavigate("agenda", { date: appointment.date, focus: appointment.id })}
+                      >
+                        Abrir
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -194,9 +199,11 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
       <section className="panel-block">
         <div className="panel-block-head">
           <h2>Relacionamento</h2>
-          <button className="panel-btn-link" type="button" onClick={() => onNavigate("leads", {})}>
-            Abrir leads
-          </button>
+          {canAccess?.("leads") && (
+            <button className="panel-btn-link" type="button" onClick={() => onNavigate("leads", {})}>
+              Abrir leads
+            </button>
+          )}
         </div>
         <div className="panel-stats">
           {leadStatuses.map((status) => (
@@ -204,6 +211,7 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
               key={status}
               className="panel-stat"
               type="button"
+              disabled={!canAccess?.("leads")}
               onClick={() => onNavigate("leads", { status })}
             >
               <span className="panel-stat-label">{leadStatusLabels[status]}</span>
@@ -242,7 +250,7 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
           <p>As filas que esta operação costuma abrir primeiro</p>
         </div>
         <div className="panel-shortcuts">
-          {vertical.leadShortcuts.map((shortcut) => (
+          {canAccess?.("leads") && vertical.leadShortcuts.map((shortcut) => (
             <button
               key={shortcut.id}
               className="panel-shortcut"
@@ -252,12 +260,16 @@ export default function Overview({ vertical, onNavigate, onSessionExpired }) {
               {shortcut.label}
             </button>
           ))}
-          <button className="panel-shortcut" type="button" onClick={() => onNavigate("agenda", {})}>
-            Agenda do dia
-          </button>
-          <button className="panel-shortcut" type="button" onClick={() => onNavigate("indicadores", {})}>
-            Indicadores
-          </button>
+          {canAccess?.("agenda") && (
+            <button className="panel-shortcut" type="button" onClick={() => onNavigate("agenda", {})}>
+              Agenda do dia
+            </button>
+          )}
+          {canAccess?.("indicadores") && (
+            <button className="panel-shortcut" type="button" onClick={() => onNavigate("indicadores", {})}>
+              Indicadores
+            </button>
+          )}
           <button className="panel-shortcut" type="button" onClick={reload}>
             Atualizar dados
           </button>

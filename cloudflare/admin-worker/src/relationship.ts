@@ -114,6 +114,15 @@ async function validateOwner(
     FROM admin_memberships m
     JOIN admin_identities i ON i.id = m.identity_id
     WHERE m.tenant_id = ? AND m.identity_id = ?
+      AND (
+        m.role = 'owner'
+        OR EXISTS (
+          SELECT 1 FROM admin_membership_permissions permission
+          WHERE permission.tenant_id = m.tenant_id
+            AND permission.identity_id = m.identity_id
+            AND permission.module IN ('leads', 'follow_ups')
+        )
+      )
   `).bind(ctx.tenantId, identityId).first<{ identity_active: number; membership_active: number }>();
   if (!row) throw new HttpError(404, "NOT_FOUND", "Responsável não encontrado");
   if (row.identity_active !== 1 || row.membership_active !== 1) {
@@ -179,6 +188,8 @@ interface ClientRow {
   last_contact_at: string;
   created_at: string;
   updated_at: string;
+  archived_at: string | null;
+  archived_by_identity_id: string | null;
   appointment_count?: number;
   lead_count?: number;
   follow_up_count?: number;
@@ -198,6 +209,9 @@ function clientPayload(row: ClientRow) {
     lastContactAt: row.last_contact_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    archivedAt: row.archived_at,
+    archivedByIdentityId: row.archived_by_identity_id,
+    archived: row.archived_at !== null,
     ...(row.appointment_count === undefined ? {} : {
       _count: {
         appointments: row.appointment_count,
@@ -221,11 +235,20 @@ async function listClients(ctx: AdminRequestContext): Promise<Response> {
   const search = sanitizeText(ctx.url.searchParams.get("search"), "Busca", 1, 120, false);
   const createdFrom = boundary(ctx.url.searchParams.get("createdFrom"));
   const createdTo = boundary(ctx.url.searchParams.get("createdTo"), true);
+  const status = requireEnum(
+    ctx.url.searchParams.get("status") ?? "active",
+    ["active", "archived", "all"] as const,
+    "Status"
+  );
   const like = search ? `%${search}%` : null;
+  const archiveFilter = status === "active"
+    ? "AND archived_at IS NULL"
+    : status === "archived" ? "AND archived_at IS NOT NULL" : "";
 
   const filter = `
     FROM clients
     WHERE tenant_id = ?
+      ${archiveFilter}
       AND (? IS NULL OR name LIKE ? OR phone LIKE ? OR email LIKE ?)
       AND (? IS NULL OR created_at >= ?)
       AND (? IS NULL OR created_at <= ?)
@@ -246,6 +269,136 @@ async function listClients(ctx: AdminRequestContext): Promise<Response> {
   ]);
 
   return paginated(ctx.url, rows.results.map(clientPayload), count?.total ?? 0);
+}
+
+interface ClientDependencies {
+  appointments: number;
+  leads: number;
+  followUps: number;
+  history: number;
+}
+
+async function clientDependencies(
+  ctx: AdminRequestContext,
+  id: string
+): Promise<ClientDependencies> {
+  const [appointments, leads, followUps, history] = await Promise.all([
+    ctx.db.prepare(`
+      SELECT COUNT(*) AS total FROM appointments
+      WHERE tenant_id = ? AND client_id = ?
+    `).bind(ctx.tenantId, id).first<{ total: number }>(),
+    ctx.db.prepare(`
+      SELECT COUNT(*) AS total FROM leads
+      WHERE tenant_id = ? AND client_id = ?
+    `).bind(ctx.tenantId, id).first<{ total: number }>(),
+    ctx.db.prepare(`
+      SELECT COUNT(*) AS total FROM follow_ups
+      WHERE tenant_id = ? AND client_id = ?
+    `).bind(ctx.tenantId, id).first<{ total: number }>(),
+    ctx.db.prepare(`
+      SELECT COUNT(*) AS total FROM relationship_history_events
+      WHERE tenant_id = ? AND client_id = ?
+    `).bind(ctx.tenantId, id).first<{ total: number }>()
+  ]);
+  return {
+    appointments: appointments?.total ?? 0,
+    leads: leads?.total ?? 0,
+    followUps: followUps?.total ?? 0,
+    history: history?.total ?? 0
+  };
+}
+
+function hasClientDependencies(dependencies: ClientDependencies): boolean {
+  return Object.values(dependencies).some((total) => total > 0);
+}
+
+function clientDeleteConflict(dependencies: ClientDependencies): Response {
+  return json({
+    error: {
+      code: "CONFLICT",
+      message: "Cliente possui agendamentos ou histórico e não pode ser excluído",
+      dependencies
+    }
+  }, { status: 409 });
+}
+
+async function getClientDependencies(ctx: AdminRequestContext): Promise<Response> {
+  const id = requirePublicId(ctx.params[0], "ID");
+  await loadClient(ctx, id);
+  const dependencies = await clientDependencies(ctx, id);
+  return json({ dependencies, canDelete: !hasClientDependencies(dependencies) });
+}
+
+async function archiveClient(ctx: AdminRequestContext): Promise<Response> {
+  const id = requirePublicId(ctx.params[0], "ID");
+  const current = await loadClient(ctx, id);
+  if (current.archived_at !== null) return json(clientPayload(current));
+  const now = new Date().toISOString();
+  await ctx.db.prepare(`
+    UPDATE clients
+    SET archived_at = ?, archived_by_identity_id = ?, updated_at = ?
+    WHERE tenant_id = ? AND id = ? AND archived_at IS NULL
+  `).bind(now, ctx.admin.identity.id, now, ctx.tenantId, id).run();
+  return json(clientPayload(await loadClient(ctx, id)));
+}
+
+async function restoreClient(ctx: AdminRequestContext): Promise<Response> {
+  const id = requirePublicId(ctx.params[0], "ID");
+  const current = await loadClient(ctx, id);
+  if (current.archived_at === null) return json(clientPayload(current));
+  const now = new Date().toISOString();
+  await ctx.db.prepare(`
+    UPDATE clients
+    SET archived_at = NULL, archived_by_identity_id = NULL, updated_at = ?
+    WHERE tenant_id = ? AND id = ? AND archived_at IS NOT NULL
+  `).bind(now, ctx.tenantId, id).run();
+  return json(clientPayload(await loadClient(ctx, id)));
+}
+
+async function deleteClient(ctx: AdminRequestContext): Promise<Response> {
+  const id = requirePublicId(ctx.params[0], "ID");
+  await loadClient(ctx, id);
+  const dependencies = await clientDependencies(ctx, id);
+  if (hasClientDependencies(dependencies)) return clientDeleteConflict(dependencies);
+
+  const result = await ctx.db.prepare(`
+    DELETE FROM clients
+    WHERE tenant_id = ? AND id = ?
+      AND NOT EXISTS (
+        SELECT 1 FROM appointments
+        WHERE tenant_id = ? AND client_id = ?
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM leads
+        WHERE tenant_id = ? AND client_id = ?
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM follow_ups
+        WHERE tenant_id = ? AND client_id = ?
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM relationship_history_events
+        WHERE tenant_id = ? AND client_id = ?
+      )
+  `).bind(
+    ctx.tenantId,
+    id,
+    ctx.tenantId,
+    id,
+    ctx.tenantId,
+    id,
+    ctx.tenantId,
+    id,
+    ctx.tenantId,
+    id
+  ).run();
+
+  if ((result.meta.changes ?? 0) === 0) {
+    const latest = await clientDependencies(ctx, id);
+    if (hasClientDependencies(latest)) return clientDeleteConflict(latest);
+    notFoundError();
+  }
+  return new Response(null, { status: 204 });
 }
 
 async function getClient(ctx: AdminRequestContext): Promise<Response> {
@@ -1531,27 +1684,31 @@ async function closeFollowUp(ctx: AdminRequestContext, status: "COMPLETED" | "CA
 }
 
 export const relationshipRoutes: AdminRoute[] = [
-  route("GET", /^clients$/, listClients),
-  route("GET", /^clients\/([^/]+)$/, getClient),
-  route("PATCH", /^clients\/([^/]+)$/, updateClient),
-  route("POST", /^clients\/([^/]+)\/notes$/, addClientNote),
-  route("GET", /^clients\/([^/]+)\/history$/, listClientHistory),
+  route("GET", /^clients$/, "clients", listClients),
+  route("GET", /^clients\/([^/]+)\/dependencies$/, "clients", getClientDependencies),
+  route("PATCH", /^clients\/([^/]+)\/archive$/, "clients", archiveClient),
+  route("PATCH", /^clients\/([^/]+)\/restore$/, "clients", restoreClient),
+  route("DELETE", /^clients\/([^/]+)$/, "clients", deleteClient),
+  route("GET", /^clients\/([^/]+)$/, "clients", getClient),
+  route("PATCH", /^clients\/([^/]+)$/, "clients", updateClient),
+  route("POST", /^clients\/([^/]+)\/notes$/, "clients", addClientNote),
+  route("GET", /^clients\/([^/]+)\/history$/, "clients", listClientHistory),
 
-  route("GET", /^leads$/, listLeads),
-  route("POST", /^leads$/, createLead),
-  route("GET", /^leads\/([^/]+)$/, getLead),
-  route("PATCH", /^leads\/([^/]+)\/status$/, updateLeadStatus),
-  route("PATCH", /^leads\/([^/]+)\/priority$/, updateLeadPriority),
-  route("PATCH", /^leads\/([^/]+)\/owner$/, assignLeadOwner),
-  route("PATCH", /^leads\/([^/]+)\/qualification$/, updateLeadQualification),
-  route("POST", /^leads\/([^/]+)\/notes$/, addLeadNote),
-  route("POST", /^leads\/([^/]+)\/lost$/, loseLead),
-  route("POST", /^leads\/([^/]+)\/convert$/, convertLead),
-  route("POST", /^leads\/([^/]+)\/appointment$/, linkLeadAppointment),
+  route("GET", /^leads$/, "leads", listLeads),
+  route("POST", /^leads$/, "leads", createLead),
+  route("GET", /^leads\/([^/]+)$/, "leads", getLead),
+  route("PATCH", /^leads\/([^/]+)\/status$/, "leads", updateLeadStatus),
+  route("PATCH", /^leads\/([^/]+)\/priority$/, "leads", updateLeadPriority),
+  route("PATCH", /^leads\/([^/]+)\/owner$/, "leads", assignLeadOwner),
+  route("PATCH", /^leads\/([^/]+)\/qualification$/, "leads", updateLeadQualification),
+  route("POST", /^leads\/([^/]+)\/notes$/, "leads", addLeadNote),
+  route("POST", /^leads\/([^/]+)\/lost$/, "leads", loseLead),
+  route("POST", /^leads\/([^/]+)\/convert$/, "leads", convertLead),
+  route("POST", /^leads\/([^/]+)\/appointment$/, "leads", linkLeadAppointment),
 
-  route("GET", /^follow-ups$/, listFollowUps),
-  route("POST", /^follow-ups$/, createFollowUp),
-  route("POST", /^follow-ups\/([^/]+)\/complete$/, (ctx) => closeFollowUp(ctx, "COMPLETED")),
-  route("POST", /^follow-ups\/([^/]+)\/cancel$/, (ctx) => closeFollowUp(ctx, "CANCELLED")),
-  route("PATCH", /^follow-ups\/([^/]+)\/owner$/, assignFollowUpOwner)
+  route("GET", /^follow-ups$/, "follow_ups", listFollowUps),
+  route("POST", /^follow-ups$/, "follow_ups", createFollowUp),
+  route("POST", /^follow-ups\/([^/]+)\/complete$/, "follow_ups", (ctx) => closeFollowUp(ctx, "COMPLETED")),
+  route("POST", /^follow-ups\/([^/]+)\/cancel$/, "follow_ups", (ctx) => closeFollowUp(ctx, "CANCELLED")),
+  route("PATCH", /^follow-ups\/([^/]+)\/owner$/, "follow_ups", assignFollowUpOwner)
 ];

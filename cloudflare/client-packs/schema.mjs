@@ -120,7 +120,7 @@ function validateContent(c, content) {
     c.str("content.hero.primaryCta", hero.primaryCta, { max: 60 });
     c.str("content.hero.secondaryCta", hero.secondaryCta, { max: 60 });
     c.strArray("content.hero.highlights", hero.highlights);
-    c.httpsUrl("content.hero.image", hero.image);
+    c.asset("content.hero.image", hero.image);
     c.str("content.hero.imageAlt", hero.imageAlt);
     c.str("content.hero.badge", hero.badge);
   }
@@ -146,7 +146,7 @@ function validateContent(c, content) {
     c.str("content.space.eyebrow", space.eyebrow);
     c.str("content.space.title", space.title);
     c.strArray("content.space.description", space.description);
-    c.httpsUrl("content.space.image", space.image);
+    c.asset("content.space.image", space.image);
     c.str("content.space.imageAlt", space.imageAlt);
   }
   const copy = content.copy;

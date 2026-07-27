@@ -48,15 +48,15 @@ beforeAll(async () => {
     `).bind(EMAIL_BOTH),
     env.DB.prepare(`
       INSERT INTO admin_memberships (identity_id, tenant_id, role, active)
-      VALUES ('identity-studio', 'studio-cut', 'ADMIN', 1)
+      VALUES ('identity-studio', 'studio-cut', 'owner', 1)
     `),
     env.DB.prepare(`
       INSERT INTO admin_memberships (identity_id, tenant_id, role, active)
-      VALUES ('identity-both', 'studio-cut', 'ADMIN', 1)
+      VALUES ('identity-both', 'studio-cut', 'owner', 1)
     `),
     env.DB.prepare(`
       INSERT INTO admin_memberships (identity_id, tenant_id, role, active)
-      VALUES ('identity-both', 'lumiere', 'ADMIN', 1)
+      VALUES ('identity-both', 'lumiere', 'owner', 1)
     `)
   ]);
 });
@@ -105,7 +105,7 @@ describe("AdminIdentity e AdminMembership", () => {
     const data = await studio.json() as { tenant: { slug: string }; role: string };
 
     expect(studio.status).toBe(200);
-    expect(data).toMatchObject({ tenant: { slug: "studio-cut" }, role: "ADMIN" });
+    expect(data).toMatchObject({ tenant: { slug: "studio-cut" }, role: "owner" });
     expect(lumiere.status).toBe(403);
   });
 

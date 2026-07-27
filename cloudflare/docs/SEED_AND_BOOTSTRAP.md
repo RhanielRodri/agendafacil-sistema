@@ -44,7 +44,7 @@ INSERT INTO admin_identities (id, email, active, created_at, updated_at)
 VALUES (:identity_id, :normalized_email, 1, :now, :now);
 
 INSERT INTO admin_memberships (identity_id, tenant_id, role, active, created_at, updated_at)
-VALUES (:identity_id, :tenant_id, 'ADMIN', 1, :now, :now);
+VALUES (:identity_id, :tenant_id, 'owner', 1, :now, :now);
 ```
 
 Nunca colocar valores reais em migrations, seed, `.dev.vars`, exemplos, comandos versionados ou relatórios.

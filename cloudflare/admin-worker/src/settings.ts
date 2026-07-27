@@ -520,7 +520,7 @@ async function getMetrics(ctx: AdminRequestContext): Promise<Response> {
 }
 
 export const settingsRoutes: AdminRoute[] = [
-  route("GET", /^settings$/, getSettings),
-  route("PATCH", /^settings$/, updateSettings),
-  route("GET", /^metrics$/, getMetrics)
+  route("GET", /^settings$/, "settings", getSettings),
+  route("PATCH", /^settings$/, "settings", updateSettings),
+  route("GET", /^metrics$/, "metrics", getMetrics)
 ];

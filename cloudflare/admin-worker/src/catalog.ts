@@ -602,18 +602,18 @@ async function getProfessionalDependencies(ctx: AdminRequestContext): Promise<Re
 }
 
 export const catalogRoutes: AdminRoute[] = [
-  route("GET", /^services$/, listServices),
-  route("POST", /^services$/, createService),
-  route("PATCH", /^services\/order$/, reorderServices),
-  route("GET", /^services\/([^/]+)\/dependencies$/, getServiceDependencies),
-  route("PATCH", /^services\/([^/]+)\/active$/, setServiceActive),
-  route("PATCH", /^services\/([^/]+)$/, updateService),
+  route("GET", /^services$/, "services", listServices),
+  route("POST", /^services$/, "services", createService),
+  route("PATCH", /^services\/order$/, "services", reorderServices),
+  route("GET", /^services\/([^/]+)\/dependencies$/, "services", getServiceDependencies),
+  route("PATCH", /^services\/([^/]+)\/active$/, "services", setServiceActive),
+  route("PATCH", /^services\/([^/]+)$/, "services", updateService),
 
-  route("GET", /^professionals$/, listProfessionals),
-  route("POST", /^professionals$/, createProfessional),
-  route("PATCH", /^professionals\/order$/, reorderProfessionals),
-  route("GET", /^professionals\/([^/]+)\/dependencies$/, getProfessionalDependencies),
-  route("PUT", /^professionals\/([^/]+)\/services$/, setProfessionalServices),
-  route("PATCH", /^professionals\/([^/]+)\/active$/, setProfessionalActive),
-  route("PATCH", /^professionals\/([^/]+)$/, updateProfessional)
+  route("GET", /^professionals$/, "professionals", listProfessionals),
+  route("POST", /^professionals$/, "professionals", createProfessional),
+  route("PATCH", /^professionals\/order$/, "professionals", reorderProfessionals),
+  route("GET", /^professionals\/([^/]+)\/dependencies$/, "professionals", getProfessionalDependencies),
+  route("PUT", /^professionals\/([^/]+)\/services$/, "professionals", setProfessionalServices),
+  route("PATCH", /^professionals\/([^/]+)\/active$/, "professionals", setProfessionalActive),
+  route("PATCH", /^professionals\/([^/]+)$/, "professionals", updateProfessional)
 ];

@@ -99,7 +99,7 @@ function qualificationForm(lead, tenantId) {
   };
 }
 
-export default function Leads({ tenantId, vertical, services, professionals, users, params, onNavigate, onSessionExpired }) {
+export default function Leads({ tenantId, vertical, services, professionals, users, params, onNavigate, onSessionExpired, canAccess }) {
   const [view, setView] = useState(params.leadId ? "list" : "pipeline");
   const [filters, setFilters] = useState(() => baseFilters(params));
   const [draft, setDraft] = useState(() => baseFilters(params));
@@ -383,9 +383,11 @@ export default function Leads({ tenantId, vertical, services, professionals, use
                   </button>
                 ))}
                 <button className="panel-btn-primary" type="button" onClick={() => openLead(lead.id)}>Ficha</button>
-                <button className="panel-btn" type="button" onClick={() => onNavigate("clientes", { clientId: lead.clientId })}>
-                  Cliente
-                </button>
+                {canAccess?.("clientes") && (
+                  <button className="panel-btn" type="button" onClick={() => onNavigate("clientes", { clientId: lead.clientId })}>
+                    Cliente
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -426,9 +428,11 @@ export default function Leads({ tenantId, vertical, services, professionals, use
               </p>
             </div>
             <div className="panel-row-actions">
-              <button className="panel-btn" type="button" onClick={() => onNavigate("clientes", { clientId: selected.clientId })}>
-                Abrir cliente
-              </button>
+              {canAccess?.("clientes") && (
+                <button className="panel-btn" type="button" onClick={() => onNavigate("clientes", { clientId: selected.clientId })}>
+                  Abrir cliente
+                </button>
+              )}
               <button className="panel-btn" type="button" onClick={() => { setSelected(null); setDetailState("idle"); }}>
                 Fechar
               </button>

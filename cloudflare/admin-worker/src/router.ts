@@ -1,4 +1,5 @@
 import type { AdminContext, AdminEnv } from "../../shared/src/types";
+import type { AdminModule } from "../../shared/src/rbac";
 
 export interface AdminRequestContext {
   request: Request;
@@ -16,11 +17,17 @@ export type AdminHandler = (ctx: AdminRequestContext) => Promise<Response>;
 export interface AdminRoute {
   method: string;
   pattern: RegExp;
+  module: AdminModule | null;
   handler: AdminHandler;
 }
 
-export function route(method: string, pattern: RegExp, handler: AdminHandler): AdminRoute {
-  return { method, pattern, handler };
+export function route(
+  method: string,
+  pattern: RegExp,
+  module: AdminModule | null,
+  handler: AdminHandler
+): AdminRoute {
+  return { method, pattern, module, handler };
 }
 
 export function matchRoute(

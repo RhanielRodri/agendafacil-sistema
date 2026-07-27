@@ -28,7 +28,13 @@ export const EXPORT_TABLES = [
 
 // Tabelas que jamais entram num export/backup: tokens de acesso e identidade/
 // membership do Access. Segredos ficam fora do artefato por princípio.
-export const EXCLUDED_TABLES = ["appointment_access_tokens", "admin_identities", "admin_memberships"];
+export const EXCLUDED_TABLES = [
+  "appointment_access_tokens",
+  "admin_identities",
+  "admin_memberships",
+  "admin_membership_permissions",
+  "admin_access_audit_events"
+];
 
 // Campos com dado pessoal, mascarados quando o export pede.
 const MASK_FIELDS = new Set([

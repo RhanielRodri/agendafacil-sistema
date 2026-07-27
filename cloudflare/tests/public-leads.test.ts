@@ -49,7 +49,7 @@ beforeAll(async () => {
     `),
     env.DB.prepare(`
       INSERT INTO admin_memberships (identity_id, tenant_id, role, active)
-      VALUES ('cf1d-owner', 'studio-cut', 'ADMIN', 1)
+      VALUES ('cf1d-owner', 'studio-cut', 'owner', 1)
       ON CONFLICT(identity_id, tenant_id) DO NOTHING
     `)
   ]);

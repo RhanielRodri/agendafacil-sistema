@@ -45,6 +45,16 @@ Não portadas por decisão de escopo: `P/first-availability`, sem consumidor enc
 | GET | `/api/admin/me` | administrativa | sessão | cookie local | `AdminSession`, `AdminUser` | atualiza uso de sessão | identidade/tenant | `Admin` | `A/context` via JWT + identity/membership |
 | GET | `/api/admin/users` | administrativa auxiliar | sessão | cookie local | `AdminUser` | nenhum | admins ativos do tenant | `Admin`, owners de leads/follow-ups | `A/identities` com recorte de memberships |
 
+### Equipe e acessos no Worker
+
+| Método | Destino | Permissão | Efeito |
+|---|---|---|---|
+| GET | `A/team` | `team` + role `owner` | lista memberships, roles, permissões, vínculo profissional e último acesso |
+| POST | `A/team` | `team` + role `owner` | cria identidade quando necessária, membership tenant-scoped, permissões e auditoria |
+| PATCH | `A/team/:identityId` | `team` + role `owner` | altera role, vínculo profissional e permissões com auditoria |
+| PATCH | `A/team/:identityId/active` | `team` + role `owner` | ativa/desativa a membership sem alterar a identidade global |
+| GET | `A/team/audit` | `team` + role `owner` | lista mudanças de acesso do tenant |
+
 ## Agenda e agendamentos administrativos
 
 | Método | Caminho atual | Classe | Tenant atual | Autenticação | Tabelas lidas/escritas | Efeito de escrita | Resposta esperada | Consumidor atual | Destino |
@@ -66,6 +76,10 @@ Não portadas por decisão de escopo: `P/first-availability`, sem consumidor enc
 | PATCH | `/api/admin/clients/:id` | administrativa | sessão | cookie local | `Client`, `RelationshipHistoryEvent` | atualiza dados e histórico | cliente atualizado | API disponível; UI parcial | `A/clients/:id` |
 | POST | `/api/admin/clients/:id/notes` | administrativa | sessão | cookie local | `Client`, `RelationshipHistoryEvent` | adiciona nota de histórico | 201 evento | `Clients` | `A/clients/:id/notes` |
 | GET | `/api/admin/clients/:id/history` | administrativa | sessão | cookie local | `Client`, `RelationshipHistoryEvent` | nenhum | histórico cronológico | `Clients` | `A/clients/:id/history` |
+| GET | — | administrativa | rota + membership + permissão `clients` | `Client` + dependências | nenhum | elegibilidade e contagens | fase de frontend posterior | `A/clients/:id/dependencies` |
+| PATCH | — | administrativa | rota + membership + permissão `clients` | `Client` | arquiva | cliente arquivado | fase de frontend posterior | `A/clients/:id/archive` |
+| PATCH | — | administrativa | rota + membership + permissão `clients` | `Client` | restaura | cliente ativo | fase de frontend posterior | `A/clients/:id/restore` |
+| DELETE | — | administrativa | rota + membership + permissão `clients` | `Client` + dependências | exclui somente sem histórico | 204 ou 409 com dependências | fase de frontend posterior | `A/clients/:id` |
 
 ## Leads
 

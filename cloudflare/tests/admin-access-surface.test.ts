@@ -22,8 +22,8 @@ beforeAll(async () => {
   await env.DB.batch([
     env.DB.prepare("INSERT INTO admin_identities (id, email, name, active) VALUES ('admin-identity-ambos', ?, 'Operadora das duas', 1)")
       .bind(BOTH_EMAIL),
-    env.DB.prepare("INSERT INTO admin_memberships (identity_id, tenant_id, role, active) VALUES ('admin-identity-ambos', 'studio-cut', 'ADMIN', 1)"),
-    env.DB.prepare("INSERT INTO admin_memberships (identity_id, tenant_id, role, active) VALUES ('admin-identity-ambos', 'lumiere', 'ADMIN', 1)"),
+    env.DB.prepare("INSERT INTO admin_memberships (identity_id, tenant_id, role, active) VALUES ('admin-identity-ambos', 'studio-cut', 'owner', 1)"),
+    env.DB.prepare("INSERT INTO admin_memberships (identity_id, tenant_id, role, active) VALUES ('admin-identity-ambos', 'lumiere', 'owner', 1)"),
     env.DB.prepare(`
       INSERT INTO clients (id, tenant_id, name, phone, normalized_phone)
       VALUES ('csv-client', 'studio-cut', 'Cliente "CSV"', '(27) 97777-1000', '27977771000')
@@ -73,7 +73,7 @@ describe("contexto de identidade sem tenant", () => {
     expect(context.tenant.slug).toBe("studio-cut");
     expect(context.identity.id).toBe(IDENTITY_STUDIO);
     expect(context.memberships).toEqual([
-      { tenantId: "studio-cut", tenantName: expect.any(String), role: "ADMIN" }
+      { tenantId: "studio-cut", tenantName: expect.any(String), role: "owner", professionalId: null }
     ]);
   });
 

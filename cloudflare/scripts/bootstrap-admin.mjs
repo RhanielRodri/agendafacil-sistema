@@ -54,8 +54,8 @@ for (const entry of entries) {
   for (const slug of slugs) {
     statements.push(
       `INSERT INTO admin_memberships (identity_id, tenant_id, role, active)\n` +
-      `SELECT id, ${sqlText(slug)}, 'ADMIN', 1 FROM admin_identities WHERE email = ${sqlText(email)}\n` +
-      `ON CONFLICT(identity_id, tenant_id) DO UPDATE SET active = 1, role = 'ADMIN', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now');`
+      `SELECT id, ${sqlText(slug)}, 'owner', 1 FROM admin_identities WHERE email = ${sqlText(email)}\n` +
+      `ON CONFLICT(identity_id, tenant_id) DO UPDATE SET active = 1, role = 'owner', professional_id = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now');`
     );
   }
 }

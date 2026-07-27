@@ -56,7 +56,9 @@ describe("schema e seed D1", () => {
       "public_rate_limits",
       "tenant_settings",
       "admin_identities",
-      "admin_memberships"
+      "admin_memberships",
+      "admin_membership_permissions",
+      "admin_access_audit_events"
     ]));
   });
 

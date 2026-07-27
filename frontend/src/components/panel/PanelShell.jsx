@@ -9,7 +9,7 @@ export const moduleGroups = [
   { id: "estrutura", label: "Estrutura", modules: ["servicos", "profissionais"] },
   { id: "disponibilidade", label: "Disponibilidade", modules: ["disponibilidade", "bloqueios"] },
   { id: "analise", label: "Análise", modules: ["indicadores"] },
-  { id: "sistema", label: "Sistema", modules: ["configuracoes"] }
+  { id: "sistema", label: "Sistema", modules: ["configuracoes", "equipe"] }
 ];
 
 // Ícones lineares finos, um por módulo — a referência é icônica, não só texto.
@@ -25,7 +25,8 @@ const ICONS = {
   disponibilidade: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7v5.2l3.4 2" /></>,
   bloqueios: <><circle cx="12" cy="12" r="8.5" /><path d="M6 6l12 12" /></>,
   indicadores: <><path d="M4 20V4" /><path d="M4 20h16" /><rect x="7.5" y="12" width="3" height="5" /><rect x="13.5" y="8" width="3" height="9" /></>,
-  configuracoes: <><circle cx="12" cy="12" r="3" /><path d="M12 2.5v2.6M12 18.9v2.6M4.2 7.2l2.2 1.3M17.6 15.5l2.2 1.3M4.2 16.8l2.2-1.3M17.6 8.5l2.2-1.3" /></>
+  configuracoes: <><circle cx="12" cy="12" r="3" /><path d="M12 2.5v2.6M12 18.9v2.6M4.2 7.2l2.2 1.3M17.6 15.5l2.2 1.3M4.2 16.8l2.2-1.3M17.6 8.5l2.2-1.3" /></>,
+  equipe: <><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M2.5 20c0-3.2 2.5-5.5 5.5-5.5s5.5 2.3 5.5 5.5M14 15.5c.8-.7 1.8-1 3-1 2.5 0 4.5 1.9 4.5 4.5" /></>
 };
 
 function ModuleIcon({ id }) {
@@ -39,29 +40,33 @@ function ModuleIcon({ id }) {
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
-function NavGroups({ labels, current, onSelect, scope }) {
+function NavGroups({ labels, current, onSelect, scope, allowedModules }) {
   return (
     <>
-      {moduleGroups.map((group) => (
-        <div className="panel-nav-group" key={group.id}>
-          <p className="panel-nav-group-label" id={`panel-nav-${scope}-${group.id}`}>{group.label}</p>
-          <ul className="panel-nav-list" aria-labelledby={`panel-nav-${scope}-${group.id}`}>
-            {group.modules.map((id) => (
-              <li key={id}>
-                <button
-                  type="button"
-                  className="panel-nav-item"
-                  aria-current={current === id ? "page" : undefined}
-                  onClick={() => onSelect(id)}
-                >
-                  <ModuleIcon id={id} />
-                  <span>{labels[id]}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      {moduleGroups.map((group) => {
+        const modules = group.modules.filter((id) => !allowedModules || allowedModules.includes(id));
+        if (!modules.length) return null;
+        return (
+          <div className="panel-nav-group" key={group.id}>
+            <p className="panel-nav-group-label" id={`panel-nav-${scope}-${group.id}`}>{group.label}</p>
+            <ul className="panel-nav-list" aria-labelledby={`panel-nav-${scope}-${group.id}`}>
+              {modules.map((id) => (
+                <li key={id}>
+                  <button
+                    type="button"
+                    className="panel-nav-item"
+                    aria-current={current === id ? "page" : undefined}
+                    onClick={() => onSelect(id)}
+                  >
+                    <ModuleIcon id={id} />
+                    <span>{labels[id]}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
     </>
   );
 }
@@ -85,7 +90,7 @@ function todayLabel() {
 export default function PanelShell({
   brand, brandMark, subtitle, symbol = false, breadcrumbRoot = "Admin",
   currentLabel, pageSubtitle, profileName, profileMeta, profileActions,
-  labels, current, onSelect, children
+  labels, current, onSelect, allowedModules, children
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerRef = useRef(null);
@@ -150,7 +155,7 @@ export default function PanelShell({
       <aside className="panel-sidebar" aria-label="Módulos do painel">
         <SidebarLogo brand={brand} brandMark={brandMark} subtitle={subtitle} symbol={symbol} />
         <nav className="panel-sidebar-nav" aria-label="Navegação do painel">
-          <NavGroups labels={labels} current={current} onSelect={select} scope="sidebar" />
+          <NavGroups labels={labels} current={current} onSelect={select} scope="sidebar" allowedModules={allowedModules} />
         </nav>
         {profileFooter}
       </aside>
@@ -179,7 +184,7 @@ export default function PanelShell({
           Fechar
         </button>
         <div className="panel-sidebar-nav">
-          <NavGroups labels={labels} current={current} onSelect={select} scope="drawer" />
+          <NavGroups labels={labels} current={current} onSelect={select} scope="drawer" allowedModules={allowedModules} />
         </div>
         {profileFooter}
       </nav>

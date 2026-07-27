@@ -13,7 +13,7 @@ beforeAll(async () => {
   await setupAdminAccess();
   await env.DB.batch([
     env.DB.prepare("INSERT INTO admin_identities (id, email, name, active) VALUES ('identity-inactive', 'inativo@access.invalid', 'Inativo', 0)"),
-    env.DB.prepare("INSERT INTO admin_memberships (identity_id, tenant_id, role, active) VALUES ('identity-inactive', 'studio-cut', 'ADMIN', 1)")
+    env.DB.prepare("INSERT INTO admin_memberships (identity_id, tenant_id, role, active) VALUES ('identity-inactive', 'studio-cut', 'owner', 1)")
   ]);
 });
 
@@ -61,7 +61,7 @@ describe("identidade administrativa", () => {
       { email: EMAIL_LUMIERE }
     );
     expect(studio.terminology.professionalPlural).toBe("barbeiros");
-    expect(studio.role).toBe("ADMIN");
+    expect(studio.role).toBe("owner");
     expect(lumiere.terminology.professionalPlural).toBe("profissionais");
   });
 

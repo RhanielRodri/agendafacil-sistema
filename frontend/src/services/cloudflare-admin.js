@@ -66,6 +66,14 @@ export const cloudflareAdminApi = {
   updateClient: (id, payload) => send(`${adminBase()}/clients/${encodeURIComponent(id)}`, "PATCH", payload),
   addClientNote: (id, note) => send(`${adminBase()}/clients/${encodeURIComponent(id)}/notes`, "POST", { note }),
   getClientHistory: (id) => request(`${adminBase()}/clients/${encodeURIComponent(id)}/history`),
+  getClientDependencies: (id) =>
+    request(`${adminBase()}/clients/${encodeURIComponent(id)}/dependencies`),
+  archiveClient: (id) =>
+    send(`${adminBase()}/clients/${encodeURIComponent(id)}/archive`, "PATCH", {}),
+  restoreClient: (id) =>
+    send(`${adminBase()}/clients/${encodeURIComponent(id)}/restore`, "PATCH", {}),
+  deleteClient: (id) =>
+    request(`${adminBase()}/clients/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
   getLeads: (filters = {}) => request(`${adminBase()}/leads${queryString(filters)}`),
   getLead: (id) => request(`${adminBase()}/leads/${encodeURIComponent(id)}`),
@@ -100,7 +108,16 @@ export const cloudflareAdminApi = {
 
   getAdminSettings: () => request(`${adminBase()}/settings`),
   updateAdminSettings: (payload) => send(`${adminBase()}/settings`, "PATCH", payload),
-  getMetrics: (filters = {}) => request(`${adminBase()}/metrics${queryString(filters)}`)
+  getMetrics: (filters = {}) => request(`${adminBase()}/metrics${queryString(filters)}`),
+
+  getTeam: () => request(`${adminBase()}/team`),
+  createTeamMember: (payload) => send(`${adminBase()}/team`, "POST", payload),
+  updateTeamMember: (id, payload) =>
+    send(`${adminBase()}/team/${encodeURIComponent(id)}`, "PATCH", payload),
+  setTeamMemberActive: (id, active) =>
+    send(`${adminBase()}/team/${encodeURIComponent(id)}/active`, "PATCH", { active }),
+  getTeamAudit: (filters = {}) =>
+    request(`${adminBase()}/team/audit${queryString(filters)}`)
 };
 
 export default cloudflareAdminApi;

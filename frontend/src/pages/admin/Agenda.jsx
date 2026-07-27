@@ -26,9 +26,12 @@ const historyLabels = {
   STATUS_CHANGED: "Estado registrado"
 };
 
-export default function Agenda({ professionals, params, onNavigate, onSessionExpired }) {
+export default function Agenda({ professionals, params, onNavigate, onSessionExpired, rbac, canAccess }) {
+  const ownAgenda = rbac?.role === "professional";
   const [date, setDate] = useState(params.date || todayIso());
-  const [professionalId, setProfessionalId] = useState(params.professionalId || "");
+  const [professionalId, setProfessionalId] = useState(
+    ownAgenda ? rbac.professionalId || "" : params.professionalId || ""
+  );
   const [status, setStatus] = useState(params.status || "");
   const [message, setMessage] = useState(null);
   const [busyId, setBusyId] = useState(null);
@@ -79,7 +82,7 @@ export default function Agenda({ professionals, params, onNavigate, onSessionExp
     }
   }
 
-  const hasFilters = Boolean(professionalId || status);
+  const hasFilters = Boolean((!ownAgenda && professionalId) || status);
 
   return (
     <>
@@ -97,13 +100,17 @@ export default function Agenda({ professionals, params, onNavigate, onSessionExp
           <button className="panel-btn" type="button" onClick={() => setDate(todayIso())}>Hoje</button>
         )}
 
-        <label className="sr-only" htmlFor="agenda-professional">Profissional</label>
-        <select id="agenda-professional" value={professionalId} onChange={(event) => setProfessionalId(event.target.value)}>
-          <option value="">Todos os profissionais</option>
-          {professionals.map((professional) => (
-            <option key={professional.id} value={professional.id}>{professional.name}</option>
-          ))}
-        </select>
+        {!ownAgenda && (
+          <>
+            <label className="sr-only" htmlFor="agenda-professional">Profissional</label>
+            <select id="agenda-professional" value={professionalId} onChange={(event) => setProfessionalId(event.target.value)}>
+              <option value="">Todos os profissionais</option>
+              {professionals.map((professional) => (
+                <option key={professional.id} value={professional.id}>{professional.name}</option>
+              ))}
+            </select>
+          </>
+        )}
 
         <label className="sr-only" htmlFor="agenda-status">Status</label>
         <select id="agenda-status" value={status} onChange={(event) => setStatus(event.target.value)}>
@@ -114,7 +121,10 @@ export default function Agenda({ professionals, params, onNavigate, onSessionExp
         </select>
 
         {hasFilters && (
-          <button className="panel-btn" type="button" onClick={() => { setProfessionalId(""); setStatus(""); }}>
+          <button className="panel-btn" type="button" onClick={() => {
+            setProfessionalId(ownAgenda ? rbac.professionalId || "" : "");
+            setStatus("");
+          }}>
             Limpar filtros
           </button>
         )}
@@ -181,7 +191,10 @@ export default function Agenda({ professionals, params, onNavigate, onSessionExp
               <PanelEmpty
                 title={hasFilters ? "Sem resultados para o filtro" : "Nenhum atendimento neste dia"}
                 actionLabel={hasFilters ? "Limpar filtros" : undefined}
-                onAction={hasFilters ? () => { setProfessionalId(""); setStatus(""); } : undefined}
+                onAction={hasFilters ? () => {
+                  setProfessionalId(ownAgenda ? rbac.professionalId || "" : "");
+                  setStatus("");
+                } : undefined}
               >
                 {hasFilters ? "Ajuste profissional ou status para ampliar a busca." : "A agenda deste dia está livre."}
               </PanelEmpty>
@@ -256,14 +269,16 @@ export default function Agenda({ professionals, params, onNavigate, onSessionExp
                             ? "Carregando…"
                             : historyById[appointment.id] ? "Ocultar histórico" : "Histórico"}
                         </button>
-                        <button
-                          className="panel-btn"
-                          type="button"
-                          onClick={() => onNavigate("clientes", { clientId: appointment.clientId })}
-                        >
-                          Cliente
-                        </button>
-                        {appointment.leadId && (
+                        {canAccess?.("clientes") && (
+                          <button
+                            className="panel-btn"
+                            type="button"
+                            onClick={() => onNavigate("clientes", { clientId: appointment.clientId })}
+                          >
+                            Cliente
+                          </button>
+                        )}
+                        {appointment.leadId && canAccess?.("leads") && (
                           <button
                             className="panel-btn"
                             type="button"

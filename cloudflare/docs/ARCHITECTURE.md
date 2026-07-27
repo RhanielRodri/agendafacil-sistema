@@ -83,7 +83,11 @@ O tenant vem exclusivamente do caminho. Query, body e headers customizados não 
 - Claims obrigatórias: `exp` e `email`.
 - Validações: assinatura, issuer HTTPS terminado em `.cloudflareaccess.com`, audience exata, expiração e email normalizado.
 - A identidade precisa existir e estar ativa em `admin_identities`.
-- A membership `(identity_id, tenant_id)` precisa existir, estar ativa e ter role `ADMIN`.
+- A membership `(identity_id, tenant_id)` precisa existir, estar ativa e ter permissão para o módulo da rota.
+- `owner`, `manager` e `receptionist` usam permissões por módulo; `team` é exclusivo de `owner`.
+- `professional` exige `professional_id` do mesmo tenant e só acessa a própria agenda no backend.
+- `last_access_at` é atualizado pela rota de contexto no máximo uma vez por hora.
+- Triggers D1 impedem rebaixar, desativar ou remover o último owner ativo.
 - Ausência ou invalidade do JWT retorna 401 genérico; identidade válida sem autorização retorna 403 genérico.
 - O frontend não recebe dados internos do token nem detalhes sobre qual etapa falhou.
 
@@ -130,7 +134,7 @@ Respostas 500 não expõem SQL, stack, binding, token, issuer, audience ou email
 - Lead priority: `LOW`, `NORMAL`, `HIGH`.
 - Follow-up: `OPEN`, `COMPLETED`, `CANCELLED`.
 - Follow-up type: `CONTACT`, `RETURN`, `EVALUATION`, `WAITLIST`, `OTHER`.
-- Roles iniciais: somente `ADMIN`.
+- Roles administrativas: `owner`, `manager`, `receptionist`, `professional`.
 
 Todos são `TEXT` com `CHECK`; valores desconhecidos são rejeitados pelo D1.
 

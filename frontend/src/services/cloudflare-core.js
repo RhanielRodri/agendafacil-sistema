@@ -37,6 +37,9 @@ function toError(status, payload) {
   error.status = status;
   error.code = detail.code;
   if (Array.isArray(detail.conflicts)) error.conflicts = detail.conflicts;
+  if (detail.dependencies && typeof detail.dependencies === "object") {
+    error.dependencies = detail.dependencies;
+  }
   return error;
 }
 

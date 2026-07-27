@@ -25,7 +25,7 @@ function toForm(professional) {
   };
 }
 
-export default function Professionals({ vertical, services, onNavigate, onSessionExpired, onCatalogChange }) {
+export default function Professionals({ vertical, services, onNavigate, onSessionExpired, onCatalogChange, canAccess }) {
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("");
@@ -291,7 +291,7 @@ export default function Professionals({ vertical, services, onNavigate, onSessio
                       label: vertical.servicePlural,
                       onClick: () => setLinking({ id: professional.id, name: professional.name, serviceIds: [...professional.serviceIds] })
                     },
-                    {
+                    canAccess?.("disponibilidade") && {
                       key: "agenda",
                       label: "Agenda",
                       onClick: () => onNavigate("disponibilidade", { professionalId: professional.id })

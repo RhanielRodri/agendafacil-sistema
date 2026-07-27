@@ -1,6 +1,7 @@
 import type { JWTVerifyGetKey } from "jose";
 import { serveAsset } from "../../shared/src/assets";
 import { errorResponse, json, notFound } from "../../shared/src/http";
+import { assertModuleAccess } from "../../shared/src/rbac";
 import { enforceFixedTenant, fixedTenantSlug, normalizeTenantSlug } from "../../shared/src/tenant";
 import type { AdminEnv } from "../../shared/src/types";
 import { listMemberships, resolveAdminContext, resolveIdentity } from "./access";
@@ -11,6 +12,7 @@ import { relationshipRoutes } from "./relationship";
 import { matchRoute, type AdminRoute } from "./router";
 import { schedulingRoutes } from "./scheduling";
 import { settingsRoutes } from "./settings";
+import { teamRoutes } from "./team";
 
 const ADMIN_SCOPE = /^\/api\/admin\/tenants\/([^/]+)\/(.+)$/;
 
@@ -20,7 +22,8 @@ const routes: AdminRoute[] = [
   ...relationshipRoutes,
   ...catalogRoutes,
   ...schedulingRoutes,
-  ...settingsRoutes
+  ...settingsRoutes,
+  ...teamRoutes
 ];
 
 interface AdminHandlerOptions {
@@ -67,6 +70,7 @@ export function createAdminHandler(options: AdminHandlerOptions = {}): ExportedH
         if (!matched) return notFound();
 
         const admin = await resolveAdminContext(request, env, tenantSlug, options.jwtKey);
+        assertModuleAccess(admin.role, admin.permissions, matched.route.module);
         return await matched.route.handler({
           request,
           env,

@@ -618,17 +618,17 @@ async function deleteScheduleBlock(ctx: AdminRequestContext): Promise<Response> 
 }
 
 export const schedulingRoutes: AdminRoute[] = [
-  route("GET", /^business-hours$/, listBusinessHours),
-  route("PUT", /^business-hours$/, updateBusinessHours),
+  route("GET", /^business-hours$/, "scheduling", listBusinessHours),
+  route("PUT", /^business-hours$/, "scheduling", updateBusinessHours),
 
-  route("POST", /^professional-schedules\/copy$/, copyProfessionalSchedules),
-  route("GET", /^professional-schedules$/, listProfessionalSchedules),
-  route("POST", /^professional-schedules$/, createProfessionalSchedule),
-  route("PATCH", /^professional-schedules\/([^/]+)$/, updateProfessionalSchedule),
-  route("DELETE", /^professional-schedules\/([^/]+)$/, deleteProfessionalSchedule),
+  route("POST", /^professional-schedules\/copy$/, "scheduling", copyProfessionalSchedules),
+  route("GET", /^professional-schedules$/, "scheduling", listProfessionalSchedules),
+  route("POST", /^professional-schedules$/, "scheduling", createProfessionalSchedule),
+  route("PATCH", /^professional-schedules\/([^/]+)$/, "scheduling", updateProfessionalSchedule),
+  route("DELETE", /^professional-schedules\/([^/]+)$/, "scheduling", deleteProfessionalSchedule),
 
-  route("GET", /^schedule-blocks$/, listScheduleBlocks),
-  route("POST", /^schedule-blocks$/, createScheduleBlock),
-  route("PATCH", /^schedule-blocks\/([^/]+)$/, updateScheduleBlock),
-  route("DELETE", /^schedule-blocks\/([^/]+)$/, deleteScheduleBlock)
+  route("GET", /^schedule-blocks$/, "scheduling", listScheduleBlocks),
+  route("POST", /^schedule-blocks$/, "scheduling", createScheduleBlock),
+  route("PATCH", /^schedule-blocks\/([^/]+)$/, "scheduling", updateScheduleBlock),
+  route("DELETE", /^schedule-blocks\/([^/]+)$/, "scheduling", deleteScheduleBlock)
 ];

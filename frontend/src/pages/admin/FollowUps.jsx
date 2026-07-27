@@ -49,7 +49,7 @@ function defaultNext() {
   return { dueAt: date.toISOString().slice(0, 16), type: "CONTACT", note: "" };
 }
 
-export default function FollowUps({ users, params, onNavigate, onSessionExpired }) {
+export default function FollowUps({ users, params, onNavigate, onSessionExpired, canAccess }) {
   const [bucket, setBucket] = useState(params.bucket || "overdue");
   const [page, setPage] = useState(1);
   const [message, setMessage] = useState(null);
@@ -230,14 +230,16 @@ export default function FollowUps({ users, params, onNavigate, onSessionExpired 
                         </button>
                       </>
                     )}
-                    {followUp.leadId && (
+                    {followUp.leadId && canAccess?.("leads") && (
                       <button className="panel-btn" type="button" onClick={() => onNavigate("leads", { leadId: followUp.leadId })}>
                         Lead
                       </button>
                     )}
-                    <button className="panel-btn" type="button" onClick={() => onNavigate("clientes", { clientId: followUp.clientId })}>
-                      Cliente
-                    </button>
+                    {canAccess?.("clientes") && (
+                      <button className="panel-btn" type="button" onClick={() => onNavigate("clientes", { clientId: followUp.clientId })}>
+                        Cliente
+                      </button>
+                    )}
                   </div>
 
                   <ManualWhatsapp

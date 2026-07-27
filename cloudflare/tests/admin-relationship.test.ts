@@ -337,3 +337,120 @@ describe("follow-ups administrativos", () => {
     expect([badDate.status, badType.status]).toEqual([400, 400]);
   });
 });
+
+describe("arquivamento e exclusão de clientes", () => {
+  beforeAll(async () => {
+    await env.DB.batch([
+      env.DB.prepare(`
+        INSERT INTO clients (id, tenant_id, name, phone, normalized_phone)
+        VALUES ('lifecycle-filter', 'studio-cut', 'Cliente Arquivável', '27999333001', '27999333001')
+      `),
+      env.DB.prepare(`
+        INSERT INTO clients (id, tenant_id, name, phone, normalized_phone)
+        VALUES ('lifecycle-delete', 'studio-cut', 'Cliente Excluível', '27999333002', '27999333002')
+      `),
+      env.DB.prepare(`
+        INSERT INTO clients (id, tenant_id, name, phone, normalized_phone)
+        VALUES ('lifecycle-blocked', 'studio-cut', 'Cliente com Histórico', '27999333003', '27999333003')
+      `),
+      env.DB.prepare(`
+        INSERT INTO appointments (
+          id, tenant_id, service_id, professional_id, client_id,
+          client_name, client_phone, appointment_date, start_time, end_time, status
+        ) VALUES (
+          'lifecycle-appointment', 'studio-cut', 'service-studio-cut', 'professional-studio-1',
+          'lifecycle-blocked', 'Cliente com Histórico', '27999333003',
+          '2098-09-14', '09:00', '09:45', 'CONFIRMED'
+        )
+      `),
+      env.DB.prepare(`
+        INSERT INTO relationship_history_events (
+          id, tenant_id, client_id, type, actor_type, metadata_json
+        ) VALUES (
+          'lifecycle-history', 'studio-cut', 'lifecycle-blocked',
+          'CLIENT_CREATED', 'SYSTEM', '{"source":"test"}'
+        )
+      `)
+    ]);
+  });
+
+  it("arquiva, filtra e restaura sem apagar relações", async () => {
+    const archived = await adminCall(adminPath("studio-cut", "clients/lifecycle-filter/archive"), {
+      method: "PATCH",
+      body: {}
+    });
+    const active = await adminJson<{ id: string }[]>(adminPath("studio-cut", "clients"));
+    const archivedRows = await adminJson<{ id: string }[]>(
+      `${adminPath("studio-cut", "clients")}?status=archived`
+    );
+    const all = await adminJson<{ id: string }[]>(
+      `${adminPath("studio-cut", "clients")}?status=all`
+    );
+    const restored = await adminCall(adminPath("studio-cut", "clients/lifecycle-filter/restore"), {
+      method: "PATCH",
+      body: {}
+    });
+
+    expect(archived.status).toBe(200);
+    expect(active.some((client) => client.id === "lifecycle-filter")).toBe(false);
+    expect(archivedRows.some((client) => client.id === "lifecycle-filter")).toBe(true);
+    expect(all.some((client) => client.id === "lifecycle-filter")).toBe(true);
+    expect(restored.status).toBe(200);
+    expect((await restored.json() as { archived: boolean }).archived).toBe(false);
+  });
+
+  it("exclui definitivamente somente cadastro sem dependências", async () => {
+    const eligibility = await adminCall(
+      adminPath("studio-cut", "clients/lifecycle-delete/dependencies")
+    );
+    const removed = await adminCall(adminPath("studio-cut", "clients/lifecycle-delete"), {
+      method: "DELETE"
+    });
+    const missing = await adminCall(adminPath("studio-cut", "clients/lifecycle-delete"));
+
+    expect(eligibility.status).toBe(200);
+    expect(await eligibility.json()).toMatchObject({
+      canDelete: true,
+      dependencies: { appointments: 0, leads: 0, followUps: 0, history: 0 }
+    });
+    expect(removed.status).toBe(204);
+    expect(missing.status).toBe(404);
+  });
+
+  it("retorna 409 com dependências quando a exclusão está bloqueada", async () => {
+    const response = await adminCall(adminPath("studio-cut", "clients/lifecycle-blocked"), {
+      method: "DELETE"
+    });
+    const body = await response.json() as {
+      error: {
+        code: string;
+        dependencies: { appointments: number; leads: number; followUps: number; history: number };
+      };
+    };
+
+    expect(response.status).toBe(409);
+    expect(body.error.code).toBe("CONFLICT");
+    expect(body.error.dependencies).toEqual({
+      appointments: 1,
+      leads: 0,
+      followUps: 0,
+      history: 1
+    });
+  });
+
+  it("não arquiva, restaura ou exclui cliente de outro tenant", async () => {
+    const archive = await adminCall(adminPath("studio-cut", "clients/rel-client-lumiere/archive"), {
+      method: "PATCH",
+      body: {}
+    });
+    const restore = await adminCall(adminPath("studio-cut", "clients/rel-client-lumiere/restore"), {
+      method: "PATCH",
+      body: {}
+    });
+    const remove = await adminCall(adminPath("studio-cut", "clients/rel-client-lumiere"), {
+      method: "DELETE"
+    });
+
+    expect([archive.status, restore.status, remove.status]).toEqual([404, 404, 404]);
+  });
+});

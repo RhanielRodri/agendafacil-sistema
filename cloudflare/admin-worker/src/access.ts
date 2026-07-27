@@ -1,5 +1,10 @@
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { HttpError } from "../../shared/src/http";
+import {
+  effectivePermissions,
+  type AdminModule,
+  type AdminRole
+} from "../../shared/src/rbac";
 import { findActiveTenant } from "../../shared/src/tenant";
 import type { AdminContext, AdminEnv, AdminIdentity } from "../../shared/src/types";
 
@@ -92,14 +97,19 @@ export async function resolveIdentity(
 export async function listMemberships(
   db: D1Database,
   identityId: string
-): Promise<{ tenantId: string; tenantName: string; role: "ADMIN" }[]> {
+): Promise<{ tenantId: string; tenantName: string; role: AdminRole; professionalId: string | null }[]> {
   const rows = await db.prepare(`
-    SELECT t.slug AS tenantId, t.name AS tenantName, m.role
+    SELECT t.slug AS tenantId, t.name AS tenantName, m.role, m.professional_id AS professionalId
     FROM admin_memberships m
     JOIN tenants t ON t.slug = m.tenant_id
-    WHERE m.identity_id = ? AND m.active = 1 AND t.active = 1 AND m.role = 'ADMIN'
+    WHERE m.identity_id = ? AND m.active = 1 AND t.active = 1
     ORDER BY t.name, t.slug
-  `).bind(identityId).all<{ tenantId: string; tenantName: string; role: "ADMIN" }>();
+  `).bind(identityId).all<{
+    tenantId: string;
+    tenantName: string;
+    role: AdminRole;
+    professionalId: string | null;
+  }>();
   return rows.results;
 }
 
@@ -112,11 +122,27 @@ export async function resolveAdminContext(
   const identity = await resolveIdentity(request, env, key);
   const tenant = await findActiveTenant(env.DB, tenantSlug);
   const membership = await env.DB.prepare(`
-    SELECT role
+    SELECT role, professional_id
     FROM admin_memberships
-    WHERE identity_id = ? AND tenant_id = ? AND active = 1 AND role = 'ADMIN'
-  `).bind(identity.id, tenant.slug).first<{ role: "ADMIN" }>();
+    WHERE identity_id = ? AND tenant_id = ? AND active = 1
+  `).bind(identity.id, tenant.slug).first<{ role: AdminRole; professional_id: string | null }>();
   if (!membership) return forbidden();
 
-  return { identity, tenant, role: membership.role };
+  if (membership.role === "professional" && !membership.professional_id) {
+    return forbidden();
+  }
+
+  const stored = await env.DB.prepare(`
+    SELECT module
+    FROM admin_membership_permissions
+    WHERE identity_id = ? AND tenant_id = ?
+  `).bind(identity.id, tenant.slug).all<{ module: AdminModule }>();
+
+  return {
+    identity,
+    tenant,
+    role: membership.role,
+    permissions: effectivePermissions(membership.role, stored.results.map((row) => row.module)),
+    professionalId: membership.professional_id
+  };
 }

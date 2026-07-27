@@ -22,6 +22,10 @@ const UPCOMING_LIMIT = 8;
 const AGENDA_LIMIT = 100;
 const PENDING_HORIZON_DAYS = 7;
 
+function ownProfessionalId(ctx: AdminRequestContext): string | null {
+  return ctx.admin.role === "professional" ? ctx.admin.professionalId : null;
+}
+
 interface AppointmentDetailRow {
   id: string;
   tenant_id: string;
@@ -172,20 +176,24 @@ function agendaRow(row: AppointmentDetailRow) {
 }
 
 async function loadDetail(ctx: AdminRequestContext, id: string): Promise<AppointmentDetailRow> {
+  const professionalId = ownProfessionalId(ctx);
   const row = await ctx.db.prepare(`
     ${DETAIL_SELECT}
     WHERE appointments.tenant_id = ? AND appointments.id = ?
-  `).bind(ctx.tenantId, id).first<AppointmentDetailRow>();
+      AND (? IS NULL OR appointments.professional_id = ?)
+  `).bind(ctx.tenantId, id, professionalId, professionalId).first<AppointmentDetailRow>();
   if (!row) notFoundError();
   return row;
 }
 
 async function listAppointments(ctx: AdminRequestContext): Promise<Response> {
+  const professionalId = ownProfessionalId(ctx);
   const rows = await ctx.db.prepare(`
     ${DETAIL_SELECT}
     WHERE appointments.tenant_id = ?
+      AND (? IS NULL OR appointments.professional_id = ?)
     ORDER BY appointments.appointment_date, appointments.start_time, appointments.id
-  `).bind(ctx.tenantId).all<AppointmentDetailRow>();
+  `).bind(ctx.tenantId, professionalId, professionalId).all<AppointmentDetailRow>();
   return json(rows.results.map(appointmentDetail));
 }
 
@@ -407,7 +415,10 @@ async function getAgendaDay(ctx: AdminRequestContext): Promise<Response> {
   const statusFilter = ctx.url.searchParams.get("status");
   const professionalParam = ctx.url.searchParams.get("professionalId");
   if (statusFilter && !APPOINTMENT_STATUSES.includes(statusFilter as never)) invalid("Status inválido");
-  const professionalId = professionalParam ? requirePublicId(professionalParam, "Profissional") : null;
+  const requestedProfessionalId = professionalParam ? requirePublicId(professionalParam, "Profissional") : null;
+  const ownId = ownProfessionalId(ctx);
+  if (ownId && requestedProfessionalId && requestedProfessionalId !== ownId) notFoundError();
+  const professionalId = ownId ?? requestedProfessionalId;
 
   const [items, summaryGroups, blocks, schedules, professionals, booked] = await Promise.all([
     ctx.db.prepare(`
@@ -533,6 +544,7 @@ function csvField(value: string | null): string {
 // A exportação sai pelo Worker administrativo e continua restrita ao tenant
 // autorizado; o Access injeta a asserção também no download do navegador.
 async function exportAppointments(ctx: AdminRequestContext): Promise<Response> {
+  const professionalId = ownProfessionalId(ctx);
   const rows = await ctx.db.prepare(`
     SELECT a.id, a.appointment_date, a.start_time, a.status,
       s.name AS service_name, p.name AS professional_name,
@@ -541,8 +553,9 @@ async function exportAppointments(ctx: AdminRequestContext): Promise<Response> {
     JOIN services s ON s.tenant_id = a.tenant_id AND s.id = a.service_id
     JOIN professionals p ON p.tenant_id = a.tenant_id AND p.id = a.professional_id
     WHERE a.tenant_id = ?
+      AND (? IS NULL OR a.professional_id = ?)
     ORDER BY a.appointment_date, a.start_time
-  `).bind(ctx.tenantId).all<ExportRow>();
+  `).bind(ctx.tenantId, professionalId, professionalId).all<ExportRow>();
 
   const header = "id,data,horario,status,servico,profissional,cliente,telefone,email";
   const body = rows.results.map((row) => [
@@ -567,13 +580,13 @@ async function exportAppointments(ctx: AdminRequestContext): Promise<Response> {
 }
 
 export const agendaRoutes: AdminRoute[] = [
-  route("GET", /^appointments\/export\.csv$/, exportAppointments),
-  route("GET", /^appointments$/, listAppointments),
-  route("GET", /^appointments\/([^/]+)$/, getAppointment),
-  route("PATCH", /^appointments\/([^/]+)\/status$/, updateAppointmentStatus),
-  route("GET", /^appointments\/([^/]+)\/history$/, listAppointmentHistory),
-  route("GET", /^overview$/, getOverview),
-  route("GET", /^agenda$/, getAgendaDay)
+  route("GET", /^appointments\/export\.csv$/, "agenda", exportAppointments),
+  route("GET", /^appointments$/, "agenda", listAppointments),
+  route("GET", /^appointments\/([^/]+)$/, "agenda", getAppointment),
+  route("PATCH", /^appointments\/([^/]+)\/status$/, "agenda", updateAppointmentStatus),
+  route("GET", /^appointments\/([^/]+)\/history$/, "agenda", listAppointmentHistory),
+  route("GET", /^overview$/, "overview", getOverview),
+  route("GET", /^agenda$/, "agenda", getAgendaDay)
 ];
 
 export { appointmentDetail, agendaRow, DETAIL_SELECT };

@@ -23,9 +23,13 @@
 | `relationship_history_events` | `RelationshipHistoryEvent` | trilha por cliente/lead/agendamento |
 | `public_rate_limits` | novo, somente Cloudflare | buckets D1 com chave SHA-256 e expiração |
 | `admin_identities` | substitui parte de `AdminUser` | email global normalizado; sem senha |
-| `admin_memberships` | substitui vínculo de `AdminUser` com tenant | role inicial `ADMIN`; sem sessão |
+| `admin_memberships` | substitui vínculo de `AdminUser` com tenant | roles `owner`, `manager`, `receptionist`, `professional`; vínculo opcional com profissional e último acesso |
+| `admin_membership_permissions` | novo | módulos autorizados por membership |
+| `admin_access_audit_events` | novo | trilha append-only de mudanças de acesso |
 
 `AdminSession` não tem equivalente D1. `AdminUser.passwordHash` não é migrado. Cloudflare Access substitui autenticação local; `AdminIdentity` e `AdminMembership` armazenam somente autorização da aplicação.
+
+`clients.archived_at` e `clients.archived_by_identity_id` implementam arquivamento sem remover relações. Exclusão definitiva usa verificação tenant-scoped de agendamentos, leads, follow-ups e histórico comercial.
 
 ## Isolamento estrutural
 
