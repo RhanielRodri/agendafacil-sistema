@@ -158,7 +158,7 @@ test("A4A 2. Client é reutilizado por telefone normalizado", async () => {
 test("A4A 3. mesmo telefone pode existir em tenant diferente", async () => {
   await createClientByBooking({ tenantId: STUDIO, phone: "27999994001" });
   await createClientByBooking({ tenantId: LUMIERE, phone: "27999994001" });
-  assert.equal(await prisma.client.count({ where: { normalizedPhone: "27999994001" } }), 2);
+  assert.equal(await prisma.client.count({ where: { normalizedPhone: "5527999994001" } }), 2);
 });
 
 test("A4A 4. concorrência não cria Client duplicado", async () => {
@@ -168,7 +168,7 @@ test("A4A 4. concorrência não cria Client duplicado", async () => {
   ]);
   assert.ok([200, 201, 409].includes(first.status));
   assert.ok([200, 201, 409].includes(second.status));
-  assert.equal(await prisma.client.count({ where: { tenantId: STUDIO, normalizedPhone: "27999994002" } }), 1);
+  assert.equal(await prisma.client.count({ where: { tenantId: STUDIO, normalizedPhone: "5527999994002" } }), 1);
 });
 
 test("A4A 5. Appointment fica vinculado ao Client", async () => {

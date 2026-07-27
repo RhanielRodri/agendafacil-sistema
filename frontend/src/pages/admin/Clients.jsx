@@ -16,6 +16,7 @@ import {
   relativeDayLabel,
   todayIso
 } from "../../utils/panel.js";
+import { formatBrazilPhone } from "../../utils/phone.js";
 import { relationshipHistoryLabels } from "../../utils/relationshipHistory.js";
 
 const dependencyLabels = {
@@ -282,7 +283,7 @@ export default function Clients({ params, onNavigate, onSessionExpired, canAcces
                 </div>
                 <div className="panel-row-main">
                   <strong>{client.name}</strong>
-                  <span>{client.phone}</span>
+                  <span>{formatBrazilPhone(client.phone)}</span>
                 </div>
                 <div className="panel-row-cell">
                   <strong>{client._count?.appointments ?? 0} agendamento(s)</strong>
@@ -357,7 +358,7 @@ export default function Clients({ params, onNavigate, onSessionExpired, canAcces
             <div>
               <h3>{detail.name}</h3>
               <p>
-                {detail.phone}{detail.email ? ` · ${detail.email}` : ""}
+                {formatBrazilPhone(detail.phone)}{detail.email ? ` · ${detail.email}` : ""}
               </p>
             </div>
             <button className="panel-btn" type="button" onClick={closeDetail}>

@@ -1,6 +1,7 @@
 import prisma from "../prismaClient.js";
 import { sanitizeText } from "../services/relationshipService.js";
 import { createHttpError } from "./utils.js";
+import { parseBrazilPhone } from "../services/phoneService.js";
 
 // Fusos aceitos hoje. A lista é curta de propósito: timezone precisa ser
 // explícito e verificável, não texto livre.
@@ -44,9 +45,9 @@ export async function loadSettings(tenantId, client = prisma) {
 function parsePhone(value, field) {
   const text = sanitizeText(value, 30);
   if (text === null) return null;
-  const digits = text.replace(/\D/g, "");
-  if (digits.length < 10 || digits.length > 13) throw createHttpError(400, `${field} inválido`);
-  return text;
+  const phone = parseBrazilPhone(text);
+  if (!phone) throw createHttpError(400, `${field} inválido`);
+  return phone.normalized;
 }
 
 function parseInteger(value, { field, min, max, allowed }) {

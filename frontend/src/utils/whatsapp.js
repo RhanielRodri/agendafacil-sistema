@@ -5,6 +5,8 @@
 // pode sobrescrevê-los no seu pack; até haver um seletor no painel, o padrão do
 // produto é usado. Um teste garante que padrão e pack neutro não divergem.
 
+import { normalizeBrazilPhone } from "./phone.js";
+
 export const TEMPLATE_KINDS = ["confirmation", "reminder", "return", "reschedule", "quote", "initialContact"];
 
 export const TEMPLATE_LABELS = {
@@ -29,13 +31,8 @@ export const DEFAULT_TEMPLATES = {
 
 // Normaliza para o formato que o wa.me espera: só dígitos, com código do país.
 // Brasil (55) por padrão quando o número vem só com DDD.
-export function normalizeWaPhone(phone, defaultCountry = "55") {
-  if (!phone) return null;
-  const digits = String(phone).replace(/\D/g, "");
-  if (digits.length < 8) return null;
-  if (digits.startsWith(defaultCountry) && digits.length >= 12) return digits;
-  if (digits.length <= 11) return `${defaultCountry}${digits}`;
-  return digits;
+export function normalizeWaPhone(phone) {
+  return normalizeBrazilPhone(phone);
 }
 
 // Preenche {placeholders} com o contexto; chave ausente vira vazio. Colapsa

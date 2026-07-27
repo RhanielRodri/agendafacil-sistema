@@ -9,6 +9,7 @@ import {
   leadStatuses,
   relativeDayLabel
 } from "../../utils/panel.js";
+import { formatBrazilPhone } from "../../utils/phone.js";
 
 // Os atalhos no fim levam de volta para as filas que a vertical prioriza.
 // Nenhum valor é calculado aqui: tudo o que aparece vem do Worker.
@@ -154,7 +155,7 @@ export default function Overview({ vertical, onNavigate, onSessionExpired, canAc
                   </div>
                   <div className="panel-row-main">
                     <strong>{appointment.clientName}</strong>
-                    <span>{appointment.clientPhone}</span>
+                    <span>{formatBrazilPhone(appointment.clientPhone)}</span>
                   </div>
                   <div className="panel-row-cell">
                     <strong>{appointment.serviceName}</strong>

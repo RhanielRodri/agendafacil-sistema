@@ -3,6 +3,7 @@ import { api } from "../../services/api.js";
 import { usePanelData } from "../../utils/usePanelData.js";
 import { useStructuralAction } from "../../utils/useStructuralAction.js";
 import { PanelError, PanelLoading, PanelMessage } from "../../components/panel/PanelState.jsx";
+import { formatBrazilPhone, maskBrazilPhone } from "../../utils/phone.js";
 
 const timezones = [
   "America/Sao_Paulo",
@@ -35,8 +36,8 @@ const advanceOptions = [
 function toForm(settings) {
   return {
     publicName: settings.publicName || "",
-    publicPhone: settings.publicPhone || "",
-    publicWhatsapp: settings.publicWhatsapp || "",
+    publicPhone: formatBrazilPhone(settings.publicPhone || ""),
+    publicWhatsapp: formatBrazilPhone(settings.publicWhatsapp || ""),
     addressLine: settings.addressLine || "",
     timezone: settings.timezone,
     slotDurationMinutes: settings.slotDurationMinutes,
@@ -106,9 +107,12 @@ export default function Settings({ tenantId, onSessionExpired }) {
               <input
                 type="tel"
                 maxLength="30"
+                inputMode="tel"
+                autoComplete="tel"
                 value={form.publicPhone}
-                onChange={(event) => setForm({ ...form, publicPhone: event.target.value })}
+                onChange={(event) => setForm({ ...form, publicPhone: maskBrazilPhone(event.target.value) })}
                 placeholder="(27) 99999-0000"
+                pattern="\(\d{2}\) \d{4,5}-\d{4}"
               />
             </label>
             <label className="panel-field">
@@ -116,8 +120,12 @@ export default function Settings({ tenantId, onSessionExpired }) {
               <input
                 type="tel"
                 maxLength="30"
+                inputMode="tel"
+                autoComplete="tel"
                 value={form.publicWhatsapp}
-                onChange={(event) => setForm({ ...form, publicWhatsapp: event.target.value })}
+                onChange={(event) => setForm({ ...form, publicWhatsapp: maskBrazilPhone(event.target.value) })}
+                placeholder="(27) 99999-0000"
+                pattern="\(\d{2}\) \d{4,5}-\d{4}"
               />
             </label>
             <label className="panel-field" style={{ gridColumn: "span 2" }}>

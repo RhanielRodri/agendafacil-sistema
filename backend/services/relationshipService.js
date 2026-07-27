@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { createHttpError, sanitizeId } from "../controllers/utils.js";
+import { parseBrazilPhone, phoneLookupValues } from "./phoneService.js";
 
 export const activeLeadStatuses = ["NEW", "CONTACTED", "QUALIFIED"];
 export const leadPriorities = ["LOW", "NORMAL", "HIGH"];
@@ -179,11 +180,11 @@ export async function validateLeadQualification(client, tenantId, payload) {
 }
 
 export function normalizePhone(value) {
-  const digits = typeof value === "string" ? value.replace(/\D/g, "") : "";
-  if (digits.length < 8 || digits.length > 15) {
+  const phone = parseBrazilPhone(value);
+  if (!phone) {
     throw createHttpError(400, "Telefone inválido");
   }
-  return digits;
+  return phone.normalized;
 }
 
 export function normalizeEmail(value) {
@@ -202,7 +203,7 @@ export function validatePerson(payload) {
   const normalizedPhone = normalizePhone(phone);
   const email = sanitizeText(payload?.email ?? payload?.clientEmail, 254);
   const normalizedEmail = normalizeEmail(email);
-  return { name, phone, normalizedPhone, email, normalizedEmail };
+  return { name, phone: normalizedPhone, normalizedPhone, email, normalizedEmail };
 }
 
 function sanitizeMetadata(metadata) {
@@ -243,11 +244,19 @@ export async function findOrCreateClient(client, {
   actorId = null,
   source
 }) {
+  const [canonicalPhone, legacyPhone] = phoneLookupValues(person.normalizedPhone);
   const existing = await client.client.findUnique({
     where: {
       tenantId_normalizedPhone: {
         tenantId,
-        normalizedPhone: person.normalizedPhone
+        normalizedPhone: canonicalPhone
+      }
+    }
+  }) || await client.client.findUnique({
+    where: {
+      tenantId_normalizedPhone: {
+        tenantId,
+        normalizedPhone: legacyPhone
       }
     }
   });
@@ -285,8 +294,9 @@ export async function findOrCreateClient(client, {
     changes.name = person.name;
     changedFields.push("name");
   }
-  if (existing.phone.replace(/\D/g, "") === person.normalizedPhone && existing.phone !== person.phone) {
+  if (existing.phone !== person.phone || existing.normalizedPhone !== person.normalizedPhone) {
     changes.phone = person.phone;
+    changes.normalizedPhone = person.normalizedPhone;
     changedFields.push("phone");
   }
 

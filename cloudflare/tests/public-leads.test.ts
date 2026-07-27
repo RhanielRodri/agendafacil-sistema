@@ -4,8 +4,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 const ORIGIN = "https://cf1d.local";
 
 function syntheticPhone() {
-  const digits = crypto.randomUUID().replace(/\D/g, "").padEnd(11, "5").slice(0, 11);
-  return digits.startsWith("0") ? `27${digits.slice(2)}` : digits;
+  return `279${crypto.randomUUID().replace(/\D/g, "").padEnd(8, "5").slice(0, 8)}`;
 }
 
 function payload(tenant: "studio-cut" | "lumiere", overrides: Record<string, unknown> = {}) {

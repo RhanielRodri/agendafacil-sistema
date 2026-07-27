@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import StatusBadge from "./StatusBadge.jsx";
 import { formatDate } from "../utils/format.js";
+import { formatBrazilPhone } from "../utils/phone.js";
 
 const transitions = {
   PENDING: [
@@ -46,7 +47,7 @@ export default function AppointmentCard({
           {appointment.service.name} com {appointment.professional.name}
         </p>
         <p className="appointment-detail">{formatDate(appointment.date)} às {appointment.time}</p>
-        <p className="appointment-detail">{appointment.clientPhone}</p>
+        <p className="appointment-detail">{formatBrazilPhone(appointment.clientPhone)}</p>
         {appointment.cancellationReason && (
           <p className="appointment-detail">Motivo: {appointment.cancellationReason}</p>
         )}

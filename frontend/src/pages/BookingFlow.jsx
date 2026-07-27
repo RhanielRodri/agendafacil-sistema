@@ -5,6 +5,7 @@ import StateMessage from "../components/StateMessage.jsx";
 import { formatCurrency, todayInputValue } from "../utils/format.js";
 import { useTranslation } from "../i18n/I18nContext.jsx";
 import { professionalDisplayName } from "../utils/presentation.js";
+import { maskBrazilPhone } from "../utils/phone.js";
 
 const initialForm = {
   clientName: "",
@@ -260,8 +261,14 @@ export default function BookingFlow({ services, professionals, initialServiceId,
               <label>
                 {t.form_phone}
                 <input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  maxLength="30"
                   value={form.clientPhone}
-                  onChange={(event) => setForm({ ...form, clientPhone: event.target.value })}
+                  onChange={(event) => setForm({ ...form, clientPhone: maskBrazilPhone(event.target.value) })}
+                  placeholder="(DD) 99999-9999"
+                  pattern="\(\d{2}\) \d{4,5}-\d{4}"
                   required
                 />
               </label>

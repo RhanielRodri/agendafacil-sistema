@@ -8,6 +8,7 @@ import {
   sanitizeCommercialText,
   sanitizeText
 } from "../services/relationshipService.js";
+import { phoneLookupValues, phoneSearchValues } from "../services/phoneService.js";
 import { createHttpError, sanitizeId } from "./utils.js";
 
 const clientSummaryInclude = {
@@ -18,6 +19,7 @@ export async function listClients(req, res, next) {
   try {
     const { page, limit, skip } = parsePagination(req.query);
     const search = sanitizeText(req.query.search, 120);
+    const phoneSearches = phoneSearchValues(search);
     const createdFrom = req.query.createdFrom ? new Date(req.query.createdFrom) : null;
     const createdTo = req.query.createdTo ? new Date(req.query.createdTo) : null;
     if ((createdFrom && Number.isNaN(createdFrom.getTime())) || (createdTo && Number.isNaN(createdTo.getTime()))) {
@@ -30,6 +32,7 @@ export async function listClients(req, res, next) {
         OR: [
           { name: { contains: search, mode: "insensitive" } },
           { phone: { contains: search } },
+          ...phoneSearches.map((value) => ({ normalizedPhone: { contains: value } })),
           { email: { contains: search, mode: "insensitive" } }
         ]
       } : {}),
@@ -103,11 +106,12 @@ export async function updateClient(req, res, next) {
     if (Object.hasOwn(req.body, "phone")) {
       const phone = sanitizeText(req.body.phone, 30);
       const normalizedPhone = normalizePhone(phone);
+      const phoneValues = phoneLookupValues(normalizedPhone);
       const duplicate = await prisma.client.findFirst({
-        where: { tenantId: req.auth.tenantId, normalizedPhone, id: { not: id } }
+        where: { tenantId: req.auth.tenantId, normalizedPhone: { in: phoneValues }, id: { not: id } }
       });
       if (duplicate) throw createHttpError(409, "Telefone já pertence a outro cliente");
-      data.phone = phone;
+      data.phone = normalizedPhone;
       data.normalizedPhone = normalizedPhone;
       fields.push("phone");
     }

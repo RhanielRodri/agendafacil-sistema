@@ -21,6 +21,7 @@ import {
   validateLeadReferences
 } from "../services/relationshipService.js";
 import { createHttpError, isDateInPast, isValidDateInput, sanitizeId } from "./utils.js";
+import { phoneSearchValues } from "../services/phoneService.js";
 
 const sources = ["BOOKING", "WAITLIST", "EVALUATION", "CONTACT", "ABANDONED_BOOKING", "MANUAL"];
 const statuses = ["NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "LOST"];
@@ -94,6 +95,7 @@ export async function listLeads(req, res, next) {
     const source = req.query.source;
     const priority = req.query.priority;
     const search = sanitizeText(req.query.search, 120);
+    const phoneSearches = phoneSearchValues(search);
     const service = sanitizeText(req.query.service, 120);
     const ownerUserId = req.query.ownerUserId ? sanitizeId(req.query.ownerUserId) : null;
     const createdFrom = parseDate(req.query.createdFrom);
@@ -118,6 +120,7 @@ export async function listLeads(req, res, next) {
         OR: [
           { client: { name: { contains: search, mode: "insensitive" } } },
           { client: { phone: { contains: search } } },
+          ...phoneSearches.map((value) => ({ client: { normalizedPhone: { contains: value } } })),
           { interestSummary: { contains: search, mode: "insensitive" } }
         ]
       } : {}),

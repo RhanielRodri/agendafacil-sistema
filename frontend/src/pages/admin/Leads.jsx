@@ -20,6 +20,7 @@ import {
   pageItems,
   todayIso
 } from "../../utils/panel.js";
+import { formatBrazilPhone } from "../../utils/phone.js";
 import { relationshipHistoryLabels } from "../../utils/relationshipHistory.js";
 
 const nextStatuses = {
@@ -424,7 +425,7 @@ export default function Leads({ tenantId, vertical, services, professionals, use
             <div>
               <h3>{selected.client.name}</h3>
               <p>
-                {selected.client.phone}{selected.client.email ? ` · ${selected.client.email}` : ""}
+                {formatBrazilPhone(selected.client.phone)}{selected.client.email ? ` · ${selected.client.email}` : ""}
               </p>
             </div>
             <div className="panel-row-actions">

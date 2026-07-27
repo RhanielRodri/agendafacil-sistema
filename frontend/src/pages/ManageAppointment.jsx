@@ -8,6 +8,7 @@ import { formatDate, todayInputValue } from "../utils/format.js";
 import { toId } from "../utils/id.js";
 import { professionalDisplayName } from "../utils/presentation.js";
 import { waMeUrl } from "../utils/whatsapp.js";
+import { formatBrazilPhone, normalizeBrazilPhone } from "../utils/phone.js";
 
 const tokenMessages = {
   TOKEN_INVALID: "Este link é inválido ou não está disponível.",
@@ -196,9 +197,8 @@ export default function ManageAppointment({ token, professionals, onBack }) {
     professionalSingular: site?.slug === "studio-cut" ? "barbeiro" : "profissional"
   };
   const whatsappUrl = waMeUrl(business.contact?.whatsapp);
-  const phoneUrl = business.contact?.phone
-    ? `tel:${String(business.contact.phone).replace(/[^\d+]/g, "")}`
-    : null;
+  const normalizedBusinessPhone = normalizeBrazilPhone(business.contact?.phone);
+  const phoneUrl = normalizedBusinessPhone ? `tel:+${normalizedBusinessPhone}` : null;
   const blockedMessage = capabilities.cancel.message || capabilities.reschedule.message;
 
   return (
@@ -247,7 +247,7 @@ export default function ManageAppointment({ token, professionals, onBack }) {
             <dt>Contato</dt>
             <dd className="manage-contact">
               {whatsappUrl && <a href={whatsappUrl} target="_blank" rel="noreferrer">WhatsApp</a>}
-              {phoneUrl && <a href={phoneUrl}>{business.contact.phone}</a>}
+              {phoneUrl && <a href={phoneUrl}>{formatBrazilPhone(business.contact.phone)}</a>}
               {!whatsappUrl && !phoneUrl && <span>Consulte o negócio</span>}
             </dd>
           </div>

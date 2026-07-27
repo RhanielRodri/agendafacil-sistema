@@ -12,6 +12,7 @@ import {
 } from "../../shared/src/admin";
 import { timeToMinutes } from "../../shared/src/availability";
 import { json, readJsonObject } from "../../shared/src/http";
+import { parseBrazilPhone } from "../../shared/src/phone";
 import { route, type AdminRequestContext, type AdminRoute } from "./router";
 
 // Fusos aceitos hoje. A lista é curta de propósito: timezone precisa ser
@@ -84,9 +85,9 @@ async function loadSettings(ctx: AdminRequestContext): Promise<SettingsRow | nul
 function parsePhone(value: unknown, field: string): string | null {
   const text = sanitizeText(value, field, 1, 30, false);
   if (text === null) return null;
-  const digits = text.replace(/\D/g, "");
-  if (digits.length < 10 || digits.length > 13) invalid(`${field} inválido`);
-  return text;
+  const phone = parseBrazilPhone(text);
+  if (!phone) invalid(`${field} inválido`);
+  return phone.normalized;
 }
 
 // Texto operacional é texto: nada de HTML entrando por aqui.

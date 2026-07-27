@@ -8,6 +8,7 @@ import {
 } from "./availability";
 import { HttpError } from "./http";
 import { publicTerminology } from "./public-catalog";
+import { parseBrazilPhone, phoneLookupValues } from "./phone";
 
 interface BookingInput {
   tenantId: string;
@@ -16,6 +17,7 @@ interface BookingInput {
   clientId?: string;
   clientName: string;
   clientPhone: string;
+  normalizedPhone?: string;
   clientEmail?: string | null;
   appointmentDate: string;
   startTime: string;
@@ -126,8 +128,8 @@ export function validatePublicBookingPayload(payload: Record<string, unknown>): 
   const professionalId = requirePublicId(typeof payload.professionalId === "string" ? payload.professionalId : null, "professionalId");
   const clientName = cleanText(payload.clientName, "Nome", 2, 120) as string;
   const clientPhone = cleanText(payload.clientPhone, "Telefone", 1, 30) as string;
-  const normalizedPhone = clientPhone.replace(/\D/g, "");
-  if (normalizedPhone.length < 8 || normalizedPhone.length > 15) {
+  const phone = parseBrazilPhone(clientPhone);
+  if (!phone) {
     throw new HttpError(400, "INVALID_REQUEST", "Telefone inválido");
   }
   const clientEmail = cleanText(payload.clientEmail, "E-mail", 3, 254, false);
@@ -141,9 +143,9 @@ export function validatePublicBookingPayload(payload: Record<string, unknown>): 
     serviceId,
     professionalId,
     clientName,
-    clientPhone,
+    clientPhone: phone.normalized,
     clientEmail,
-    normalizedPhone,
+    normalizedPhone: phone.normalized,
     normalizedEmail,
     date,
     time
@@ -171,20 +173,52 @@ async function loadService(db: D1Database, input: BookingInput): Promise<Booking
   return service;
 }
 
+async function loadClientByPhone(db: D1Database, tenantId: string, normalizedPhone: string) {
+  const [canonical, legacy] = phoneLookupValues(normalizedPhone);
+  return db.prepare(`
+    SELECT id, normalized_phone
+    FROM clients
+    WHERE tenant_id = ? AND normalized_phone IN (?, ?)
+    ORDER BY CASE WHEN normalized_phone = ? THEN 0 ELSE 1 END
+    LIMIT 1
+  `).bind(tenantId, canonical, legacy, canonical).first<{ id: string; normalized_phone: string }>();
+}
+
 async function atomicReservation(db: D1Database, input: BookingInput, service: BookingService): Promise<BookingResult> {
   const slotMinutes = input.slotMinutes ?? 30;
   const appointmentId = crypto.randomUUID();
-  const clientId = input.clientId ?? crypto.randomUUID();
+  const parsedPhone = parseBrazilPhone(input.normalizedPhone ?? input.clientPhone);
+  if (!parsedPhone) throw new HttpError(400, "INVALID_REQUEST", "Telefone inválido");
+  const normalizedPhone = parsedPhone.normalized;
+  const existingClient = await loadClientByPhone(db, input.tenantId, normalizedPhone);
+  const clientId = existingClient?.id ?? input.clientId ?? crypto.randomUUID();
   const rawToken = randomToken();
   const tokenHash = await sha256(rawToken);
   const now = new Date();
   const nowIso = now.toISOString();
-  const normalizedPhone = input.clientPhone.replace(/\D/g, "");
   const normalizedEmail = input.clientEmail?.toLowerCase() ?? null;
   const endTime = minutesToTime(timeToMinutes(input.startTime) + service.duration_minutes);
   const slots = slotTimes(input.startTime, service.duration_minutes, slotMinutes);
   const statements: D1PreparedStatement[] = [
-    db.prepare(`
+    existingClient ? db.prepare(`
+      UPDATE clients SET
+        phone = ?,
+        normalized_phone = ?,
+        email = COALESCE(email, ?),
+        normalized_email = COALESCE(normalized_email, ?),
+        last_contact_at = ?,
+        updated_at = ?
+      WHERE id = ? AND tenant_id = ?
+    `).bind(
+      normalizedPhone,
+      normalizedPhone,
+      input.clientEmail ?? null,
+      normalizedEmail,
+      nowIso,
+      nowIso,
+      clientId,
+      input.tenantId
+    ) : db.prepare(`
       INSERT INTO clients (
         id, tenant_id, name, phone, normalized_phone, email, normalized_email,
         first_contact_at, last_contact_at, created_at, updated_at
@@ -202,7 +236,7 @@ async function atomicReservation(db: D1Database, input: BookingInput, service: B
       clientId,
       input.tenantId,
       input.clientName,
-      input.clientPhone,
+      normalizedPhone,
       normalizedPhone,
       input.clientEmail ?? null,
       normalizedEmail,
@@ -226,7 +260,7 @@ async function atomicReservation(db: D1Database, input: BookingInput, service: B
       input.serviceId,
       input.professionalId,
       input.clientName,
-      input.clientPhone,
+      normalizedPhone,
       input.clientEmail ?? null,
       input.appointmentDate,
       input.startTime,
@@ -243,7 +277,14 @@ async function atomicReservation(db: D1Database, input: BookingInput, service: B
       SELECT ?, ?, clients.id, NULL, 'CLIENT_CREATED', 'CUSTOMER', ?, ?
       FROM clients
       WHERE clients.id = ? AND clients.tenant_id = ?
-    `).bind(crypto.randomUUID(), input.tenantId, JSON.stringify({ source: "BOOKING" }), nowIso, clientId, input.tenantId),
+    `).bind(
+      crypto.randomUUID(),
+      input.tenantId,
+      JSON.stringify({ source: "BOOKING" }),
+      nowIso,
+      existingClient ? "__existing_client__" : clientId,
+      input.tenantId
+    ),
     db.prepare(`
       INSERT INTO appointment_history_events (
         id, tenant_id, appointment_id, type, to_status, actor_type, created_at
@@ -328,6 +369,7 @@ export async function createPublicAppointment(
     professionalId: payload.professionalId,
     clientName: payload.clientName,
     clientPhone: payload.clientPhone,
+    normalizedPhone: payload.normalizedPhone,
     clientEmail: payload.clientEmail,
     appointmentDate: payload.date,
     startTime: payload.time,

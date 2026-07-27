@@ -1,3 +1,5 @@
+import { formatBrazilPhone } from "./phone.js";
+
 export const appointmentStatuses = ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"];
 export const leadStatuses = ["NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "LOST"];
 export const activeLeadStatuses = ["NEW", "CONTACTED", "QUALIFIED"];
@@ -111,9 +113,7 @@ export function delayLabel(dueAt, now = new Date()) {
 }
 
 export function maskPhone(phone = "") {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length < 6) return phone;
-  return `${digits.slice(0, 2)} •••••-${digits.slice(-4)}`;
+  return formatBrazilPhone(phone);
 }
 
 export function formatMinutes(total) {

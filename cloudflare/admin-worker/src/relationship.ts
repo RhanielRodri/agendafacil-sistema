@@ -18,6 +18,7 @@ import {
 } from "../../shared/src/admin";
 import { calculateD1Availability, requirePublicId } from "../../shared/src/availability";
 import { HttpError, json, readJsonObject } from "../../shared/src/http";
+import { parseBrazilPhone, phoneLookupValues, phoneSearchValues } from "../../shared/src/phone";
 import { route, type AdminRequestContext, type AdminRoute } from "./router";
 
 const ACTIVE_LEAD = ["NEW", "CONTACTED", "QUALIFIED"];
@@ -241,6 +242,9 @@ async function listClients(ctx: AdminRequestContext): Promise<Response> {
     "Status"
   );
   const like = search ? `%${search}%` : null;
+  const clientPhoneLikes = phoneSearchValues(search).map((value) => `%${value}%`);
+  const clientPhoneLikeA = clientPhoneLikes[0] ?? null;
+  const clientPhoneLikeB = clientPhoneLikes[1] ?? clientPhoneLikeA;
   const archiveFilter = status === "active"
     ? "AND archived_at IS NULL"
     : status === "archived" ? "AND archived_at IS NOT NULL" : "";
@@ -249,11 +253,16 @@ async function listClients(ctx: AdminRequestContext): Promise<Response> {
     FROM clients
     WHERE tenant_id = ?
       ${archiveFilter}
-      AND (? IS NULL OR name LIKE ? OR phone LIKE ? OR email LIKE ?)
+      AND (? IS NULL OR name LIKE ? OR phone LIKE ? OR normalized_phone LIKE ? OR normalized_phone LIKE ? OR email LIKE ?)
       AND (? IS NULL OR created_at >= ?)
       AND (? IS NULL OR created_at <= ?)
   `;
-  const binds = [ctx.tenantId, like, like, like, like, createdFrom, createdFrom, createdTo, createdTo];
+  const binds = [
+    ctx.tenantId,
+    like, like, like, clientPhoneLikeA, clientPhoneLikeB, like,
+    createdFrom, createdFrom,
+    createdTo, createdTo
+  ];
 
   const [count, rows] = await Promise.all([
     ctx.db.prepare(`SELECT COUNT(*) AS total ${filter}`).bind(...binds).first<{ total: number }>(),
@@ -478,15 +487,15 @@ async function updateClient(ctx: AdminRequestContext): Promise<Response> {
     fields.push("name");
   }
   if (Object.hasOwn(body, "phone")) {
-    const phone = sanitizeText(body.phone, "Telefone", 1, 30) as string;
-    const normalizedPhone = phone.replace(/\D/g, "");
-    if (normalizedPhone.length < 8 || normalizedPhone.length > 15) invalid("Telefone inválido");
+    const phone = parseBrazilPhone(sanitizeText(body.phone, "Telefone", 1, 30));
+    if (!phone) invalid("Telefone inválido");
+    const [canonical, legacy] = phoneLookupValues(phone.normalized);
     const duplicate = await ctx.db.prepare(
-      "SELECT id FROM clients WHERE tenant_id = ? AND normalized_phone = ? AND id <> ?"
-    ).bind(ctx.tenantId, normalizedPhone, id).first<{ id: string }>();
+      "SELECT id FROM clients WHERE tenant_id = ? AND normalized_phone IN (?, ?) AND id <> ?"
+    ).bind(ctx.tenantId, canonical, legacy, id).first<{ id: string }>();
     if (duplicate) throw new HttpError(409, "CONFLICT", "Telefone já pertence a outro cliente");
     updates.push("phone = ?", "normalized_phone = ?");
-    binds.push(phone, normalizedPhone);
+    binds.push(phone.normalized, phone.normalized);
     fields.push("phone");
   }
   if (Object.hasOwn(body, "email")) {
@@ -795,6 +804,9 @@ async function listLeads(ctx: AdminRequestContext): Promise<Response> {
   const ownerUserId = query.get("ownerUserId") ? requirePublicId(query.get("ownerUserId"), "Responsável") : null;
   const search = sanitizeText(query.get("search"), "Busca", 1, 120, false);
   const like = search ? `%${search}%` : null;
+  const leadPhoneLikes = phoneSearchValues(search).map((value) => `%${value}%`);
+  const leadPhoneLikeA = leadPhoneLikes[0] ?? null;
+  const leadPhoneLikeB = leadPhoneLikes[1] ?? leadPhoneLikeA;
   const createdFrom = boundary(query.get("createdFrom"));
   const createdTo = boundary(query.get("createdTo"), true);
   const overdue = booleanQuery(query.get("overdue"), "Filtro de vencidos");
@@ -810,7 +822,7 @@ async function listLeads(ctx: AdminRequestContext): Promise<Response> {
     "(? IS NULL OR leads.source = ?)",
     "(? IS NULL OR leads.priority = ?)",
     "(? IS NULL OR leads.owner_identity_id = ?)",
-    "(? IS NULL OR clients.name LIKE ? OR clients.phone LIKE ? OR leads.interest_summary LIKE ?)",
+    "(? IS NULL OR clients.name LIKE ? OR clients.phone LIKE ? OR clients.normalized_phone LIKE ? OR clients.normalized_phone LIKE ? OR leads.interest_summary LIKE ?)",
     "(? IS NULL OR leads.created_at >= ?)",
     "(? IS NULL OR leads.created_at <= ?)"
   ];
@@ -820,7 +832,7 @@ async function listLeads(ctx: AdminRequestContext): Promise<Response> {
     source, source,
     priority, priority,
     ownerUserId, ownerUserId,
-    like, like, like, like,
+    like, like, like, leadPhoneLikeA, leadPhoneLikeB, like,
     createdFrom, createdFrom,
     createdTo, createdTo
   ];
@@ -1492,6 +1504,9 @@ async function listFollowUps(ctx: AdminRequestContext): Promise<Response> {
   const overdue = booleanQuery(query.get("overdue"), "Filtro de vencidos");
   const search = sanitizeText(query.get("search"), "Busca", 1, 120, false);
   const like = search ? `%${search}%` : null;
+  const followUpPhoneLikes = phoneSearchValues(search).map((value) => `%${value}%`);
+  const followUpPhoneLikeA = followUpPhoneLikes[0] ?? null;
+  const followUpPhoneLikeB = followUpPhoneLikes[1] ?? followUpPhoneLikeA;
   const from = overdue ? null : boundary(query.get("from"));
   const to = overdue ? null : boundary(query.get("to"), true);
   const createdFrom = boundary(query.get("createdFrom"));
@@ -1503,7 +1518,7 @@ async function listFollowUps(ctx: AdminRequestContext): Promise<Response> {
     "(? IS NULL OR follow_ups.status = ?)",
     "(? IS NULL OR follow_ups.type = ?)",
     "(? IS NULL OR follow_ups.owner_identity_id = ?)",
-    "(? IS NULL OR clients.name LIKE ? OR clients.phone LIKE ? OR follow_ups.note LIKE ?)",
+    "(? IS NULL OR clients.name LIKE ? OR clients.phone LIKE ? OR clients.normalized_phone LIKE ? OR clients.normalized_phone LIKE ? OR follow_ups.note LIKE ?)",
     "(? IS NULL OR follow_ups.due_at >= ?)",
     "(? IS NULL OR follow_ups.due_at <= ?)",
     "(? IS NULL OR follow_ups.created_at >= ?)",
@@ -1514,7 +1529,7 @@ async function listFollowUps(ctx: AdminRequestContext): Promise<Response> {
     status, status,
     type, type,
     ownerUserId, ownerUserId,
-    like, like, like, like,
+    like, like, like, followUpPhoneLikeA, followUpPhoneLikeB, like,
     from, from,
     to, to,
     createdFrom, createdFrom,

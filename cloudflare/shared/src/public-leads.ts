@@ -1,4 +1,5 @@
 import { HttpError } from "./http";
+import { parseBrazilPhone, phoneLookupValues } from "./phone";
 
 const PUBLIC_SOURCES: Record<string, readonly string[]> = {
   "studio-cut": ["WAITLIST", "CONTACT"],
@@ -75,8 +76,8 @@ function validate(tenantId: string, payload: Record<string, unknown>): Validated
 
   const clientName = cleanText(payload.name, "Nome", 2, 120) as string;
   const clientPhone = cleanText(payload.phone, "Telefone", 1, 30) as string;
-  const normalizedPhone = clientPhone.replace(/\D/g, "");
-  if (normalizedPhone.length < 8 || normalizedPhone.length > 15) invalid("Telefone inválido");
+  const phone = parseBrazilPhone(clientPhone);
+  if (!phone) invalid("Telefone inválido");
 
   const clientEmail = cleanText(payload.email, "E-mail", 3, 254, false);
   const normalizedEmail = clientEmail?.toLowerCase() ?? null;
@@ -99,8 +100,8 @@ function validate(tenantId: string, payload: Record<string, unknown>): Validated
   return {
     source,
     clientName,
-    clientPhone,
-    normalizedPhone,
+    clientPhone: phone.normalized,
+    normalizedPhone: phone.normalized,
     clientEmail,
     normalizedEmail,
     interestSummary,
@@ -161,8 +162,38 @@ export async function capturePublicLead(
 
   const now = new Date().toISOString();
   const clientId = crypto.randomUUID();
+  const [canonicalPhone, legacyPhone] = phoneLookupValues(input.normalizedPhone);
+  const existingClient = await db.prepare(`
+    SELECT id, normalized_phone
+    FROM clients
+    WHERE tenant_id = ? AND normalized_phone IN (?, ?)
+    ORDER BY CASE WHEN normalized_phone = ? THEN 0 ELSE 1 END
+    LIMIT 1
+  `).bind(tenantId, canonicalPhone, legacyPhone, canonicalPhone)
+    .first<{ id: string; normalized_phone: string }>();
 
-  await db.prepare(`
+  if (existingClient) {
+    await db.prepare(`
+      UPDATE clients SET
+        phone = ?,
+        normalized_phone = ?,
+        email = COALESCE(email, ?),
+        normalized_email = COALESCE(normalized_email, ?),
+        last_contact_at = ?,
+        updated_at = ?
+      WHERE id = ? AND tenant_id = ?
+    `).bind(
+      input.normalizedPhone,
+      input.normalizedPhone,
+      input.clientEmail,
+      input.normalizedEmail,
+      now,
+      now,
+      existingClient.id,
+      tenantId
+    ).run();
+  } else {
+    await db.prepare(`
     INSERT INTO clients (
       id, tenant_id, name, phone, normalized_phone, email, normalized_email,
       first_contact_at, last_contact_at, created_at, updated_at
@@ -173,11 +204,12 @@ export async function capturePublicLead(
       last_contact_at = excluded.last_contact_at,
       updated_at = excluded.updated_at
   `).bind(
-    clientId, tenantId, input.clientName, input.clientPhone, input.normalizedPhone,
+    clientId, tenantId, input.clientName, input.normalizedPhone, input.normalizedPhone,
     input.clientEmail, input.normalizedEmail, now, now, now, now
   ).run();
+  }
 
-  const client = await db.prepare("SELECT id FROM clients WHERE tenant_id = ? AND normalized_phone = ?")
+  const client = existingClient ?? await db.prepare("SELECT id FROM clients WHERE tenant_id = ? AND normalized_phone = ?")
     .bind(tenantId, input.normalizedPhone).first<{ id: string }>();
   if (!client) throw new HttpError(500, "INTERNAL_ERROR", "Erro interno");
 

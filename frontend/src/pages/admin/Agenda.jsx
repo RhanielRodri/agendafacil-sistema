@@ -14,6 +14,7 @@ import {
   shiftIsoDay,
   todayIso
 } from "../../utils/panel.js";
+import { formatBrazilPhone } from "../../utils/phone.js";
 
 const historyLabels = {
   CREATED: "Criado",
@@ -219,7 +220,7 @@ export default function Agenda({ professionals, params, onNavigate, onSessionExp
                       <div className="panel-row-main">
                         <strong>{appointment.clientName}</strong>
                         <span>
-                          {appointment.clientPhone}
+                          {formatBrazilPhone(appointment.clientPhone)}
                         </span>
                         <div className="panel-tags">
                           {appointment.leadSource && <span className="panel-tag">{leadSourceLabels[appointment.leadSource]}</span>}

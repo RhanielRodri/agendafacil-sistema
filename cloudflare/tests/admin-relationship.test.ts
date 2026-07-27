@@ -62,11 +62,15 @@ describe("clientes administrativos", () => {
   it("lista, busca e pagina somente clientes do tenant", async () => {
     const all = await adminJson<{ id: string }[]>(adminPath("studio-cut", "clients"));
     const search = await adminJson<{ id: string }[]>(`${adminPath("studio-cut", "clients")}?search=Joana`);
+    const phoneSearch = await adminJson<{ id: string }[]>(
+      `${adminPath("studio-cut", "clients")}?search=${encodeURIComponent("+55 (27) 98888-1000")}`
+    );
     const paged = await adminJson<{ items: unknown[]; pagination: { total: number; pages: number } }>(
       `${adminPath("studio-cut", "clients")}?page=1&pageSize=1`
     );
     expect(all.map((row) => row.id).sort()).toEqual(["rel-client-studio", "rel-client-studio-2"]);
     expect(search.map((row) => row.id)).toEqual(["rel-client-studio"]);
+    expect(phoneSearch.map((row) => row.id)).toEqual(["rel-client-studio"]);
     expect(paged.items).toHaveLength(1);
     expect(paged.pagination).toMatchObject({ total: 2, pages: 2 });
   });

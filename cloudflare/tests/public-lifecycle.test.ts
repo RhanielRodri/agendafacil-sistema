@@ -12,8 +12,7 @@ function futureDate(dayOfWeek: number, weeksAhead = 1): string {
 }
 
 function syntheticPhone() {
-  const digits = crypto.randomUUID().replace(/\D/g, "").padEnd(11, "7").slice(0, 11);
-  return digits.startsWith("0") ? `27${digits.slice(2)}` : digits;
+  return `279${crypto.randomUUID().replace(/\D/g, "").padEnd(8, "7").slice(0, 8)}`;
 }
 
 function bookingPayload(tenant: "studio-cut" | "lumiere", overrides: Record<string, unknown> = {}) {
@@ -144,10 +143,39 @@ describe("criação pública CF1B", () => {
     const second = await create("studio-cut", { clientName: first.payload.clientName, clientPhone: phone, date: futureDate(1, 3), time: "09:00" });
     const count = await env.DB.prepare(`
       SELECT COUNT(*) AS count FROM clients WHERE normalized_phone = ? AND tenant_id = 'studio-cut'
-    `).bind(phone).first<{ count: number }>();
+    `).bind(`55${phone}`).first<{ count: number }>();
 
     expect([first.response.status, second.response.status]).toEqual([201, 201]);
     expect(count?.count).toBe(1);
+  });
+
+  it("reutiliza e promove cadastro legado sem duplicar", async () => {
+    const national = "27999991234";
+    await env.DB.prepare(`
+      INSERT INTO clients (id, tenant_id, name, phone, normalized_phone)
+      VALUES ('cf1b-legacy-phone', 'studio-cut', 'CF1B Cliente legado', '(27) 99999-1234', ?)
+    `).bind(national).run();
+
+    const created = await create("studio-cut", {
+      clientName: "CF1B Cliente legado",
+      clientPhone: "+55 (27) 99999-1234",
+      date: futureDate(1, 4),
+      time: "09:00"
+    });
+    const client = await env.DB.prepare(`
+      SELECT id, phone, normalized_phone FROM clients
+      WHERE tenant_id = 'studio-cut' AND normalized_phone IN (?, ?)
+    `).bind(national, `55${national}`).all<{ id: string; phone: string; normalized_phone: string }>();
+    const appointment = await env.DB.prepare("SELECT client_id, client_phone FROM appointments WHERE id = ?")
+      .bind(created.data.id).first<{ client_id: string; client_phone: string }>();
+
+    expect(created.response.status).toBe(201);
+    expect(client.results).toEqual([{
+      id: "cf1b-legacy-phone",
+      phone: `55${national}`,
+      normalized_phone: `55${national}`
+    }]);
+    expect(appointment).toEqual({ client_id: "cf1b-legacy-phone", client_phone: `55${national}` });
   });
 
   it("rejeita horário indisponível e sobreposição parcial", async () => {

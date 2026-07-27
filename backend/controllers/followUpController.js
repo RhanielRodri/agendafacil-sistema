@@ -10,6 +10,7 @@ import {
   validateFollowUpPayload
 } from "../services/relationshipService.js";
 import { createHttpError, sanitizeId } from "./utils.js";
+import { phoneSearchValues } from "../services/phoneService.js";
 
 const statuses = ["OPEN", "COMPLETED", "CANCELLED"];
 
@@ -55,6 +56,7 @@ export async function listFollowUps(req, res, next) {
     const status = req.query.status;
     const type = req.query.type;
     const search = sanitizeText(req.query.search, 120);
+    const phoneSearches = phoneSearchValues(search);
     const ownerUserId = req.query.ownerUserId ? sanitizeId(req.query.ownerUserId) : null;
     const from = parseDate(req.query.from);
     const to = parseDate(req.query.to, true);
@@ -77,6 +79,7 @@ export async function listFollowUps(req, res, next) {
         OR: [
           { client: { name: { contains: search, mode: "insensitive" } } },
           { client: { phone: { contains: search } } },
+          ...phoneSearches.map((value) => ({ client: { normalizedPhone: { contains: value } } })),
           { note: { contains: search, mode: "insensitive" } }
         ]
       } : {})

@@ -3,6 +3,7 @@ import { toId } from "../utils/id.js";
 import tenant from "../config/site.js";
 import { api } from "../services/api.js";
 import StateMessage from "./StateMessage.jsx";
+import { maskBrazilPhone } from "../utils/phone.js";
 
 const defaultActions = {
   "studio-cut": [
@@ -111,7 +112,17 @@ export default function LeadCapture({ services }) {
         </label>
         <label>
           Telefone
-          <input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} maxLength={30} inputMode="tel" required />
+          <input
+            type="tel"
+            value={form.phone}
+            onChange={(event) => setForm({ ...form, phone: maskBrazilPhone(event.target.value) })}
+            maxLength={30}
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="(DD) 99999-9999"
+            pattern="\(\d{2}\) \d{4,5}-\d{4}"
+            required
+          />
         </label>
         <label>
           E-mail (opcional)
