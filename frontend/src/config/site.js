@@ -17,10 +17,14 @@ const site = tenant
       wordmark: presentation?.wordmark || null,
       panelSubtitle: presentation?.panelSubtitle || null,
       brandSymbol: presentation?.brandSymbol || false,
+      logo: { ...tenant.logo, ...(presentation?.logo || {}) },
       hero: { ...tenant.hero, ...(presentation?.hero || {}) },
+      copy: { ...tenant.copy, ...(presentation?.copy || {}) },
+      process: { ...tenant.process, ...(presentation?.process || {}) },
       space: { ...tenant.space, ...(presentation?.space || {}) },
       metadata: {
         ...tenant.metadata,
+        ...(presentation?.metadata || {}),
         fonts: presentation?.fonts,
         faviconVariant: presentation?.faviconVariant
       }

@@ -43,17 +43,27 @@ export default function App() {
     }
 
     const isAdmin = page === "admin";
+    const useStudioCutAdminBrand = isAdmin && tenant.slug === "studio-cut";
+    const activeMetadata = isAdmin && !useStudioCutAdminBrand ? tenant.metadata : site.metadata;
+    const activeLogo = isAdmin && !useStudioCutAdminBrand ? tenant.logo : site.logo;
     applyMetadata({
-      ...site.metadata,
-      title: isAdmin ? `${tenant.name} | Painel administrativo` : tenant.metadata.title,
-      canonical: isAdmin ? `${window.location.origin}${adminPath}` : tenant.metadata.canonical,
-      mark: tenant.logo.mark,
-      background: tenant.logo.background,
-      foreground: tenant.logo.foreground,
+      ...activeMetadata,
+      title: isAdmin ? `${tenant.name} | Painel administrativo` : activeMetadata.title,
+      canonical: isAdmin ? `${window.location.origin}${adminPath}` : activeMetadata.canonical,
+      mark: activeLogo.mark,
+      background: activeLogo.background,
+      foreground: activeLogo.foreground,
       siteName: tenant.name
     });
     loadData();
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.pageSurface = page === "admin" ? "admin" : "public";
+    return () => {
+      delete document.documentElement.dataset.pageSurface;
+    };
+  }, [page]);
 
   useEffect(() => {
     function syncManagementRoute() {

@@ -68,7 +68,7 @@ const requestedPath = normalizePath(window.location.pathname);
 const canonicalPath = surfacePath(legacyRedirects[requestedPath] || requestedPath);
 
 if (canonicalPath !== requestedPath) {
-  window.history.replaceState({}, "", canonicalPath);
+  window.history.replaceState({}, "", `${canonicalPath}${window.location.search}${window.location.hash}`);
 }
 
 const matched = routes[canonicalPath];

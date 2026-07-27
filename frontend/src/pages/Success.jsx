@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { formatDate } from "../utils/format.js";
 import { useTranslation } from "../i18n/I18nContext.jsx";
+import { professionalDisplayName } from "../utils/presentation.js";
 
 export default function Success({ appointment, onBack }) {
   const { t } = useTranslation();
@@ -35,7 +36,7 @@ export default function Success({ appointment, onBack }) {
         <p>{t.success_desc}</p>
         <div className="summary-box">
           <strong>{appointment.service.name}</strong>
-          <span>{appointment.professional.name}</span>
+          <span>{professionalDisplayName(appointment.professional)}</span>
           <span>{formatDate(appointment.date)} {t.at} {appointment.time}</span>
           <span>{appointment.clientName}</span>
         </div>

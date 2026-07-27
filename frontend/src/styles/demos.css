@@ -422,6 +422,143 @@
   }
 }
 
+:root[data-demo="studio-cut"] #galeria {
+  position: relative;
+  padding-top: clamp(68px, 8vw, 112px);
+  padding-bottom: clamp(68px, 8vw, 112px);
+  background:
+    radial-gradient(circle at 14% 12%, rgba(197, 154, 92, 0.18), transparent 34%),
+    linear-gradient(135deg, #241e18 0%, #171411 48%, #100e0c 100%);
+}
+
+:root[data-demo="studio-cut"] #galeria .section-heading {
+  max-width: 760px;
+}
+
+:root[data-demo="studio-cut"] #galeria .section-heading h2 {
+  max-width: 680px;
+  font-size: clamp(36px, 6vw, 72px);
+  letter-spacing: -0.04em;
+}
+
+:root[data-demo="studio-cut"] #galeria .gallery-grid {
+  grid-template-columns: 1.35fr 1fr 1fr;
+  gap: clamp(12px, 1.8vw, 22px);
+}
+
+:root[data-demo="studio-cut"] #galeria .gallery-item {
+  border-color: rgba(197, 154, 92, 0.28);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.26);
+}
+
+:root[data-demo="studio-cut"] #galeria .gallery-item:first-child {
+  grid-row: span 2;
+}
+
+:root[data-demo="studio-cut"] #galeria .gallery-item:first-child img {
+  aspect-ratio: 4 / 5;
+}
+
+:root[data-demo="studio-cut"] #galeria .gallery-item img {
+  height: auto;
+}
+
+:root[data-demo="studio-cut"] #galeria .gallery-item figcaption {
+  padding: 6px 12px;
+  border-color: rgba(197, 154, 92, 0.52);
+}
+
+:root[data-demo="studio-cut"] #profissionais {
+  padding-top: clamp(34px, 4.5vw, 58px);
+  padding-bottom: clamp(38px, 5vw, 64px);
+}
+
+:root[data-demo="studio-cut"] #profissionais .section-heading {
+  max-width: 620px;
+  margin-bottom: clamp(18px, 2.4vw, 28px);
+}
+
+:root[data-demo="studio-cut"] #profissionais .section-heading h2 {
+  font-size: clamp(28px, 3.6vw, 44px);
+}
+
+:root[data-demo="studio-cut"] #profissionais .team-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+:root[data-demo="studio-cut"] #profissionais .professional-card {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 14px;
+  align-items: center;
+  min-height: 0;
+  padding: 14px;
+}
+
+:root[data-demo="studio-cut"] #profissionais .professional-photo {
+  border-radius: calc(var(--radius-sm) - 4px);
+}
+
+:root[data-demo="studio-cut"] #profissionais .professional-card img,
+:root[data-demo="studio-cut"] #profissionais .professional-avatar {
+  width: 92px;
+  height: 108px;
+  aspect-ratio: auto;
+}
+
+:root[data-demo="studio-cut"] #profissionais .professional-card-body {
+  padding: 0;
+}
+
+:root[data-demo="studio-cut"] #profissionais .professional-card h3 {
+  margin-bottom: 5px;
+  font-size: 18px;
+}
+
+:root[data-demo="studio-cut"] #profissionais .professional-specialty {
+  margin-bottom: 6px;
+  font-size: 10px !important;
+}
+
+:root[data-demo="studio-cut"] #profissionais .professional-bio {
+  margin-top: 0 !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+}
+
+@media (max-width: 720px) {
+  :root[data-demo="studio-cut"] #galeria .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  :root[data-demo="studio-cut"] #galeria .gallery-item:first-child {
+    grid-row: auto;
+  }
+
+  :root[data-demo="studio-cut"] #galeria .gallery-item:first-child img,
+  :root[data-demo="studio-cut"] #galeria .gallery-item img {
+    height: auto;
+    aspect-ratio: 16 / 11;
+  }
+
+  :root[data-demo="studio-cut"] #profissionais .team-grid {
+    grid-template-columns: 1fr;
+  }
+
+  :root[data-demo="studio-cut"] #profissionais .professional-card {
+    grid-template-columns: 76px 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  :root[data-demo="studio-cut"] #profissionais .professional-card img,
+  :root[data-demo="studio-cut"] #profissionais .professional-avatar {
+    width: 76px;
+    height: 88px;
+  }
+}
+
 /* Os nomes das etapas (Serviço · Horário · Dados) sumiam abaixo de 640px,
    deixando só os números. Voltam menores, ainda em uma linha. */
 @media (max-width: 639px) {
@@ -429,5 +566,405 @@
     display: block;
     font-size: 10px;
     letter-spacing: 0.02em;
+  }
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] {
+  --bg: #171411;
+  --surface: #1f1b17;
+  --surface-2: #29231c;
+  --text-primary: #f3ecdf;
+  --text-secondary: #c6baa7;
+  --text-muted: #8f816e;
+  --border: #382f26;
+  --border-strong: #755f42;
+  --accent: #c59a5c;
+  --accent-hover: #d5b279;
+  --accent-muted: rgba(197, 154, 92, 0.12);
+  --accent-text: #171411;
+  --focus-ring: 2px solid #c59a5c;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .navbar,
+:root[data-demo="studio-cut"][data-page-surface="public"] .navbar.scrolled {
+  background: rgba(23, 20, 17, 0.96);
+  border-bottom-color: rgba(197, 154, 92, 0.18);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .navbar-brand-mark.brand-mark {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 3px;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .navbar-brand-name {
+  color: var(--text-primary);
+  font-family: "Barlow Condensed", Impact, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .navbar-links a:hover,
+:root[data-demo="studio-cut"][data-page-surface="public"] .hero-tag span,
+:root[data-demo="studio-cut"][data-page-surface="public"] .eyebrow,
+:root[data-demo="studio-cut"][data-page-surface="public"] .service-card-cta,
+:root[data-demo="studio-cut"][data-page-surface="public"] .professional-specialty {
+  color: var(--accent);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .navbar-actions {
+  position: relative;
+  z-index: 96;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .navbar-toggle {
+  width: 44px;
+  height: 44px;
+  border-color: var(--accent);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .navbar-drawer {
+  background: #171411;
+  border-left-color: rgba(197, 154, 92, 0.24);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .navbar-drawer-links a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  border-bottom-color: var(--border);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .primary-button,
+:root[data-demo="studio-cut"][data-page-surface="public"] .primary-link {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .primary-button:hover:not(:disabled),
+:root[data-demo="studio-cut"][data-page-surface="public"] .primary-link:hover {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+  color: var(--bg);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .secondary-button {
+  border-color: var(--border-strong);
+  background: transparent;
+  color: var(--text-primary);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .hero {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(197, 154, 92, 0.1), transparent 32%),
+    var(--bg);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .hero h1 .dim {
+  color: var(--accent);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .hero-sub {
+  max-width: 430px;
+  font-size: 14px;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .hero-tag-line,
+:root[data-demo="studio-cut"][data-page-surface="public"] .hero-badge-dot {
+  background: var(--accent);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .hero-image img {
+  filter: saturate(0.58) contrast(1.08) brightness(0.7) sepia(0.08);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .hero-image-badge {
+  background: rgba(23, 20, 17, 0.9);
+  border-color: rgba(197, 154, 92, 0.38);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .differentials,
+:root[data-demo="studio-cut"][data-page-surface="public"] #galeria,
+:root[data-demo="studio-cut"][data-page-surface="public"] #espaco,
+:root[data-demo="studio-cut"][data-page-surface="public"] #contato {
+  background: #1c1814;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .differential {
+  border-left-color: var(--accent);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .service-card,
+:root[data-demo="studio-cut"][data-page-surface="public"] .professional-card,
+:root[data-demo="studio-cut"][data-page-surface="public"] .review-card,
+:root[data-demo="studio-cut"][data-page-surface="public"] .process-card,
+:root[data-demo="studio-cut"][data-page-surface="public"] .studio-photo,
+:root[data-demo="studio-cut"][data-page-surface="public"] .panel,
+:root[data-demo="studio-cut"][data-page-surface="public"] .summary-sticky {
+  border-color: var(--border);
+  box-shadow: inset 0 1px 0 rgba(197, 154, 92, 0.08);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .service-card.selected {
+  outline-color: var(--accent);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .service-card-footer strong,
+:root[data-demo="studio-cut"][data-page-surface="public"] .review-stars,
+:root[data-demo="studio-cut"][data-page-surface="public"] .summary-price {
+  color: var(--accent);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .gallery-item {
+  border: 1px solid rgba(197, 154, 92, 0.2);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #galeria {
+  position: relative;
+  padding-top: clamp(68px, 8vw, 112px);
+  padding-bottom: clamp(68px, 8vw, 112px);
+  background:
+    radial-gradient(circle at 14% 12%, rgba(197, 154, 92, 0.18), transparent 34%),
+    linear-gradient(135deg, #241e18 0%, #171411 48%, #100e0c 100%);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #galeria .section-heading {
+  max-width: 760px;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #galeria .section-heading h2 {
+  max-width: 680px;
+  font-size: clamp(36px, 6vw, 72px);
+  letter-spacing: -0.04em;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #galeria .gallery-grid {
+  grid-template-columns: 1.35fr 1fr 1fr;
+  gap: clamp(12px, 1.8vw, 22px);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #galeria .gallery-item {
+  border-color: rgba(197, 154, 92, 0.28);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.26);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #galeria .gallery-item:first-child {
+  grid-row: span 2;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #galeria .gallery-item:first-child img {
+  aspect-ratio: 4 / 5;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #galeria .gallery-item figcaption {
+  padding: 6px 12px;
+  border-color: rgba(197, 154, 92, 0.52);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #profissionais {
+  padding-top: clamp(34px, 4.5vw, 58px);
+  padding-bottom: clamp(38px, 5vw, 64px);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .section-heading {
+  max-width: 620px;
+  margin-bottom: clamp(18px, 2.4vw, 28px);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .section-heading h2 {
+  font-size: clamp(28px, 3.6vw, 44px);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .team-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .professional-card {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 14px;
+  align-items: center;
+  min-height: 0;
+  padding: 14px;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .professional-photo {
+  border-radius: calc(var(--radius-sm) - 4px);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .professional-card img,
+:root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .professional-avatar {
+  width: 92px;
+  height: 108px;
+  aspect-ratio: auto;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .professional-card-body {
+  padding: 0;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .professional-card h3 {
+  margin-bottom: 5px;
+  font-size: 18px;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .professional-specialty {
+  margin-bottom: 6px;
+  font-size: 10px !important;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .professional-bio {
+  margin-top: 0 !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .gallery-item figcaption {
+  border: 1px solid rgba(197, 154, 92, 0.45);
+  background: rgba(23, 20, 17, 0.84);
+  color: var(--text-primary);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .step-circle.current {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .step-circle.done {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .step-line.done {
+  background: var(--accent);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .slot-grid {
+  grid-template-columns: repeat(auto-fill, minmax(72px, 88px));
+  justify-content: start;
+  gap: 8px;
+  background: transparent;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .slot {
+  min-height: 44px;
+  border: 1px solid var(--border);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .slot.selected {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .summary-sticky {
+  border-top: 2px solid var(--accent);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] input,
+:root[data-demo="studio-cut"][data-page-surface="public"] select,
+:root[data-demo="studio-cut"][data-page-surface="public"] textarea {
+  border-color: var(--border-strong);
+  background: #14110f;
+  color: var(--text-primary);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] textarea {
+  width: 100%;
+  min-height: 112px;
+  padding: 12px;
+  resize: vertical;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] input:focus,
+:root[data-demo="studio-cut"][data-page-surface="public"] select:focus,
+:root[data-demo="studio-cut"][data-page-surface="public"] textarea:focus {
+  border-color: var(--accent);
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .relationship-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+:root[data-demo="studio-cut"][data-page-surface="public"] .relationship-consent input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  appearance: auto;
+  accent-color: var(--accent);
+}
+
+@media (max-width: 1023px) {
+  :root[data-demo="studio-cut"][data-page-surface="public"] .booking-sidebar {
+    display: block;
+  }
+
+  :root[data-demo="studio-cut"][data-page-surface="public"] .summary-sticky {
+    position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  :root[data-demo="studio-cut"][data-page-surface="public"] .navbar-brand-mark.brand-mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  :root[data-demo="studio-cut"][data-page-surface="public"] .navbar-brand-name {
+    font-size: 17px;
+  }
+
+  :root[data-demo="studio-cut"][data-page-surface="public"] #galeria .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  :root[data-demo="studio-cut"][data-page-surface="public"] #galeria .gallery-item:first-child {
+    grid-row: auto;
+  }
+
+  :root[data-demo="studio-cut"][data-page-surface="public"] #galeria .gallery-item:first-child img,
+  :root[data-demo="studio-cut"][data-page-surface="public"] #galeria .gallery-item img {
+    aspect-ratio: 16 / 11;
+  }
+
+  :root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .team-grid {
+    grid-template-columns: 1fr;
+  }
+
+  :root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .professional-card {
+    grid-template-columns: 76px 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  :root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .professional-card img,
+  :root[data-demo="studio-cut"][data-page-surface="public"] #profissionais .professional-avatar {
+    width: 76px;
+    height: 88px;
+  }
+}
+
+@media (max-width: 639px) {
+  :root[data-demo="studio-cut"][data-page-surface="public"] .step-label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.01em;
   }
 }

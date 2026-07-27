@@ -454,7 +454,7 @@ export default function Home({ services, professionals, loading, error, onSucces
 
   const order = tenant.slug === "lumiere"
     ? ["differentials", "details", "services", "space", "reviews", "process", "booking", "contact"]
-    : ["differentials", "services", "professionals", "gallery", "reviews", "process", "space", "booking", "contact"];
+    : ["differentials", "services", "gallery", "professionals", "booking", "reviews", "process", "space", "contact"];
 
   return (
     <main className={`business-site ${tenant.slug}-site`}>

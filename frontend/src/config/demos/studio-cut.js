@@ -78,42 +78,64 @@ const studioCut = {
 // (por isso é export nomeado, invisível ao gate de paridade `default`), e o
 // deployment fixado por vertical mantém isto fora do bundle da outra demo.
 export const presentation = {
-  faviconVariant: "block",
+  faviconVariant: "barber",
+  brandSymbol: true,
+  wordmark: "STUDIO CUT",
+  logo: {
+    mark: "SC",
+    background: "#171411",
+    foreground: "#c59a5c"
+  },
+  metadata: {
+    title: "Studio Cut | Barbearia premium em Vila Velha",
+    description: "Corte, barba e acabamento com hora marcada na Praia da Costa. Escolha o barbeiro e reserve online.",
+    themeColor: "#171411",
+    image: "https://studio-cut-public.sor-os-demos.workers.dev/assets/hero.jpg"
+  },
   fonts: "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap",
   nav: [
-    { label: "Início", href: "#topo" },
     { label: "Serviços", href: "#servicos" },
     { label: "Barbeiros", href: "#profissionais" },
     { label: "Galeria", href: "#galeria" },
-    { label: "Sobre", href: "#espaco" },
-    { label: "Avaliações", href: "#avaliacoes" }
+    { label: "Agendar", href: "#agendamento" }
   ],
   hero: {
-    headline: ["PRECISÃO", "EM CADA", "CORTE."],
-    sub: "Corte, barba e acabamento com hora marcada. Escolha o serviço, o barbeiro e o horário sem depender de mensagem.",
+    eyebrow: "Barbearia de precisão · Praia da Costa",
+    headline: ["CORTE CERTO.", "HORA", "MARCADA."],
+    sub: "Escolha corte, barba ou combo, veja a agenda dos barbeiros e reserve em poucos passos.",
     secondaryCta: "Ver serviços",
-    highlights: ["Barbeiros experientes", "Agendamento online", "Seg a Sáb"],
+    highlights: ["Corte, barba e acabamento", "Agenda em tempo real", "Seg a Sáb"],
     image: "/assets/hero.jpg",
     imageAlt: "Barbeiro finalizando um corte na Studio Cut",
-    badge: "Agenda aberta esta semana"
+    badge: "Horários disponíveis"
   },
   differentials: {
     items: [
-      { title: "Barbeiros experientes", text: "Equipe especializada em corte, barba e acabamento." },
-      { title: "Produtos premium", text: "Linha profissional para finalização que dura." },
-      { title: "Agendamento online", text: "Escolha horário sem troca de mensagens." },
-      { title: "Ambiente preparado", text: "Estrutura pensada para um atendimento tranquilo." }
+      { title: "Técnica precisa", text: "Corte, barba e acabamento com atenção aos detalhes." },
+      { title: "Produtos profissionais", text: "Finalização escolhida para o seu estilo e rotina." },
+      { title: "Hora marcada", text: "Agenda real, escolha direta e menos espera." },
+      { title: "Ambiente autoral", text: "Carvão, couro e metal em uma experiência sem excessos." }
     ]
   },
+  copy: {
+    servicesEyebrow: "Serviços essenciais",
+    servicesTitle: "Corte, barba e acabamento sem improviso",
+    professionalsEyebrow: "Na cadeira",
+    professionalsTitle: "Escolha quem assina o seu corte"
+  },
+  process: {
+    eyebrow: "Reserva direta",
+    title: "Do serviço à cadeira em três passos"
+  },
   gallery: {
-    eyebrow: "Galeria",
-    title: "O trabalho de perto",
+    eyebrow: "Precisão em cena",
+    title: "Técnica, ferramentas e ambiente",
     items: [
-      { src: "/assets/gallery/1.jpg", alt: "Corte masculino finalizado", label: "Cortes" },
-      { src: "/assets/gallery/5.jpg", alt: "Barbeiro em atendimento", label: "Atendimento" },
-      { src: "/assets/gallery/2.jpg", alt: "Acabamento de barba", label: "Barba" },
-      { src: "/assets/gallery/3.jpg", alt: "Detalhe de acabamento", label: "Acabamento" },
-      { src: "/assets/gallery/4.jpg", alt: "Ambiente da barbearia", label: "Ambiente" }
+      { src: "/assets/gallery/v2/precision-fade.webp", alt: "Degradê masculino finalizado com precisão", label: "Degradê" },
+      { src: "/assets/gallery/v2/beard-razor.webp", alt: "Barba sendo alinhada com navalha", label: "Barba" },
+      { src: "/assets/gallery/v2/barber-service.webp", alt: "Barbeiro realizando corte com tesoura e pente", label: "Técnica" },
+      { src: "/assets/gallery/v2/tools.webp", alt: "Ferramentas profissionais preparadas para o atendimento", label: "Ferramentas" },
+      { src: "/assets/gallery/v2/interior.webp", alt: "Interior contemporâneo de barbearia em carvão e latão", label: "Ambiente" }
     ]
   },
   reviews: {
@@ -128,6 +150,9 @@ export const presentation = {
   },
   space: {
     image: "/assets/space.jpg",
+    eyebrow: "Studio Cut",
+    title: "Um espaço pensado para fazer bem feito",
+    description: ["Atendimento com hora marcada, ferramentas profissionais e um ambiente sóbrio para corte, barba e acabamento."],
     location: "Praia da Costa · Vila Velha, ES",
     hours: ["Seg a Sex · 9h às 18h", "Sábado · 8h às 14h"]
   },
@@ -146,8 +171,8 @@ export const presentation = {
     }
   },
   contact: {
-    title: "Não encontrou o horário ideal?",
-    description: "Entre na lista de espera, peça um encaixe ou fale direto com a equipe.",
+    title: "Seu horário ideal não apareceu?",
+    description: "Entre na lista de espera ou peça um encaixe. A equipe retorna com as opções possíveis.",
     actions: [
       { label: "Entrar na lista de espera", source: "WAITLIST" },
       { label: "Solicitar encaixe", source: "WAITLIST", urgency: "TODAY" },

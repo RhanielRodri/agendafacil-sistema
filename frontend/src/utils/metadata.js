@@ -56,6 +56,9 @@ function ensureLink(rel, extra = {}) {
 // apple-touch-icon. `variant` diferencia a linguagem: monograma reto e
 // geométrico no Studio Cut, marca serifada e circular na Lumière.
 export function faviconSvg(mark, background, foreground, variant) {
+  if (variant === "barber") {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="3" fill="${background}"/><path d="M8 8h48v48H8zM16 14h32M16 50h32" fill="none" stroke="${foreground}" stroke-width="1.5"/><path d="M32 13v38" stroke="${foreground}" stroke-width="1" opacity="0.35"/><text x="32" y="41" fill="${foreground}" font-family="'Arial Narrow',Arial,sans-serif" font-size="23" font-weight="800" letter-spacing="1.5" text-anchor="middle">${mark}</text></svg>`;
+  }
   if (variant === "serif") {
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="${background}"/><circle cx="32" cy="32" r="21" fill="none" stroke="${foreground}" stroke-width="1.5" opacity="0.55"/><text x="32" y="43" fill="${foreground}" font-family="Georgia,'Times New Roman',serif" font-size="34" font-style="italic" text-anchor="middle">${mark}</text></svg>`;
   }

@@ -189,7 +189,7 @@
 /* Retratos precisam de rosto legível: o filtro escuro da A6 (brilho 0.72)
    funciona no hero, mas some com o rosto no card. Aqui fica mais claro. */
 :root[data-demo="studio-cut"] .professional-card img {
-  filter: grayscale(100%) contrast(1.04) brightness(0.92);
+  filter: saturate(0.62) contrast(1.04) brightness(0.88) sepia(0.06);
   object-position: center 20%;
 }
 
@@ -245,8 +245,8 @@
   border-radius: var(--radius-sm);
 }
 
-:root[data-demo="studio-cut"] .gallery-item img { filter: grayscale(100%) contrast(1.05) brightness(0.82); }
-:root[data-demo="studio-cut"] .gallery-item:hover img { filter: grayscale(60%) contrast(1.05) brightness(0.9); }
+:root[data-demo="studio-cut"] .gallery-item img { filter: saturate(0.72) contrast(1.05) brightness(0.86) sepia(0.06); }
+:root[data-demo="studio-cut"] .gallery-item:hover img { filter: saturate(0.92) contrast(1.04) brightness(0.94) sepia(0.03); }
 :root[data-demo="lumiere"] .gallery-item img { filter: saturate(0.82); }
 :root[data-demo="lumiere"] .gallery-item:first-child {
   grid-column: span 2;

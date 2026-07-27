@@ -4,6 +4,7 @@ import StatusBadge from "../components/StatusBadge.jsx";
 import StateMessage from "../components/StateMessage.jsx";
 import { api } from "../services/api.js";
 import { formatDate, todayInputValue } from "../utils/format.js";
+import { professionalDisplayName } from "../utils/presentation.js";
 
 const tokenMessages = {
   TOKEN_INVALID: "Este link é inválido ou não está disponível.",
@@ -159,7 +160,7 @@ export default function ManageAppointment({ token, professionals, onBack }) {
         </div>
         <div className="summary-box manage-summary">
           <strong>{appointment.service.name}</strong>
-          <span>{appointment.professional.name}</span>
+          <span>{professionalDisplayName(appointment.professional)}</span>
           <span>{formatDate(appointment.date)} às {appointment.time}</span>
           <span>{appointment.service.duration} minutos</span>
         </div>
@@ -224,7 +225,7 @@ export default function ManageAppointment({ token, professionals, onBack }) {
                 required
               >
                 {availableProfessionals.map((professional) => (
-                  <option key={professional.id} value={professional.id}>{professional.name}</option>
+                  <option key={professional.id} value={professional.id}>{professionalDisplayName(professional)}</option>
                 ))}
               </select>
             </label>

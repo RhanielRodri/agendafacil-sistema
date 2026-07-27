@@ -4,6 +4,7 @@ import { api } from "../services/api.js";
 import StateMessage from "../components/StateMessage.jsx";
 import { formatCurrency, todayInputValue } from "../utils/format.js";
 import { useTranslation } from "../i18n/I18nContext.jsx";
+import { professionalDisplayName } from "../utils/presentation.js";
 
 const initialForm = {
   clientName: "",
@@ -33,6 +34,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
     () => professionals.find((professional) => sameId(professional.id, selectedProfessionalId)),
     [professionals, selectedProfessionalId]
   );
+  const selectedProfessionalName = professionalDisplayName(selectedProfessional);
 
   useEffect(() => {
     if (initialServiceId) {
@@ -185,7 +187,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
                     <option value="">{t.step2_professional_placeholder}</option>
                     {professionals.map((professional) => (
                       <option key={professional.id} value={professional.id}>
-                        {professional.name}
+                        {professionalDisplayName(professional)}
                       </option>
                     ))}
                   </select>
@@ -244,7 +246,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
               <h3>{t.step3_title}</h3>
               <div className="summary-box">
                 <strong>{selectedService?.name}</strong>
-                <span>{selectedProfessional?.name}</span>
+                <span>{selectedProfessionalName}</span>
                 <span>{date} {t.at} {time}</span>
               </div>
               <label>
@@ -301,7 +303,7 @@ export default function BookingFlow({ services, professionals, initialServiceId,
             <div className="summary-row">
               <span className="summary-label">{t.summary_professional}</span>
               <span className="summary-value">
-                {selectedProfessional ? selectedProfessional.name : "—"}
+                {selectedProfessional ? selectedProfessionalName : "—"}
               </span>
             </div>
             <div className="summary-row">
