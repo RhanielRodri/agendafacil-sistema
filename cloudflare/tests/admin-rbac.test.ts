@@ -244,6 +244,53 @@ describe("agenda própria da role professional", () => {
 });
 
 describe("owners e auditoria", () => {
+  it("trata owner como preset e aplica permissões personalizadas no backend", async () => {
+    const customized = await adminCall(adminPath("studio-cut", `team/${IDENTITY_STUDIO}`), {
+      method: "PATCH",
+      body: { permissions: ["agenda", "team"] }
+    });
+    const context = await adminCall(adminPath("studio-cut", "context"));
+    const overview = await adminCall(adminPath("studio-cut", "overview"));
+    const agenda = await adminCall(`${adminPath("studio-cut", "agenda")}?date=2098-08-18`);
+    const team = await adminCall(adminPath("studio-cut", "team"));
+    const contextBody = await context.json() as { permissions: string[] };
+
+    expect(customized.status).toBe(200);
+    expect(contextBody.permissions).toEqual(["agenda", "team"]);
+    expect([overview.status, agenda.status, team.status]).toEqual([403, 200, 200]);
+
+    const restored = await adminCall(adminPath("studio-cut", `team/${IDENTITY_STUDIO}`), {
+      method: "PATCH",
+      body: {
+        permissions: [
+          "overview",
+          "agenda",
+          "clients",
+          "leads",
+          "follow_ups",
+          "services",
+          "professionals",
+          "scheduling",
+          "metrics",
+          "settings",
+          "team"
+        ]
+      }
+    });
+    expect(restored.status).toBe(200);
+  });
+
+  it("mantém Equipe e acessos obrigatório para owner", async () => {
+    const response = await adminCall(adminPath("studio-cut", `team/${IDENTITY_STUDIO}`), {
+      method: "PATCH",
+      body: { permissions: ["agenda"] }
+    });
+    const body = await response.json() as { error: { code: string } };
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("INVALID_REQUEST");
+  });
+
   it("não permite rebaixar nem desativar o último owner", async () => {
     const demote = await adminCall(adminPath("studio-cut", `team/${IDENTITY_STUDIO}`), {
       method: "PATCH",

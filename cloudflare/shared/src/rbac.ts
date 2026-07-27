@@ -33,7 +33,7 @@ export function requireAdminRole(value: unknown): AdminRole {
 }
 
 export function permissionsForRole(role: AdminRole, value?: unknown): AdminModule[] {
-  if (role === "owner" || role === "professional" || value === undefined) {
+  if (role === "professional" || value === undefined) {
     return [...ROLE_DEFAULTS[role]];
   }
   if (!Array.isArray(value)) {
@@ -44,14 +44,19 @@ export function permissionsForRole(role: AdminRole, value?: unknown): AdminModul
     throw new HttpError(400, "INVALID_REQUEST", "Permissões inválidas");
   }
   if (unique.includes("team")) {
-    throw new HttpError(400, "INVALID_REQUEST", "Permissão de equipe exige role owner");
+    if (role !== "owner") {
+      throw new HttpError(400, "INVALID_REQUEST", "Permissão de equipe exige role owner");
+    }
+  } else if (role === "owner") {
+    throw new HttpError(400, "INVALID_REQUEST", "Owner deve manter acesso a Equipe e acessos");
   }
   return ADMIN_MODULES.filter((module) => unique.includes(module));
 }
 
 export function effectivePermissions(role: AdminRole, stored: AdminModule[]): AdminModule[] {
-  if (role === "owner" || role === "professional") return [...ROLE_DEFAULTS[role]];
-  return ADMIN_MODULES.filter((module) => stored.includes(module) && module !== "team");
+  if (role === "professional") return [...ROLE_DEFAULTS[role]];
+  if (role === "owner" && stored.length === 0) return [...ROLE_DEFAULTS.owner];
+  return ADMIN_MODULES.filter((module) => stored.includes(module) && (role === "owner" || module !== "team"));
 }
 
 export function assertModuleAccess(role: AdminRole, permissions: AdminModule[], module: AdminModule | null): void {

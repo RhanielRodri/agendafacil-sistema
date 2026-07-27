@@ -34,7 +34,7 @@ export const permissionLabels = {
   clients: "Clientes",
   leads: "Leads",
   follow_ups: "Follow-ups",
-  services: "Serviços",
+  services: "Procedimentos",
   professionals: "Profissionais",
   scheduling: "Disponibilidade",
   metrics: "Indicadores",
